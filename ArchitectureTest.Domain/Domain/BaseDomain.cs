@@ -1,9 +1,9 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
 using ArchitectureTest.Data.Enums;
-using ArchitectureTest.Data.Repositories.BasicRepo;
-using ArchitectureTest.Data.UnitOfWork;
+using ArchitectureTest.Domain.Repositories.BasicRepo;
+using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Domain.Contracts;
-using ArchitectureTest.Data.StatusCodes;
+using ArchitectureTest.Domain.StatusCodes;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;

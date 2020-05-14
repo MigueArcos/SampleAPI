@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArchitectureTest.Data.StatusCodes {
+namespace ArchitectureTest.Domain.StatusCodes {
 	public class SuccessStatusCode : CustomCode {
 		public int HttpStatusCode { get; set; } = 200;
 		public SuccessStatusCode(int statusCode, int httpStatusCode, string message) {

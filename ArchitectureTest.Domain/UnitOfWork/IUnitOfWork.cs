@@ -1,7 +1,7 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
-using ArchitectureTest.Data.Repositories.BasicRepo;
+using ArchitectureTest.Domain.Repositories.BasicRepo;
 
-namespace ArchitectureTest.Data.UnitOfWork {
+namespace ArchitectureTest.Domain.UnitOfWork {
 	public interface IUnitOfWork {
 		IRepository<Note> NotesRepository { get; }
 		IRepository<Checklist> ChecklistRepository { get; }

@@ -1,8 +1,8 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
 using ArchitectureTest.Data.Enums;
-using ArchitectureTest.Data.Repositories.BasicRepo;
-using ArchitectureTest.Data.StatusCodes;
-using ArchitectureTest.Data.UnitOfWork;
+using ArchitectureTest.Domain.Repositories.BasicRepo;
+using ArchitectureTest.Domain.StatusCodes;
+using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Domain.Models;
 using System;
 using System.Collections.Generic;

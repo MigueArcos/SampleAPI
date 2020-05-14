@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ArchitectureTest.Data.StatusCodes {
+namespace ArchitectureTest.Domain.StatusCodes {
 	public class ErrorStatusCode : Exception {
 		public CustomCode StatusCode { get; set; }
 		public int HttpStatusCode { get; set; }

@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using ArchitectureTest.Data.Database.Entities;
-using ArchitectureTest.Data.Repositories.BasicRepo;
+﻿using ArchitectureTest.Data.Database.Entities;
+using ArchitectureTest.Domain.Repositories.BasicRepo;
 using Microsoft.EntityFrameworkCore.Storage;
+using System;
 
-namespace ArchitectureTest.Data.UnitOfWork {
+namespace ArchitectureTest.Domain.UnitOfWork {
 	public class UnitOfWork : IUnitOfWork, IDisposable {
 		private IRepository<Note> notesRepository;
 		private IRepository<Checklist> checklistRepository;

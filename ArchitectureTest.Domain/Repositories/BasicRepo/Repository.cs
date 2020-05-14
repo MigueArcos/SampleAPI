@@ -4,10 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using ArchitectureTest.Data.Database.Entities;
-using ArchitectureTest.Data.StatusCodes;
+using ArchitectureTest.Domain.StatusCodes;
 using Microsoft.EntityFrameworkCore;
 
-namespace ArchitectureTest.Data.Repositories.BasicRepo {
+namespace ArchitectureTest.Domain.Repositories.BasicRepo {
 	public class Repository<TEntity> : IRepository<TEntity> where TEntity : Entity {
 		private readonly DatabaseContext dbContext;
 		private readonly DbSet<TEntity> dbSet;

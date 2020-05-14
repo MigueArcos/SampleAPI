@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace ArchitectureTest.Data.Repositories.BasicRepo {
+namespace ArchitectureTest.Domain.Repositories.BasicRepo {
 	public interface IRepository<TEntity> where TEntity : Entity {
 		Task<TEntity> Post(TEntity entity);
 		Task<bool> Put(TEntity entity);

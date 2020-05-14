@@ -1,5 +1,5 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
-using ArchitectureTest.Data.UnitOfWork;
+using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
 using Microsoft.AspNetCore.Mvc;

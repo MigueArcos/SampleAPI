@@ -1,7 +1,11 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
-using ArchitectureTest.Data.UnitOfWork;
+using ArchitectureTest.Domain.UnitOfWork;
+using ArchitectureTest.Infrastructure.AppConfiguration;
+using ArchitectureTest.Infrastructure.Helpers;
+using ArchitectureTest.Web.ActionFilters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +22,12 @@ namespace ArchitectureTest.Web {
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddDbContext<DatabaseContext>(options => options.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
+			ConfigData config = new ConfigData();
+			Configuration.GetSection("ConfigData").Bind(config);
+			services.AddSingleton(config);
+			services.AddSingleton(new JwtTokenManager(config.Jwt));
+			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+			services.AddScoped<JwtVerificationAttribute>();
 			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 		}
 

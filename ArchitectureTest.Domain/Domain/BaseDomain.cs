@@ -76,7 +76,7 @@ namespace ArchitectureTest.Domain.Domain {
 				return exception as ErrorStatusCode;
 			}
 			else {
-				//We should never expose real exceptions, so we will catch all unknown exceptions (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an unknown exception after log
+				//We should never expose real exceptions, so we will catch all unknown exceptions (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
 				Console.WriteLine(exception);
 				return ErrorStatusCode.UnknownError;
 			}

@@ -1,21 +1,27 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
-using ArchitectureTest.Data.StatusCodes;
-using ArchitectureTest.Data.UnitOfWork;
+using ArchitectureTest.Domain.StatusCodes;
+using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using ArchitectureTest.Infrastructure.Helpers;
+using Microsoft.AspNetCore.Http;
+using ArchitectureTest.Web.ActionFilters;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
 	public class NotesController : BaseController<Note, NoteDTO> {
-		public NotesController(IUnitOfWork unitOfWork) : base(new NotesDomain(unitOfWork.NotesRepository, unitOfWork)) {
-
+		private readonly IHttpContextAccessor httpContextAccessor;
+		public NotesController(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor) : base(new NotesDomain(unitOfWork.NotesRepository, unitOfWork)) {
+			this.httpContextAccessor = httpContextAccessor;
 		}
+
 		[HttpGet]
+		[TypeFilter(typeof(JwtVerificationAttribute))]
 		public async Task<ObjectResult> GetAll() {
 			try {
-				long userId = 1;//Should be retrieved from token
+				var userId = long.Parse(httpContextAccessor.HttpContext.Items[AppConstants.UserId].ToString());//Should be retrieved from token
 				var result = await (domain as NotesDomain).GetUserNotes(userId);
 				return Ok(result);
 			}

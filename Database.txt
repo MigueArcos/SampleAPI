@@ -1,0 +1,12 @@
+CREATE TABLE User (Id BIGINT PRIMARY KEY AUTO_INCREMENT, Email VARCHAR(320), UserName VARCHAR(50), CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW());
+CREATE TABLE Note (Id BIGINT PRIMARY KEY AUTO_INCREMENT, UserId BIGINT NOT NULL, Title VARCHAR(100), Content TEXT, CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW(), FOREIGN KEY (UserId) REFERENCES User(Id));
+CREATE TABLE Checklist (Id BIGINT PRIMARY KEY AUTO_INCREMENT, UserId BIGINT NOT NULL, Title VARCHAR(100), CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW(), FOREIGN KEY (UserId) REFERENCES User(Id));
+CREATE TABLE ChecklistDetail (Id BIGINT PRIMARY KEY AUTO_INCREMENT, ChecklistId BIGINT NOT NULL, ParentDetailId BIGINT, TaskName VARCHAR(100) NOT NULL, Status BIT NOT NULL, CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW(), FOREIGN KEY (ChecklistId) REFERENCES Checklist(Id));
+
+
+
+INSERT INTO User (Email, UserName) VALUES ('migue300995@gmail.com', 'Miguel Angel');
+
+INSERT INTO Note (UserId, Title, Content) VALUES (1, 'Note 1', ''), (1, 'Note 2', ''), (1, 'Note 3', ''), (1, 'Note 4', ''), (1, 'Note 5', ''), (1, 'Note 16', ''), (1, 'Note 7', '');
+
+dotnet ef dbcontext scaffold "Server=localhost; Database=Papu; Uid=root; Pwd=root" Pomelo.EntityFrameworkCore.MySql -c DatabaseContext --context-dir Database -o Database/Entities --force

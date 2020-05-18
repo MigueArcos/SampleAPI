@@ -1,4 +1,5 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
+using ArchitectureTest.Domain.Repositories;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -28,7 +29,7 @@ namespace ArchitectureTest.Domain.UnitOfWork {
 			get {
 
 				if (checklistRepository == null) {
-					checklistRepository = new Repository<Checklist>(databaseContext);
+					checklistRepository = new ChecklistRepository(databaseContext);
 				}
 				return checklistRepository;
 			}

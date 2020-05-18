@@ -14,7 +14,7 @@ namespace ArchitectureTest.Web.Controllers {
 			this.domain = domain;
 		}
 		[HttpPost]
-		[TypeFilter(typeof(JwtVerificationAttribute))]
+		[TypeFilter(typeof(ValidateJwt))]
 		public async Task<ObjectResult> Post([FromBody] TDto dto) {
 			try {
 				var result = await domain.Post(dto);

@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Serialization;
+
 namespace ArchitectureTest.Web {
 	public class Startup {
 		public Startup(IConfiguration configuration) {
@@ -27,8 +29,11 @@ namespace ArchitectureTest.Web {
 			services.AddSingleton(config);
 			services.AddSingleton(new JwtTokenManager(config.Jwt));
 			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddScoped<JwtVerificationAttribute>();
-			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+			services.AddScoped<ValidateJwt>();
+			services.AddMvc().AddJsonOptions(o => {
+				o.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+				o.SerializerSettings.ContractResolver = new DefaultContractResolver();
+			}).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

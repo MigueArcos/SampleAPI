@@ -18,7 +18,7 @@ namespace ArchitectureTest.Web.Controllers {
 		}
 
 		[HttpGet]
-		[TypeFilter(typeof(JwtVerificationAttribute))]
+		[TypeFilter(typeof(ValidateJwt))]
 		public async Task<ObjectResult> GetAll() {
 			try {
 				var userId = long.Parse(httpContextAccessor.HttpContext.Items[AppConstants.UserId].ToString());//Should be retrieved from token

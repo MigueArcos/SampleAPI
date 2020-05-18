@@ -57,7 +57,16 @@ namespace ArchitectureTest.Domain.Domain {
 				Title = entity.Title,
 				UserId = entity.UserId,
 				CreationDate = entity.CreationDate ?? new System.DateTime(default),
-				ModificationDate = entity.ModificationDate ?? new System.DateTime(default)
+				ModificationDate = entity.ModificationDate ?? new System.DateTime(default),
+				Details = entity.ChecklistDetail?.Select(cD => new ChecklistDetailDTO {
+					Id = cD.Id,
+					ChecklistId = cD.ChecklistId,
+					ParentDetailId = cD.ParentDetailId,
+					TaskName = cD.TaskName,
+					Status = cD.Status,
+					CreationDate = cD.CreationDate ?? new System.DateTime(default),
+					ModificationDate = cD.ModificationDate ?? new System.DateTime(default)
+				}).ToList()
 			};
 		}
 

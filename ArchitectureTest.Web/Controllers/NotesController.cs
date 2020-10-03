@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ArchitectureTest.Infrastructure.Helpers;
 using Microsoft.AspNetCore.Http;
 using ArchitectureTest.Web.ActionFilters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
@@ -17,8 +18,8 @@ namespace ArchitectureTest.Web.Controllers {
 			this.httpContextAccessor = httpContextAccessor;
 		}
 
-		[HttpGet]
-		[TypeFilter(typeof(ValidateJwt))]
+		[HttpGet("list")]
+		[Authorize]
 		public async Task<ObjectResult> GetAll() {
 			try {
 				var userId = long.Parse(httpContextAccessor.HttpContext.Items[AppConstants.UserId].ToString());//Should be retrieved from token

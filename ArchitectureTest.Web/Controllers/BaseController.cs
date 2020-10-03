@@ -6,6 +6,7 @@ using ArchitectureTest.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ArchitectureTest.Web.ActionFilters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ArchitectureTest.Web.Controllers {
 	public class BaseController<TEntity, TDto> : ControllerBase where TEntity : Entity where TDto : BasicDTO, IEntityConverter<TEntity> {
@@ -14,7 +15,7 @@ namespace ArchitectureTest.Web.Controllers {
 			this.domain = domain;
 		}
 		[HttpPost]
-		[TypeFilter(typeof(ValidateJwt))]
+		[Authorize]
 		public async Task<ObjectResult> Post([FromBody] TDto dto) {
 			try {
 				var result = await domain.Post(dto);

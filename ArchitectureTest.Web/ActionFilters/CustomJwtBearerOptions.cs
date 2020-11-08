@@ -41,10 +41,14 @@ namespace ArchitectureTest.Web.ActionFilters {
 				if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
 					JwtWithClaims newToken = jwtManager.ExchangeRefreshToken(token, refreshToken);
 					context.Principal = newToken.Claims;
-					context.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
-						[AppConstants.Token] = newToken.JsonWebToken.Token,
-						[AppConstants.RefreshToken] = newToken.JsonWebToken.RefreshToken
-					}));
+					// if there was a cookie, then set again the cookie with the new value
+					if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])){
+						context.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+							[AppConstants.Token] = newToken.JsonWebToken.Token,
+							[AppConstants.RefreshToken] = newToken.JsonWebToken.RefreshToken
+						}));
+					}
+					// If everything goes ok set request principal (In this point authentication is done and ok)
 					context.Success();
 				}
 			}

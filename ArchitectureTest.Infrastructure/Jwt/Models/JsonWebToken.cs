@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 
 namespace ArchitectureTest.Infrastructure.Jwt.Models {
@@ -9,5 +10,9 @@ namespace ArchitectureTest.Infrastructure.Jwt.Models {
 		public string Token { get; set; }
 		public string RefreshToken { get; set; }
 		public long ExpiresIn { get; set; }
+	}
+	public class JwtWithClaims {
+		public JsonWebToken JsonWebToken { get; set; }
+		public ClaimsPrincipal Claims { get; set; }
 	}
 }

@@ -9,6 +9,8 @@ using ArchitectureTest.Infrastructure.Helpers;
 using Microsoft.AspNetCore.Http;
 using ArchitectureTest.Web.ActionFilters;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using System.Security.Claims;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
@@ -22,7 +24,7 @@ namespace ArchitectureTest.Web.Controllers {
 		[Authorize]
 		public async Task<ObjectResult> GetAll() {
 			try {
-				var userId = long.Parse(httpContextAccessor.HttpContext.Items[AppConstants.UserId].ToString());//Should be retrieved from token
+				var userId = long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);//Should be retrieved from token
 				var result = await (domain as NotesDomain).GetUserNotes(userId);
 				return Ok(result);
 			}

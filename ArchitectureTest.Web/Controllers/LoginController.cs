@@ -28,10 +28,13 @@ namespace ArchitectureTest.Web.Controllers {
 					Email = "migue300995@gmail.com",
 					Id = 1
 				});
-				httpContextAccessor.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
-					[AppConstants.Token] = token.Token,
-					[AppConstants.RefreshToken] = token.RefreshToken
-				}));
+				bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
+				if (saveAuthInCookie){
+					httpContextAccessor.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+						[AppConstants.Token] = token.Token,
+						[AppConstants.RefreshToken] = token.RefreshToken
+					}));
+				}
 				return Ok(token);
 			}else{
 				return BadRequest(ErrorStatusCode.AuthorizationFailed.StatusCode);

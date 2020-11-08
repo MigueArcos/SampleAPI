@@ -1,10 +1,11 @@
 ﻿using ArchitectureTest.Infrastructure.Jwt.Models;
+using System.Security.Claims;
 
 namespace ArchitectureTest.Infrastructure.Jwt {
 	public interface IJwtManager {
 		JsonWebToken GenerateToken(JwtUser user);
 		string GenerateRefreshToken();
-		JwtUser ReadToken(string token, bool validateLifeTime);
-		JsonWebToken ExchangeRefreshToken(string accessToken, string refreshToken);
+		ClaimsPrincipal ReadToken(string token, bool validateLifeTime);
+		JwtWithClaims ExchangeRefreshToken(string accessToken, string refreshToken);
 	}
 }

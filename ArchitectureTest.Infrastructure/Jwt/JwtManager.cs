@@ -11,7 +11,7 @@ using System.Text;
 namespace ArchitectureTest.Infrastructure.Jwt {
 	public class JwtManager : IJwtManager {
 		private readonly JwtConfiguration jwtConfiguration;
-		private const int TokenTTLHours = 1;
+		private const int TokenTTLMinutes = 1;
 		private const int RefreshTokenTTLHours = 720;
 
 		private SymmetricSecurityKey securityKey;
@@ -27,11 +27,11 @@ namespace ArchitectureTest.Infrastructure.Jwt {
 			var tokenDescriptor = new SecurityTokenDescriptor {
 				Subject = new ClaimsIdentity(new Claim[]
 				{
-					new Claim(AppConstants.UserId, user.Id.ToString()),
-					new Claim(AppConstants.Email, user.Email),
-					new Claim(AppConstants.Name, user.Name)
+					new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+					new Claim(ClaimTypes.Email, user.Email),
+					new Claim(ClaimTypes.Name, user.Name)
 				}),
-				Expires = DateTime.UtcNow.AddHours(TokenTTLHours),
+				Expires = DateTime.UtcNow.AddMinutes(TokenTTLMinutes),
 				Issuer = jwtConfiguration.Issuer,
 				Audience = jwtConfiguration.Audience,
 				SigningCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature)
@@ -43,7 +43,7 @@ namespace ArchitectureTest.Infrastructure.Jwt {
 				Email = user.Email,
 				RefreshToken = GenerateRefreshToken(),
 				UserId = user.Id,
-				ExpiresIn = TokenTTLHours * 3600
+				ExpiresIn = TokenTTLMinutes * 60
 			};
 		}
 		public string GenerateRefreshToken() {
@@ -53,7 +53,7 @@ namespace ArchitectureTest.Infrastructure.Jwt {
 				return Convert.ToBase64String(randomNumber);
 			}
 		}
-		public JwtUser ReadToken(string token, bool validateLifeTime) {
+		public ClaimsPrincipal ReadToken(string token, bool validateLifeTime) {
 			var claims = tokenHandler.ValidateToken(token, new TokenValidationParameters {
 				ValidateIssuerSigningKey = true,
 				ValidateIssuer = true,
@@ -63,19 +63,23 @@ namespace ArchitectureTest.Infrastructure.Jwt {
 				IssuerSigningKey = securityKey,
 				ValidateLifetime = validateLifeTime
 			}, out SecurityToken validatedToken);
-			return new JwtUser {
-				Email = claims.FindFirst(AppConstants.Email)?.Value,
-				Id = long.Parse(claims.FindFirst(AppConstants.UserId)?.Value),
-				Name = claims.FindFirst(AppConstants.Name)?.Value
-			};
+			return claims;
 		}
 
-		public JsonWebToken ExchangeRefreshToken(string accessToken, string refreshToken) {
+		public JwtWithClaims ExchangeRefreshToken(string accessToken, string refreshToken) {
 			// validate refreshToken in DB
 			var tokenExistsInBD = true;
 			if (tokenExistsInBD) {
-				var oldToken = ReadToken(accessToken, false);
-				return GenerateToken(oldToken);
+				ClaimsPrincipal oldClaims = ReadToken(accessToken, false);
+				var user = new JwtUser {
+					Email = oldClaims.FindFirst(ClaimTypes.Email)?.Value,
+					Id = long.Parse(oldClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value),
+					Name = oldClaims.FindFirst(ClaimTypes.Name)?.Value
+				};
+				return new JwtWithClaims {
+					JsonWebToken = GenerateToken(user),
+					Claims = oldClaims
+				};
 			}
 			return null;
 		}

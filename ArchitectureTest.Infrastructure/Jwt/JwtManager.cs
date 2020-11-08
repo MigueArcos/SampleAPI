@@ -1,6 +1,4 @@
-﻿using ArchitectureTest.Infrastructure.AppConfiguration;
-using ArchitectureTest.Infrastructure.Helpers;
-using ArchitectureTest.Infrastructure.Jwt.Models;
+﻿using ArchitectureTest.Infrastructure.Jwt.Models;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,18 +8,15 @@ using System.Text;
 
 namespace ArchitectureTest.Infrastructure.Jwt {
 	public class JwtManager : IJwtManager {
-		private readonly JwtConfiguration jwtConfiguration;
 		private const int TokenTTLMinutes = 1;
 		private const int RefreshTokenTTLHours = 720;
 
-		private SymmetricSecurityKey securityKey;
-		private JwtSecurityTokenHandler tokenHandler;
+		private readonly JwtSecurityTokenHandler tokenHandler;
+		private readonly TokenValidationParameters tokenValidationParameters;
 
-		public JwtManager(ConfigData configData) {
-			jwtConfiguration = configData.Jwt;
-
-			securityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtConfiguration.Secret));
+		public JwtManager(TokenValidationParameters tokenValidationParameters) {
 			tokenHandler = new JwtSecurityTokenHandler();
+			this.tokenValidationParameters = tokenValidationParameters;
 		}
 		public JsonWebToken GenerateToken(JwtUser user) {
 			var tokenDescriptor = new SecurityTokenDescriptor {
@@ -32,9 +27,9 @@ namespace ArchitectureTest.Infrastructure.Jwt {
 					new Claim(ClaimTypes.Name, user.Name)
 				}),
 				Expires = DateTime.UtcNow.AddMinutes(TokenTTLMinutes),
-				Issuer = jwtConfiguration.Issuer,
-				Audience = jwtConfiguration.Audience,
-				SigningCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature)
+				Issuer = tokenValidationParameters.ValidIssuer,
+				Audience = tokenValidationParameters.ValidAudience,
+				SigningCredentials = new SigningCredentials(tokenValidationParameters.IssuerSigningKey, SecurityAlgorithms.HmacSha256Signature)
 			};
 
 			var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -54,15 +49,8 @@ namespace ArchitectureTest.Infrastructure.Jwt {
 			}
 		}
 		public ClaimsPrincipal ReadToken(string token, bool validateLifeTime) {
-			var claims = tokenHandler.ValidateToken(token, new TokenValidationParameters {
-				ValidateIssuerSigningKey = true,
-				ValidateIssuer = true,
-				ValidateAudience = true,
-				ValidIssuer = jwtConfiguration.Issuer,
-				ValidAudience = jwtConfiguration.Audience,
-				IssuerSigningKey = securityKey,
-				ValidateLifetime = validateLifeTime
-			}, out SecurityToken validatedToken);
+			tokenValidationParameters.ValidateLifetime = validateLifeTime;
+			var claims = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
 			return claims;
 		}
 

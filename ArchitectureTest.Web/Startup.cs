@@ -25,24 +25,26 @@ namespace ArchitectureTest.Web {
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services) {
-			services.AddDbContext<DatabaseContext>(options => options.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
-			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			ConfigData config = new ConfigData();
 			Configuration.GetSection("ConfigData").Bind(config);
+			TokenValidationParameters tokenValidationParameters = new TokenValidationParameters {
+				ValidateIssuer = true,
+				ValidateAudience = true,
+				ValidateLifetime = true,
+				ValidateIssuerSigningKey = true,
+				ValidIssuer = config.Jwt.Issuer,
+				ValidAudience = config.Jwt.Audience,
+				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config.Jwt.Secret))
+			};
+
+			services.AddDbContext<DatabaseContext>(options => options.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
+			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			services.AddSingleton(config);
 			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddScoped<IJwtManager, JwtManager>();
+			services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters));
 			services.AddScoped<CustomJwtBearerEvents>();
 			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
-				options.TokenValidationParameters = new TokenValidationParameters {
-					ValidateIssuer = true,
-					ValidateAudience = true,
-					ValidateLifetime = true,
-					ValidateIssuerSigningKey = true,
-					ValidIssuer = config.Jwt.Issuer,
-					ValidAudience = config.Jwt.Audience,
-					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config.Jwt.Secret))
-				};
+				options.TokenValidationParameters = tokenValidationParameters;
 				options.EventsType = typeof(CustomJwtBearerEvents);
 			});
 			services.AddMvc().AddJsonOptions(o => {

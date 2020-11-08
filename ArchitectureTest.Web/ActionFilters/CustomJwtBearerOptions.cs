@@ -4,6 +4,8 @@ using ArchitectureTest.Infrastructure.Helpers;
 using ArchitectureTest.Infrastructure.Jwt;
 using ArchitectureTest.Infrastructure.Jwt.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,31 +18,11 @@ namespace ArchitectureTest.Web.ActionFilters {
 			this.jwtManager = jwtManager;
 		}
 		public override Task MessageReceived(MessageReceivedContext context){
-			var cookieObj = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(context.Request.Cookies[AppConstants.SessionCookie] ?? "{}");
-			var authorizationHeader = context.Request.Headers["Authorization"].ToString();
-			if (!string.IsNullOrEmpty(authorizationHeader)){
-				var array = authorizationHeader.Split("Bearer ");
-				context.Token = array.Length > 1 ? array[1] : null; 
-			}
-			else if (!string.IsNullOrEmpty(context.Request.Cookies[AppConstants.SessionCookie])){
-				context.Token = cookieObj[AppConstants.Token];
-			}
-			if (!string.IsNullOrEmpty(context.Token)){
-				try{
-					var tokenResult = jwtManager.ReadToken(context.Token, true);
-				} catch (Exception e){
-					if (!string.IsNullOrEmpty(cookieObj[AppConstants.RefreshToken])){
-						JsonWebToken newToken = jwtManager.ExchangeRefreshToken(cookieObj[AppConstants.Token], cookieObj[AppConstants.RefreshToken]);
-						context.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
-							[AppConstants.Token] = newToken.RefreshToken,
-							[AppConstants.RefreshToken] = newToken.Token
-						}));
-						context.Token = newToken.Token;
-					}
-				}		
-			}
+			GetTokensFromRequestContext(context.HttpContext.Request, out string accessToken, out string refreshToken);
+			context.Token = accessToken;
 			return Task.CompletedTask;
 		}
+
 		public override Task Challenge(JwtBearerChallengeContext context){
 			if (context.AuthenticateFailure != null){
 				var json = Newtonsoft.Json.JsonConvert.SerializeObject(ErrorStatusCode.AuthorizationFailed.StatusCode);
@@ -51,6 +33,57 @@ namespace ArchitectureTest.Web.ActionFilters {
 				context.HandleResponse();
 			}
 			return Task.CompletedTask;
+		}
+		// AuthenticationFailed, try again using the refreshToken
+		public override Task AuthenticationFailed(AuthenticationFailedContext context){
+			try {
+				GetTokensFromRequestContext(context.HttpContext.Request, out string token, out string refreshToken);
+				if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
+					JwtWithClaims newToken = jwtManager.ExchangeRefreshToken(token, refreshToken);
+					context.Principal = newToken.Claims;
+					context.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+						[AppConstants.Token] = newToken.JsonWebToken.Token,
+						[AppConstants.RefreshToken] = newToken.JsonWebToken.RefreshToken
+					}));
+					context.Success();
+				}
+			}
+			catch {
+				return Task.CompletedTask;
+			}
+			return Task.CompletedTask;
+		}
+
+		public override Task TokenValidated(TokenValidatedContext context){
+			return Task.CompletedTask;
+		}
+
+		private bool GetTokensFromRequestContext(HttpRequest requestContext, out string accessToken, out string refreshToken) {
+			const string defaultBearerValue = "Bearer ";
+			try {
+				var cookieObj = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(requestContext.Cookies[AppConstants.SessionCookie] ?? "{}");
+				var authorizationHeader = requestContext.Headers[HeaderNames.Authorization].ToString();
+				if (!string.IsNullOrEmpty(authorizationHeader)) {
+					var array = authorizationHeader.Split(defaultBearerValue);
+					accessToken = array.Length > 1 ? array[1] : defaultBearerValue;
+					var refreshTokenHeader = requestContext.Headers[AppConstants.RefreshTokenHeader].ToString();
+					refreshToken = string.IsNullOrEmpty(refreshTokenHeader) ? string.Empty : refreshTokenHeader;
+				}
+				else if (!string.IsNullOrEmpty(requestContext.Cookies[AppConstants.SessionCookie])) {
+					cookieObj.TryGetValue(AppConstants.Token, out accessToken);
+					cookieObj.TryGetValue(AppConstants.RefreshToken, out refreshToken);
+				}
+				else {
+					accessToken = defaultBearerValue;
+					refreshToken = string.Empty;
+				}
+				return true;
+			}
+			catch {
+				accessToken = defaultBearerValue;
+				refreshToken = string.Empty;
+				return false;
+			}
 		}
 	}
 }

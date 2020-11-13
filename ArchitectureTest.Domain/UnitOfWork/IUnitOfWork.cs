@@ -6,6 +6,7 @@ namespace ArchitectureTest.Domain.UnitOfWork {
 		IRepository<Note> NotesRepository { get; }
 		IRepository<Checklist> ChecklistRepository { get; }
 		IRepository<ChecklistDetail> ChecklistDetailRepository { get; }
+		IRepository<TEntity> Repository<TEntity>() where TEntity : Entity;
 		void StartTransaction();
 		void Commit();
 		void Rollback();

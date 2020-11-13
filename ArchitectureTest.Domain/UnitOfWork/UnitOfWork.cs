@@ -1,18 +1,26 @@
 ﻿using ArchitectureTest.Data.Database.Entities;
 using ArchitectureTest.Domain.Repositories;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
+using ArchitectureTest.Domain.UnitOfWork.RepoFactory;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
+using System.Collections.Generic;
 
 namespace ArchitectureTest.Domain.UnitOfWork {
+	public class RepoDictionary<TEntity> : Dictionary<string, IRepository<TEntity>> where TEntity: Entity {
+
+	}
 	public class UnitOfWork : IUnitOfWork, IDisposable {
 		private IRepository<Note> notesRepository;
 		private IRepository<Checklist> checklistRepository;
 		private IRepository<ChecklistDetail> checklistDetailRepository;
 		private readonly DatabaseContext databaseContext;
 		private IDbContextTransaction transaction;
+		private IRepositoryFactory repositoryFactory;
+		private Dictionary<string, object> repos = new Dictionary<string, object>();
 		public UnitOfWork(DatabaseContext databaseContext) {
 			this.databaseContext = databaseContext;
+			repositoryFactory = new RepositoryFactory(databaseContext);
 		}
 
 		public IRepository<Note> NotesRepository {
@@ -43,6 +51,16 @@ namespace ArchitectureTest.Domain.UnitOfWork {
 				}
 				return checklistDetailRepository;
 			}
+		}
+
+		public IRepository<TEntity> Repository<TEntity>() where TEntity : Entity {
+			string typeName = typeof(TEntity).Name;
+			repos.TryGetValue(typeName, out object repo);
+			if (repo == null) {
+				repo = repositoryFactory.Create<TEntity>();
+				repos.Add(typeName, repo);
+			}
+			return repo as IRepository<TEntity>;
 		}
 
 		public void Commit() {

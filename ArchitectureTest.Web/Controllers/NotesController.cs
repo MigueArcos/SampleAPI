@@ -16,7 +16,7 @@ namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
 	public class NotesController : BaseController<Note, NoteDTO> {
 		private readonly IHttpContextAccessor httpContextAccessor;
-		public NotesController(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor) : base(new NotesDomain(unitOfWork.NotesRepository, unitOfWork)) {
+		public NotesController(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor) : base(new NotesDomain(unitOfWork)) {
 			this.httpContextAccessor = httpContextAccessor;
 		}
 

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Domain {
 	public class ChecklistDomain : BaseDomain<Checklist, ChecklistDTO> {
-		public ChecklistDomain(IRepository<Checklist> repository, IUnitOfWork unitOfWork) : base(repository, unitOfWork) { }
+		public ChecklistDomain(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 		public override bool RequestIsValid(RequestType requestType, long? entityId = null, ChecklistDTO dto = null) {
 			switch (requestType) {
 				case RequestType.Post:
@@ -32,6 +32,18 @@ namespace ArchitectureTest.Domain.Domain {
 			}
 			return true;
 		}
+		public async Task<IList<ChecklistDTO>> GetUserChecklists(long userId) {
+			try {
+				//A more complete validation can be performed here since we have the unitOfWork and access to all repos
+				if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
+				var notes = await repository.Get(n => n.UserId == userId);
+				return ToDTOs(notes);
+			}
+			catch (Exception exception) {
+				throw DefaultCatchHandler(exception);
+			}
+		}
+
 		public override async Task<ChecklistDTO> Post(ChecklistDTO dto) {
 			try {
 				unitOfWork.StartTransaction();

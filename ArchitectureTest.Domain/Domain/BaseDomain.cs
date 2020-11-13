@@ -13,8 +13,8 @@ namespace ArchitectureTest.Domain.Domain {
 	public abstract class BaseDomain<TEntity, TDto> : IDtoConverter<TEntity, TDto> where TEntity : Entity where TDto : BasicDTO, IEntityConverter<TEntity> {
 		protected readonly IRepository<TEntity> repository;
 		protected readonly IUnitOfWork unitOfWork;
-		public BaseDomain(IRepository<TEntity> repository, IUnitOfWork unitOfWork) {
-			this.repository = repository;
+		public BaseDomain(IUnitOfWork unitOfWork) {
+			this.repository = unitOfWork.Repository<TEntity>();
 			this.unitOfWork = unitOfWork;
 		}
 		public virtual async Task<TDto> Post(TDto dto) {

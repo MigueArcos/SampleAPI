@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Domain {
 	public class NotesDomain : BaseDomain<Note, NoteDTO> {
-		public NotesDomain(IRepository<Note> repository, IUnitOfWork unitOfWork) : base(repository, unitOfWork) { }
+		public NotesDomain(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 		public override bool RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO dto = null) {
 			switch (requestType) {
 				case RequestType.Post:

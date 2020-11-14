@@ -10,7 +10,7 @@ using System;
 using ArchitectureTest.Domain.Models;
 
 namespace ArchitectureTest.Domain.Domain {
-	public abstract class BaseDomain<TEntity, TDto> : IDtoConverter<TEntity, TDto> where TEntity : Entity where TDto : BasicDTO, IEntityConverter<TEntity> {
+	public abstract class BaseDomain<TEntity, TDto> : IDtoConverter<TEntity, TDto> where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
 		protected readonly IRepository<TEntity> repository;
 		protected readonly IUnitOfWork unitOfWork;
 		public BaseDomain(IUnitOfWork unitOfWork) {

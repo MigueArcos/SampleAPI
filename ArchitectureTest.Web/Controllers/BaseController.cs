@@ -1,15 +1,13 @@
-﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.StatusCodes;
-using ArchitectureTest.Domain.Contracts;
+﻿using ArchitectureTest.Domain.Contracts;
 using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.StatusCodes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using ArchitectureTest.Web.ActionFilters;
-using Microsoft.AspNetCore.Authorization;
 
 namespace ArchitectureTest.Web.Controllers {
-	public class BaseController<TEntity, TDto> : ControllerBase where TEntity : Entity where TDto : BasicDTO, IEntityConverter<TEntity> {
+	public class BaseController<TEntity, TDto> : ControllerBase where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
 		protected readonly BaseDomain<TEntity, TDto> domain;
 		public BaseController(BaseDomain<TEntity, TDto> domain) {
 			this.domain = domain;

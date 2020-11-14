@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace ArchitectureTest.Data.Database.MySQL.Entities
 {
-    public partial class ChecklistDetail : Entity {
+    public partial class ChecklistDetail  {
+        public long Id { get; set; }
         public long ChecklistId { get; set; }
         public long? ParentDetailId { get; set; }
         public string TaskName { get; set; }

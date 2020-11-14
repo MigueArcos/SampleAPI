@@ -1,16 +1,14 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.StatusCodes;
-using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using ArchitectureTest.Infrastructure.Helpers;
-using Microsoft.AspNetCore.Http;
-using ArchitectureTest.Web.ActionFilters;
+using ArchitectureTest.Domain.StatusCodes;
+using ArchitectureTest.Domain.UnitOfWork;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]

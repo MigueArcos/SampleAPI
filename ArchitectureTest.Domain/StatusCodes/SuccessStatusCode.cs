@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ArchitectureTest.Domain.StatusCodes {
+﻿namespace ArchitectureTest.Domain.StatusCodes {
 	public class SuccessStatusCode : CustomCode {
 		public int HttpStatusCode { get; set; } = 200;
 		public SuccessStatusCode(int statusCode, int httpStatusCode, string message) {

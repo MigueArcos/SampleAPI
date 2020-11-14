@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ArchitectureTest.Domain.StatusCodes {
+﻿namespace ArchitectureTest.Domain.StatusCodes {
 	public class CustomCode {
 		public int StatusCode { get; set; }
 		public string Message { get; set; }

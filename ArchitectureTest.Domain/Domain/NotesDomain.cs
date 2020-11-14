@@ -1,9 +1,8 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Data.Enums;
-using ArchitectureTest.Domain.Repositories.BasicRepo;
+using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.StatusCodes;
 using ArchitectureTest.Domain.UnitOfWork;
-using ArchitectureTest.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

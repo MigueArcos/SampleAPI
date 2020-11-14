@@ -5,11 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Repositories {
-	public class ChecklistRepository : Repository<Checklist>{
+	public class ChecklistRepository : Repository<Checklist> {
 		public ChecklistRepository(DatabaseContext dbContext) : base(dbContext) {
 		}
 		public override Task<List<Checklist>> Get(Expression<Func<Checklist, bool>> whereFilters = null) {

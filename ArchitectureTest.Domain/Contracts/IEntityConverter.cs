@@ -1,14 +1,10 @@
-﻿
-using ArchitectureTest.Data.Database.SQLServer.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace ArchitectureTest.Domain.Contracts {
-	public interface IEntityConverter<TEntity> where TEntity: Entity {
+	public interface IEntityConverter<TEntity> where TEntity : class {
 		TEntity ToEntity();
 	}
-	public interface IChildEntityConverter<TEntity> where TEntity : Entity {
+	public interface IChildEntityConverter<TEntity> where TEntity : class {
 		List<TEntity> GetChildEntities();
 	}
 }

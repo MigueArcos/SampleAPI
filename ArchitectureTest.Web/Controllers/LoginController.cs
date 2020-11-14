@@ -22,21 +22,22 @@ namespace ArchitectureTest.Web.Controllers {
 		// POST api/values
 		[HttpPost("sign-in")]
 		public ObjectResult SignIn([FromBody] SignInModel signInModel) {
-			if (signInModel.Email == "migue300995@gmail.com" && signInModel.Password == "zeusensacion"){
-				var token = jwtManager.GenerateToken(new JwtUser { 
+			if (signInModel.Email == "migue300995@gmail.com" && signInModel.Password == "zeusensacion") {
+				var token = jwtManager.GenerateToken(new JwtUser {
 					Name = "Miguel Angel López Arcos",
 					Email = "migue300995@gmail.com",
 					Id = 1
 				});
 				bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
-				if (saveAuthInCookie){
+				if (saveAuthInCookie) {
 					httpContextAccessor.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
 						[AppConstants.Token] = token.Token,
 						[AppConstants.RefreshToken] = token.RefreshToken
 					}));
 				}
 				return Ok(token);
-			}else{
+			}
+			else {
 				return BadRequest(ErrorStatusCode.AuthorizationFailed.StatusCode);
 			}
 		}

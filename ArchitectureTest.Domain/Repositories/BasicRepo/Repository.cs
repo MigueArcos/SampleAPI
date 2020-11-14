@@ -1,14 +1,13 @@
-﻿using System;
+﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.StatusCodes;
-using Microsoft.EntityFrameworkCore;
 
 namespace ArchitectureTest.Domain.Repositories.BasicRepo {
-	public class Repository<TEntity> : IRepository<TEntity> where TEntity : Entity {
+	public class Repository<TEntity> : IRepository<TEntity> where TEntity : class {
 		protected readonly DatabaseContext dbContext;
 		protected readonly DbSet<TEntity> dbSet;
 		public Repository(DatabaseContext dbContext) {
@@ -17,7 +16,7 @@ namespace ArchitectureTest.Domain.Repositories.BasicRepo {
 		}
 		//We should never expose real databaseErrors, so we will catch those exception and rethrow an unknown exception
 		public virtual async Task<bool> DeleteById(long id) {
-			TEntity entity = dbSet.FirstOrDefault(e => e.Id == id);
+			TEntity entity = dbSet.Find(id);
 			var deletedEntity = dbSet.Remove(entity);
 			await dbContext.SaveChangesAsync();
 			return deletedEntity.State == EntityState.Deleted;
@@ -28,7 +27,7 @@ namespace ArchitectureTest.Domain.Repositories.BasicRepo {
 		}
 
 		public virtual Task<TEntity> GetById(long id) {
-			return dbSet.FirstOrDefaultAsync(e => e.Id == id);
+			return dbSet.FindAsync(id);
 		}
 
 		public virtual async Task<TEntity> Post(TEntity entity) {

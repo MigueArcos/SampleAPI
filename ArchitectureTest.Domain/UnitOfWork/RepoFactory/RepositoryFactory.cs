@@ -10,7 +10,7 @@ namespace ArchitectureTest.Domain.UnitOfWork.RepoFactory {
 			this.databaseContext = databaseContext;
 		}
 
-		public IRepository<TEntity> Create<TEntity>() where TEntity : Entity {
+		public IRepository<TEntity> Create<TEntity>() where TEntity : class {
 			string typeName = typeof(TEntity).Name;
 			switch (typeName) {
 				case "Checklist":

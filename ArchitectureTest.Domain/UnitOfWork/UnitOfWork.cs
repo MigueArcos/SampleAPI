@@ -7,13 +7,7 @@ using System;
 using System.Collections.Generic;
 
 namespace ArchitectureTest.Domain.UnitOfWork {
-	public class RepoDictionary<TEntity> : Dictionary<string, IRepository<TEntity>> where TEntity: Entity {
-
-	}
 	public class UnitOfWork : IUnitOfWork, IDisposable {
-		private IRepository<Note> notesRepository;
-		private IRepository<Checklist> checklistRepository;
-		private IRepository<ChecklistDetail> checklistDetailRepository;
 		private readonly DatabaseContext databaseContext;
 		private IDbContextTransaction transaction;
 		private IRepositoryFactory repositoryFactory;
@@ -23,37 +17,7 @@ namespace ArchitectureTest.Domain.UnitOfWork {
 			repositoryFactory = new RepositoryFactory(databaseContext);
 		}
 
-		public IRepository<Note> NotesRepository {
-			get {
-
-				if (notesRepository == null) {
-					notesRepository = new Repository<Note>(databaseContext);
-				}
-				return notesRepository;
-			}
-		}
-
-		public IRepository<Checklist> ChecklistRepository {
-			get {
-
-				if (checklistRepository == null) {
-					checklistRepository = new ChecklistRepository(databaseContext);
-				}
-				return checklistRepository;
-			}
-		}
-
-		public IRepository<ChecklistDetail> ChecklistDetailRepository {
-			get {
-
-				if (checklistDetailRepository == null) {
-					checklistDetailRepository = new Repository<ChecklistDetail>(databaseContext);
-				}
-				return checklistDetailRepository;
-			}
-		}
-
-		public IRepository<TEntity> Repository<TEntity>() where TEntity : Entity {
+		public IRepository<TEntity> Repository<TEntity>() where TEntity : class {
 			string typeName = typeof(TEntity).Name;
 			repos.TryGetValue(typeName, out object repo);
 			if (repo == null) {

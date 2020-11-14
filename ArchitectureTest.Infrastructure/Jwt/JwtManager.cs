@@ -4,7 +4,6 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace ArchitectureTest.Infrastructure.Jwt {
 	public class JwtManager : IJwtManager {

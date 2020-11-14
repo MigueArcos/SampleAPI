@@ -6,25 +6,24 @@ using ArchitectureTest.Infrastructure.Jwt.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
-using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.ActionFilters {
-	public class CustomJwtBearerEvents: JwtBearerEvents {
+	public class CustomJwtBearerEvents : JwtBearerEvents {
 		private readonly IJwtManager jwtManager;
-		public CustomJwtBearerEvents(IJwtManager jwtManager){
+		public CustomJwtBearerEvents(IJwtManager jwtManager) {
 			this.jwtManager = jwtManager;
 		}
-		public override Task MessageReceived(MessageReceivedContext context){
+		public override Task MessageReceived(MessageReceivedContext context) {
 			GetTokensFromRequestContext(context.HttpContext.Request, out string accessToken, out string refreshToken);
 			context.Token = accessToken;
 			return Task.CompletedTask;
 		}
 
-		public override Task Challenge(JwtBearerChallengeContext context){
-			if (context.AuthenticateFailure != null){
+		public override Task Challenge(JwtBearerChallengeContext context) {
+			if (context.AuthenticateFailure != null) {
 				var json = Newtonsoft.Json.JsonConvert.SerializeObject(ErrorStatusCode.AuthorizationFailed.StatusCode);
 				byte[] bytes = Encoding.UTF8.GetBytes(json);
 				context.HttpContext.Response.StatusCode = 401;
@@ -35,14 +34,14 @@ namespace ArchitectureTest.Web.ActionFilters {
 			return Task.CompletedTask;
 		}
 		// AuthenticationFailed, try again using the refreshToken
-		public override Task AuthenticationFailed(AuthenticationFailedContext context){
+		public override Task AuthenticationFailed(AuthenticationFailedContext context) {
 			try {
 				GetTokensFromRequestContext(context.HttpContext.Request, out string token, out string refreshToken);
 				if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
 					JwtWithClaims newToken = jwtManager.ExchangeRefreshToken(token, refreshToken);
 					context.Principal = newToken.Claims;
 					// if there was a cookie, then set again the cookie with the new value
-					if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])){
+					if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])) {
 						context.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
 							[AppConstants.Token] = newToken.JsonWebToken.Token,
 							[AppConstants.RefreshToken] = newToken.JsonWebToken.RefreshToken
@@ -58,7 +57,7 @@ namespace ArchitectureTest.Web.ActionFilters {
 			return Task.CompletedTask;
 		}
 
-		public override Task TokenValidated(TokenValidatedContext context){
+		public override Task TokenValidated(TokenValidatedContext context) {
 			return Task.CompletedTask;
 		}
 

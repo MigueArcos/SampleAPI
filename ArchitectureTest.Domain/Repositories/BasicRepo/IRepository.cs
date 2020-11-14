@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.MySQL.Entities;
+﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;

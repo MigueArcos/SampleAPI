@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.MySQL.Entities;
+﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.Repositories;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
 using ArchitectureTest.Domain.UnitOfWork.RepoFactory;

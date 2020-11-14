@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using ArchitectureTest.Data.Database.MySQL.Entities;
+using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.StatusCodes;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.MySQL.Entities;
+﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Infrastructure.AppConfiguration;
 using ArchitectureTest.Infrastructure.Jwt;
@@ -37,7 +37,7 @@ namespace ArchitectureTest.Web {
 				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config.Jwt.Secret))
 			};
 
-			services.AddDbContext<DatabaseContext>(options => options.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
+			services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SQLServer")));
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			services.AddSingleton(config);
 			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

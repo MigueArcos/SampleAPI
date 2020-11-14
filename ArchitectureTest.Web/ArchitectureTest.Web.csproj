@@ -11,11 +11,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.1.8" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ArchitectureTest.Data\ArchitectureTest.Data.csproj" />
     <ProjectReference Include="..\ArchitectureTest.Domain\ArchitectureTest.Domain.csproj" />
     <ProjectReference Include="..\ArchitectureTest.Infrastructure\ArchitectureTest.Infrastructure.csproj" />
   </ItemGroup>

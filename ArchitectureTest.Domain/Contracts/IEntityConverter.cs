@@ -1,5 +1,5 @@
 ﻿
-using ArchitectureTest.Data.Database.Entities;
+using ArchitectureTest.Data.Database.MySQL.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;

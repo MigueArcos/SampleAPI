@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace ArchitectureTest.Data.Database.Entities
+namespace ArchitectureTest.Data.Database.MySQL.Entities
 {
     public partial class DatabaseContext : DbContext
     {

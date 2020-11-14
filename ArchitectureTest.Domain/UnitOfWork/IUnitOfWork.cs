@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.Entities;
+﻿using ArchitectureTest.Data.Database.MySQL.Entities;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
 
 namespace ArchitectureTest.Domain.UnitOfWork {

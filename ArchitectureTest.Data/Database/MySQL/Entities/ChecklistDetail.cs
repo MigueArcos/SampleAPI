@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ArchitectureTest.Data.Database.Entities
+namespace ArchitectureTest.Data.Database.MySQL.Entities
 {
     public partial class ChecklistDetail : Entity {
         public long ChecklistId { get; set; }

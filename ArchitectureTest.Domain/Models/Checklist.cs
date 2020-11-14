@@ -32,6 +32,7 @@ namespace ArchitectureTest.Domain.Models {
 		public bool Status { get; set; }
 		public DateTime CreationDate { get; set; }
 		public DateTime ModificationDate { get; set; }
+		public List<ChecklistDetailDTO> SubItems { get; set; }
 
 		public ChecklistDetail ToEntity() {
 			return new ChecklistDetail {

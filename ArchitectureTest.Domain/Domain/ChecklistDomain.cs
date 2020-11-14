@@ -47,12 +47,7 @@ namespace ArchitectureTest.Domain.Domain {
 			try {
 				unitOfWork.StartTransaction();
 				var insertResult = await base.Post(dto);
-				var tasks = new List<Task>();
-				dto.Details.ForEach(d => {
-					d.ChecklistId = insertResult.Id ?? 0;
-					tasks.Add(unitOfWork.Repository<ChecklistDetail>().Post(d.ToEntity()));
-				});
-				await Task.WhenAll(tasks);
+				await PostDetails(insertResult.Id ?? 0, dto.Details);
 				unitOfWork.Commit();
 				dto.Id = insertResult.Id;
 				return dto;
@@ -69,20 +64,40 @@ namespace ArchitectureTest.Domain.Domain {
 				UserId = entity.UserId,
 				CreationDate = entity.CreationDate ?? new System.DateTime(default),
 				ModificationDate = entity.ModificationDate ?? new System.DateTime(default),
-				Details = entity.ChecklistDetail?.Select(cD => new ChecklistDetailDTO {
-					Id = cD.Id,
-					ChecklistId = cD.ChecklistId,
-					ParentDetailId = cD.ParentDetailId,
-					TaskName = cD.TaskName,
-					Status = cD.Status,
-					CreationDate = cD.CreationDate ?? new System.DateTime(default),
-					ModificationDate = cD.ModificationDate ?? new System.DateTime(default)
-				}).ToList()
+				Details = GetChecklistDetails(entity.ChecklistDetail)
 			};
 		}
 
 		public override IList<ChecklistDTO> ToDTOs(IList<Checklist> entities) {
 			return entities.Select(n => ToDTO(n)).ToList();
+		}
+		private List<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null){
+			var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetailDTO {
+				Id = cD.Id,
+				ChecklistId = cD.ChecklistId,
+				ParentDetailId = cD.ParentDetailId,
+				TaskName = cD.TaskName,
+				Status = cD.Status,
+				CreationDate = cD.CreationDate ?? new System.DateTime(default),
+				ModificationDate = cD.ModificationDate ?? new System.DateTime(default)
+			}).ToList();
+			selection.ForEach(i => {
+				i.SubItems = GetChecklistDetails(details, i.Id);
+			});
+			return selection;
+		}
+
+		private async Task<bool> PostDetails(long parentChecklistId, List<ChecklistDetailDTO> details, long? parentDetailId = null) {
+			for(int i = 0; i < details.Count; i++){
+				var d = details[i];
+				d.ChecklistId = parentChecklistId;
+				d.ParentDetailId = parentDetailId;
+				ChecklistDetail checklistDetailEntity = await unitOfWork.Repository<ChecklistDetail>().Post(d.ToEntity());
+				if (d.SubItems != null && d.SubItems.Count > 0) {	
+					await PostDetails(parentChecklistId, d.SubItems, checklistDetailEntity.Id);
+				}
+			}
+			return true;
 		}
 	}
 }

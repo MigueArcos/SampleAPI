@@ -33,15 +33,10 @@ namespace ArchitectureTest.Domain.Domain {
 			return true;
 		}
 		public async Task<IList<NoteDTO>> GetUserNotes(long userId) {
-			try {
-				//A more complete validation can be performed here since we have the unitOfWork and access to all repos
-				if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
-				var notes = await repository.Get(n => n.UserId == userId);
-				return ToDTOs(notes);
-			}
-			catch (Exception exception) {
-				throw Utils.HandleException(exception);
-			}
+			//A more complete validation can be performed here since we have the unitOfWork and access to all repos
+			if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
+			var notes = await repository.Get(n => n.UserId == userId);
+			return ToDTOs(notes);
 		}
 		public override NoteDTO ToDTO(Note entity) {
 			return new NoteDTO {

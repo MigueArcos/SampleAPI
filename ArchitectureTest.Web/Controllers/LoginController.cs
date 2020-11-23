@@ -8,12 +8,13 @@ using ArchitectureTest.Infrastructure.Helpers;
 using ArchitectureTest.Infrastructure.HttpExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
-	public class LoginController : ControllerBase {
+	public class LoginController : BaseController {
 		private readonly UsersDomain usersDomain;
 
 		public LoginController(IUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher) {
@@ -35,10 +36,8 @@ namespace ArchitectureTest.Web.Controllers {
 					}
 					return Ok(token);
 				}
-				catch (ErrorStatusCode error) {
-					return new ObjectResult(error.StatusCode) {
-						StatusCode = error.HttpStatusCode
-					};
+				catch (Exception error) {
+					return DefaultCatch(error);
 				}
 			}
 			else{
@@ -63,10 +62,8 @@ namespace ArchitectureTest.Web.Controllers {
 					}
 					return Ok(token);
 				}
-				catch (ErrorStatusCode error) {
-					return new ObjectResult(error.StatusCode) {
-						StatusCode = error.HttpStatusCode
-					};
+				catch (Exception error) {
+					return DefaultCatch(error);
 				}
 			}
 			else {

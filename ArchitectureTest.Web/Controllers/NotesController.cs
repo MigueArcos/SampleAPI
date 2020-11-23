@@ -6,13 +6,14 @@ using ArchitectureTest.Domain.UnitOfWork;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
-	public class NotesController : BaseController<Note, NoteDTO> {
+	public class NotesController : EntityController<Note, NoteDTO> {
 		private readonly IHttpContextAccessor httpContextAccessor;
 		public NotesController(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor) : base(new NotesDomain(unitOfWork)) {
 			this.httpContextAccessor = httpContextAccessor;
@@ -26,8 +27,8 @@ namespace ArchitectureTest.Web.Controllers {
 				var result = await (domain as NotesDomain).GetUserNotes(userId);
 				return Ok(result);
 			}
-			catch (ErrorStatusCode exception) {
-				return DefaultCatch(exception);
+			catch (Exception error) {
+				return DefaultCatch(error);
 			}
 		}
 	}

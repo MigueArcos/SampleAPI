@@ -32,15 +32,10 @@ namespace ArchitectureTest.Domain.Domain {
 			return true;
 		}
 		public async Task<IList<ChecklistDTO>> GetUserChecklists(long userId) {
-			try {
-				//A more complete validation can be performed here since we have the unitOfWork and access to all repos
-				if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
-				var notes = await repository.Get(n => n.UserId == userId);
-				return ToDTOs(notes);
-			}
-			catch (Exception exception) {
-				throw Utils.HandleException(exception);
-			}
+			//A more complete validation can be performed here since we have the unitOfWork and access to all repos
+			if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
+			var notes = await repository.Get(n => n.UserId == userId);
+			return ToDTOs(notes);
 		}
 
 		public override async Task<ChecklistDTO> Post(ChecklistDTO dto) {
@@ -54,7 +49,9 @@ namespace ArchitectureTest.Domain.Domain {
 			}
 			catch (Exception exception) {
 				unitOfWork.Rollback();
-				throw Utils.HandleException(exception);
+				//We should never expose real exceptions, so we will catch all unknown exceptions (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
+				Console.WriteLine(exception);
+				throw ErrorStatusCode.UnknownError;
 			}
 		}
 		public override ChecklistDTO ToDTO(Checklist entity) {

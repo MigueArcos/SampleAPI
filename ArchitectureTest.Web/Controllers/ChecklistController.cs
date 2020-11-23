@@ -1,17 +1,17 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.StatusCodes;
 using ArchitectureTest.Domain.UnitOfWork;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
-	public class ChecklistController : BaseController<Checklist, ChecklistDTO> {
+	public class ChecklistController : EntityController<Checklist, ChecklistDTO> {
 		public ChecklistController(IUnitOfWork unitOfWork) : base(new ChecklistDomain(unitOfWork)) {
 
 		}
@@ -24,8 +24,8 @@ namespace ArchitectureTest.Web.Controllers {
 				var result = await (domain as ChecklistDomain).GetUserChecklists(userId);
 				return Ok(result);
 			}
-			catch (ErrorStatusCode exception) {
-				return DefaultCatch(exception);
+			catch (Exception error) {
+				return DefaultCatch(error);
 			}
 		}
 	}

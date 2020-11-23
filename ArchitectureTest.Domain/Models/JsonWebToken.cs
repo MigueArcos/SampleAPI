@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace ArchitectureTest.Infrastructure.Jwt.Models {
+namespace ArchitectureTest.Domain.Models {
 	public class JsonWebToken {
 		public long UserId { get; set; }
 		public string Email { get; set; }

@@ -1,8 +1,8 @@
-﻿using ArchitectureTest.Domain.StatusCodes;
+﻿using ArchitectureTest.Domain.Contracts;
+using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.StatusCodes;
 using ArchitectureTest.Infrastructure.Extensions;
 using ArchitectureTest.Infrastructure.Helpers;
-using ArchitectureTest.Infrastructure.Jwt;
-using ArchitectureTest.Infrastructure.Jwt.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
@@ -34,11 +34,11 @@ namespace ArchitectureTest.Web.ActionFilters {
 			return Task.CompletedTask;
 		}
 		// AuthenticationFailed, try again using the refreshToken
-		public override Task AuthenticationFailed(AuthenticationFailedContext context) {
+		public override async Task AuthenticationFailed(AuthenticationFailedContext context) {
 			try {
 				GetTokensFromRequestContext(context.HttpContext.Request, out string token, out string refreshToken);
 				if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
-					JwtWithClaims newToken = jwtManager.ExchangeRefreshToken(token, refreshToken);
+					JwtWithClaims newToken = await jwtManager.ExchangeRefreshToken(token, refreshToken);
 					context.Principal = newToken.Claims;
 					// if there was a cookie, then set again the cookie with the new value
 					if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])) {
@@ -52,9 +52,9 @@ namespace ArchitectureTest.Web.ActionFilters {
 				}
 			}
 			catch {
-				return Task.CompletedTask;
+				return;
 			}
-			return Task.CompletedTask;
+			return;
 		}
 
 		public override Task TokenValidated(TokenValidatedContext context) {

@@ -40,7 +40,7 @@ namespace ArchitectureTest.Domain.Domain {
 				return ToDTOs(notes);
 			}
 			catch (Exception exception) {
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 		public override NoteDTO ToDTO(Note entity) {
@@ -55,6 +55,10 @@ namespace ArchitectureTest.Domain.Domain {
 
 		public override IList<NoteDTO> ToDTOs(IList<Note> entities) {
 			return entities.Select(n => ToDTO(n)).ToList();
+		}
+
+		public override bool EntityBelongsToUser(Note entity, long userId) {
+			return entity.UserId == userId;
 		}
 	}
 }

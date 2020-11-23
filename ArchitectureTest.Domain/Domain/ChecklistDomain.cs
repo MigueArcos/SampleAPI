@@ -39,7 +39,7 @@ namespace ArchitectureTest.Domain.Domain {
 				return ToDTOs(notes);
 			}
 			catch (Exception exception) {
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 
@@ -47,14 +47,14 @@ namespace ArchitectureTest.Domain.Domain {
 			try {
 				unitOfWork.StartTransaction();
 				var insertResult = await base.Post(dto);
-				await PostDetails(insertResult.Id ?? 0, dto.Details);
+				if (dto.Details != null && dto.Details.Count > 0) await PostDetails(insertResult.Id ?? 0, dto.Details);
 				unitOfWork.Commit();
 				dto.Id = insertResult.Id;
 				return dto;
 			}
 			catch (Exception exception) {
 				unitOfWork.Rollback();
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 		public override ChecklistDTO ToDTO(Checklist entity) {
@@ -98,6 +98,10 @@ namespace ArchitectureTest.Domain.Domain {
 				}
 			}
 			return true;
+		}
+
+		public override bool EntityBelongsToUser(Checklist entity, long userId) {
+			return entity.UserId == userId;
 		}
 	}
 }

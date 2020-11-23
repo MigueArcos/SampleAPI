@@ -26,26 +26,32 @@ namespace ArchitectureTest.Domain.Domain {
 				throw ErrorStatusCode.UnknownError;
 			}
 			catch (Exception exception){
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 
-		public virtual async Task<TDto> GetById(long entityId) {
+		public virtual async Task<TDto> GetById(long entityId, long? userId = null) {
 			try {
 				if (RequestIsValid(RequestType.Get, entityId: entityId)) {
 					var entity = await repository.GetById(entityId);
-					return ToDTO(entity);
+					if (entity != null){
+						if (userId != null && !EntityBelongsToUser(entity, userId.Value)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
+						return ToDTO(entity);
+					}
+					throw ErrorStatusCode.EntityNotFound;
 				}
 				throw ErrorStatusCode.UnknownError;
 			}
 			catch (Exception exception) {
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 
-		public virtual async Task<TDto> Put(long entityId, TDto dto) {
+		public virtual async Task<TDto> Put(long entityId, TDto dto, long? userId = null) {
 			try {
 				if (RequestIsValid(RequestType.Put, entityId: entityId, dto: dto)) {
+					var entity = await repository.GetById(entityId);
+					if (entity != null && userId != null && !EntityBelongsToUser(entity, userId.Value)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
 					dto.Id = entityId;
 					var result = await repository.Put(dto.ToEntity());
 					if (result) return dto;
@@ -54,34 +60,27 @@ namespace ArchitectureTest.Domain.Domain {
 				throw ErrorStatusCode.UnknownError;
 			}
 			catch (Exception exception) {
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 
-		public virtual async Task<bool> Delete(long entityId) {
+		public virtual async Task<bool> Delete(long entityId, long? userId = null) {
 			try {
 				if (RequestIsValid(RequestType.Delete, entityId: entityId)) {
+					var entity = await repository.GetById(entityId);
+					if (entity != null && userId != null && !EntityBelongsToUser(entity, userId.Value)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
 					var result = await repository.DeleteById(entityId);
 					return result;
 				}
 				throw ErrorStatusCode.UnknownError;
 			}
 			catch (Exception exception) {
-				throw DefaultCatchHandler(exception);
+				throw Utils.HandleException(exception);
 			}
 		}
 
-		protected ErrorStatusCode DefaultCatchHandler(Exception exception){
-			if (exception is ErrorStatusCode) {
-				return exception as ErrorStatusCode;
-			}
-			else {
-				//We should never expose real exceptions, so we will catch all unknown exceptions (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
-				Console.WriteLine(exception);
-				return ErrorStatusCode.UnknownError;
-			}
-		}
 		public abstract bool RequestIsValid(RequestType requestType, long? entityId = null, TDto dto = null);
+		public abstract bool EntityBelongsToUser(TEntity entity, long userId);
 		public abstract TDto ToDTO(TEntity entity);
 		public abstract IList<TDto> ToDTOs(IList<TEntity> entities);
 	}

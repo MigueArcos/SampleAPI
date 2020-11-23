@@ -4,17 +4,21 @@ using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.StatusCodes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
 	public class BaseController<TEntity, TDto> : ControllerBase where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
 		protected readonly BaseDomain<TEntity, TDto> domain;
-		public BaseController(BaseDomain<TEntity, TDto> domain) {
+		private readonly bool validateEntityBelongsToUser;
+		public BaseController(BaseDomain<TEntity, TDto> domain, bool validateEntityBelongsToUser = true) {
 			this.domain = domain;
+			this.validateEntityBelongsToUser = validateEntityBelongsToUser;
 		}
 		[HttpPost]
 		[Authorize]
-		public async Task<ObjectResult> Post([FromBody] TDto dto) {
+		public virtual async Task<IActionResult> Post([FromBody] TDto dto) {
 			try {
 				var result = await domain.Post(dto);
 				return Ok(dto);
@@ -24,9 +28,13 @@ namespace ArchitectureTest.Web.Controllers {
 			}
 		}
 		[HttpGet("{id}")]
-		public async Task<ObjectResult> GetById([FromRoute] long id) {
+		public virtual async Task<IActionResult> GetById([FromRoute] long id) {
 			try {
-				var result = await domain.GetById(id);
+				var result = await (validateEntityBelongsToUser ?
+					domain.GetById(id, long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value))
+					:
+					domain.GetById(id)
+				);
 				return Ok(result);
 			}
 			catch (ErrorStatusCode exception) {
@@ -34,9 +42,13 @@ namespace ArchitectureTest.Web.Controllers {
 			}
 		}
 		[HttpPut("{id}")]
-		public async Task<ObjectResult> Put([FromRoute] long id, [FromBody] TDto dto) {
+		public virtual async Task<IActionResult> Put([FromRoute] long id, [FromBody] TDto dto) {
 			try {
-				var result = await domain.Put(id, dto);
+				var result = await (validateEntityBelongsToUser ?
+					domain.Put(id, dto, long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value))
+					:
+					domain.Put(id, dto)
+				);
 				return Ok(dto);
 			}
 			catch (ErrorStatusCode exception) {
@@ -44,9 +56,13 @@ namespace ArchitectureTest.Web.Controllers {
 			}
 		}
 		[HttpDelete("{id}")]
-		public async Task<ObjectResult> Delete([FromRoute] long id) {
+		public virtual async Task<IActionResult> Delete([FromRoute] long id) {
 			try {
-				var result = await domain.Delete(id);
+				var result = await (validateEntityBelongsToUser ?
+					domain.Delete(id, long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value))
+					:
+					domain.Delete(id)
+				);
 				return Ok(new { Id = id });
 			}
 			catch (ErrorStatusCode exception) {

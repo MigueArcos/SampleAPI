@@ -1,7 +1,8 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+using ArchitectureTest.Domain.Contracts;
+using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Infrastructure.AppConfiguration;
-using ArchitectureTest.Infrastructure.Jwt;
 using ArchitectureTest.Web.ActionFilters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -41,7 +42,8 @@ namespace ArchitectureTest.Web {
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			services.AddSingleton(config);
 			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters));
+			services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, s.GetService<IUnitOfWork>().Repository<UserToken>()));
+			services.AddScoped<IPasswordHasher, PasswordHasher>();
 			services.AddScoped<CustomJwtBearerEvents>();
 			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
 				options.TokenValidationParameters = tokenValidationParameters;

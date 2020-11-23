@@ -20,9 +20,9 @@ namespace ArchitectureTest.Web.Controllers {
 
 		[HttpGet("list")]
 		[Authorize]
-		public async Task<ObjectResult> GetAll() {
+		public async Task<IActionResult> GetAll() {
 			try {
-				var userId = long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);//Should be retrieved from token
+				var userId = long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
 				var result = await (domain as NotesDomain).GetUserNotes(userId);
 				return Ok(result);
 			}

@@ -1,52 +1,82 @@
-﻿using ArchitectureTest.Domain.StatusCodes;
+﻿using ArchitectureTest.Domain.Contracts;
+using ArchitectureTest.Domain.Domain;
+using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.StatusCodes;
+using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Infrastructure.Extensions;
 using ArchitectureTest.Infrastructure.Helpers;
-using ArchitectureTest.Infrastructure.Jwt;
-using ArchitectureTest.Infrastructure.Jwt.Models;
+using ArchitectureTest.Infrastructure.HttpExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
-	[ApiController]
 	public class LoginController : ControllerBase {
-		private readonly IJwtManager jwtManager;
-		private readonly IHttpContextAccessor httpContextAccessor;
+		private readonly UsersDomain usersDomain;
 
-		public LoginController(IJwtManager jwtManager, IHttpContextAccessor httpContextAccessor) {
-			this.jwtManager = jwtManager;
-			this.httpContextAccessor = httpContextAccessor;
+		public LoginController(IUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher) {
+			usersDomain = new UsersDomain(unitOfWork, jwtManager, passwordHasher);
 		}
 
 		// POST api/values
 		[HttpPost("sign-in")]
-		public ObjectResult SignIn([FromBody] SignInModel signInModel) {
-			if (signInModel.Email == "migue300995@gmail.com" && signInModel.Password == "zeusensacion") {
-				var token = jwtManager.GenerateToken(new JwtUser {
-					Name = "Miguel Angel López Arcos",
-					Email = "migue300995@gmail.com",
-					Id = 1
-				});
-				bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
-				if (saveAuthInCookie) {
-					httpContextAccessor.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
-						[AppConstants.Token] = token.Token,
-						[AppConstants.RefreshToken] = token.RefreshToken
-					}));
+		public async Task<IActionResult> SignIn([FromBody] SignInModel signInModel) {
+			if (ModelState.IsValid){
+				try{
+					var token = await usersDomain.SignIn(signInModel);
+					bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
+					if (saveAuthInCookie) {
+						HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+							[AppConstants.Token] = token.Token,
+							[AppConstants.RefreshToken] = token.RefreshToken
+						}));
+					}
+					return Ok(token);
 				}
-				return Ok(token);
+				catch (ErrorStatusCode error) {
+					return new ObjectResult(error.StatusCode) {
+						StatusCode = error.HttpStatusCode
+					};
+				}
 			}
-			else {
-				return BadRequest(ErrorStatusCode.AuthorizationFailed.StatusCode);
+			else{
+				var errors = ModelState.GetErrors();
+				return BadRequest(new {
+					StatusCode = 400,
+					Message = errors[0]
+				});
 			}
 		}
 		[HttpPost("sign-up")]
-		public void SignUp([FromBody] string value) {
+		public async Task<IActionResult> SignUp([FromBody] SignUpModel signUpModel) {
+			if (ModelState.IsValid) {
+				try {
+					var token = await usersDomain.SignUp(signUpModel);
+					bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
+					if (saveAuthInCookie) {
+						HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+							[AppConstants.Token] = token.Token,
+							[AppConstants.RefreshToken] = token.RefreshToken
+						}));
+					}
+					return Ok(token);
+				}
+				catch (ErrorStatusCode error) {
+					return new ObjectResult(error.StatusCode) {
+						StatusCode = error.HttpStatusCode
+					};
+				}
+			}
+			else {
+				var errors = ModelState.GetErrors();
+				return BadRequest(new {
+					StatusCode = 400,
+					Message = errors[0]
+				});
+			}
 		}
 	}
-	public class SignInModel {
-		public string Email { get; set; }
-		public string Password { get; set; }
-	}
+	
 }

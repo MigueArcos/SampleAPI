@@ -11,6 +11,6 @@
 			StatusCode = statusCode;
 			Message = message;
 		}
-		public static readonly SuccessStatusCode RepoNotFound = new SuccessStatusCode(2000, "Todo bien");
+		public static readonly SuccessStatusCode RepoNotFound = new SuccessStatusCode(2000, CustomMessages.EverythingOK);
 	}
 }

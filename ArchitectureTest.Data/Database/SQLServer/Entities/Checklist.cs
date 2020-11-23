@@ -3,12 +3,13 @@ using System.Collections.Generic;
 
 namespace ArchitectureTest.Data.Database.SQLServer.Entities
 {
-    public partial class Checklist 
+    public partial class Checklist
     {
         public Checklist()
         {
             ChecklistDetail = new HashSet<ChecklistDetail>();
         }
+
         public long Id { get; set; }
         public long UserId { get; set; }
         public string Title { get; set; }

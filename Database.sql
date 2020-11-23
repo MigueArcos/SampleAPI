@@ -1,21 +1,109 @@
 --- MySQL
-CREATE TABLE User (Id BIGINT PRIMARY KEY AUTO_INCREMENT, Email VARCHAR(320), UserName VARCHAR(50), CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW());
-CREATE TABLE Note (Id BIGINT PRIMARY KEY AUTO_INCREMENT, UserId BIGINT NOT NULL, Title VARCHAR(100), Content TEXT, CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW(), FOREIGN KEY (UserId) REFERENCES User(Id));
-CREATE TABLE Checklist (Id BIGINT PRIMARY KEY AUTO_INCREMENT, UserId BIGINT NOT NULL, Title VARCHAR(100), CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW(), FOREIGN KEY (UserId) REFERENCES User(Id));
-CREATE TABLE ChecklistDetail (Id BIGINT PRIMARY KEY AUTO_INCREMENT, ChecklistId BIGINT NOT NULL, ParentDetailId BIGINT, TaskName VARCHAR(100) NOT NULL, Status BIT NOT NULL, CreationDate DATETIME DEFAULT NOW(), ModificationDate DATETIME DEFAULT NOW(), FOREIGN KEY (ChecklistId) REFERENCES Checklist(Id));
+CREATE TABLE User (
+    Id BIGINT PRIMARY KEY AUTO_INCREMENT, 
+    Email VARCHAR(320),
+    [Name] VARCHAR(50),
+    [Password] VARCHAR(256),
+    CreationDate DATETIME DEFAULT NOW(), 
+    ModificationDate DATETIME DEFAULT NOW()
+);
+CREATE TABLE TokenType(
+    Id BIGINT PRIMARY KEY AUTO_INCREMENT, 
+    Name VARCHAR(20)
+);
+CREATE TABLE UserToken(
+    Id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    UserId BIGINT NOT NULL, 
+    TokenTypeId BIGINT NOT NULL,
+    Token VARCHAR(256),
+    ExpiryTime DATETIME,
+    FOREIGN KEY (UserId) REFERENCES User(Id),
+    FOREIGN KEY (TokenTypeId) REFERENCES TokenType(Id)
+);
+CREATE TABLE Note (
+    Id BIGINT PRIMARY KEY AUTO_INCREMENT, 
+    UserId BIGINT NOT NULL, 
+    Title VARCHAR(100), 
+    Content TEXT, 
+    CreationDate DATETIME DEFAULT NOW(), 
+    ModificationDate DATETIME DEFAULT NOW(), 
+    FOREIGN KEY (UserId) REFERENCES User(Id)
+);
+CREATE TABLE Checklist (
+    Id BIGINT PRIMARY KEY AUTO_INCREMENT, 
+    UserId BIGINT NOT NULL, 
+    Title VARCHAR(100), 
+    CreationDate DATETIME DEFAULT NOW(), 
+    ModificationDate DATETIME DEFAULT NOW(), 
+    FOREIGN KEY (UserId) REFERENCES User(Id)
+);
+CREATE TABLE ChecklistDetail (
+    Id BIGINT PRIMARY KEY AUTO_INCREMENT, 
+    ChecklistId BIGINT NOT NULL, 
+    ParentDetailId BIGINT, 
+    TaskName VARCHAR(100) NOT NULL, 
+    Status BIT NOT NULL, 
+    CreationDate DATETIME DEFAULT NOW(), 
+    ModificationDate DATETIME DEFAULT NOW(), 
+    FOREIGN KEY (ChecklistId) REFERENCES Checklist(Id)
+);
 -- dotnet ef dbcontext scaffold "Server=localhost; Database=Papu; Uid=root; Pwd=root" Pomelo.EntityFrameworkCore.MySql -c DatabaseContext --context-dir Database/MySQL -o Database/MySQL/Entities --force
 
 
 --- SQL Server
-CREATE TABLE [User] (Id BIGINT PRIMARY KEY IDENTITY(1, 1), Email VARCHAR(320), UserName VARCHAR(50), CreationDate DATETIME DEFAULT GETDATE(), ModificationDate DATETIME DEFAULT GETDATE());
-CREATE TABLE Note (Id BIGINT PRIMARY KEY IDENTITY(1, 1), UserId BIGINT NOT NULL, Title VARCHAR(100), Content TEXT, CreationDate DATETIME DEFAULT GETDATE(), ModificationDate DATETIME DEFAULT GETDATE(), FOREIGN KEY (UserId) REFERENCES [User](Id));
-CREATE TABLE Checklist (Id BIGINT PRIMARY KEY IDENTITY(1, 1), UserId BIGINT NOT NULL, Title VARCHAR(100), CreationDate DATETIME DEFAULT GETDATE(), ModificationDate DATETIME DEFAULT GETDATE(), FOREIGN KEY (UserId) REFERENCES [User](Id));
-CREATE TABLE ChecklistDetail (Id BIGINT PRIMARY KEY IDENTITY(1, 1), ChecklistId BIGINT NOT NULL, ParentDetailId BIGINT, TaskName VARCHAR(100) NOT NULL, Status BIT NOT NULL, CreationDate DATETIME DEFAULT GETDATE(), ModificationDate DATETIME DEFAULT GETDATE(), FOREIGN KEY (ChecklistId) REFERENCES Checklist(Id));
-
+CREATE TABLE [User] (
+    Id BIGINT PRIMARY KEY IDENTITY(1, 1), 
+    Email VARCHAR(320), 
+    [Name] VARCHAR(50),
+    [Password] VARCHAR(256), 
+    CreationDate DATETIME DEFAULT GETDATE(), 
+    ModificationDate DATETIME DEFAULT GETDATE()
+);
+CREATE TABLE TokenType(
+    Id BIGINT PRIMARY KEY IDENTITY(1, 1), 
+    [Name] VARCHAR(20)
+);
+CREATE TABLE UserToken(
+    Id BIGINT PRIMARY KEY IDENTITY(1, 1),
+    UserId BIGINT NOT NULL, 
+    TokenTypeId BIGINT NOT NULL,
+    Token VARCHAR(256),
+    ExpiryTime DATETIME,
+    FOREIGN KEY (UserId) REFERENCES [User](Id),
+    FOREIGN KEY (TokenTypeId) REFERENCES TokenType(Id)
+);
+CREATE TABLE Note (
+    Id BIGINT PRIMARY KEY IDENTITY(1, 1), 
+    UserId BIGINT NOT NULL, 
+    Title VARCHAR(100), 
+    Content TEXT, 
+    CreationDate DATETIME DEFAULT GETDATE(), 
+    ModificationDate DATETIME DEFAULT GETDATE(), 
+    FOREIGN KEY (UserId) REFERENCES [User](Id)
+);
+CREATE TABLE Checklist (
+    Id BIGINT PRIMARY KEY IDENTITY(1, 1), 
+    UserId BIGINT NOT NULL, 
+    Title VARCHAR(100), 
+    CreationDate DATETIME DEFAULT GETDATE(), 
+    ModificationDate DATETIME DEFAULT GETDATE(), 
+    FOREIGN KEY (UserId) REFERENCES [User](Id)
+);
+CREATE TABLE ChecklistDetail (
+    Id BIGINT PRIMARY KEY IDENTITY(1, 1), 
+    ChecklistId BIGINT NOT NULL, 
+    ParentDetailId BIGINT, 
+    TaskName VARCHAR(100) NOT NULL, 
+    Status BIT NOT NULL, 
+    CreationDate DATETIME DEFAULT GETDATE(),
+    ModificationDate DATETIME DEFAULT GETDATE(), 
+    FOREIGN KEY (ChecklistId) REFERENCES Checklist(Id)
+);
 -- dotnet ef dbcontext scaffold "Server=(localdb)\mssqllocaldb;Database=ArchitectureTest;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -c DatabaseContext --context-dir Database/SQLServer -o Database/SQLServer/Entities --force
 
 ---- INSERTS
-INSERT INTO [User] (Email, UserName) VALUES ('migue300995@gmail.com', 'Miguel Angel');
+INSERT INTO [TokenType] ([Name]) VALUES ('RefreshToken')
+-- INSERT INTO [User] (Email, UserName) VALUES ('migue300995@gmail.com', 'Miguel Angel'); SignUp user in api
 
 INSERT INTO Note (UserId, Title, Content) VALUES (1, 'Note 1', ''), (1, 'Note 2', ''), (1, 'Note 3', ''), (1, 'Note 4', ''), (1, 'Note 5', ''), (1, 'Note 16', ''), (1, 'Note 7', '');
 INSERT INTO Checklist(UserId, Title) VALUES (1, 'Checklist 1')

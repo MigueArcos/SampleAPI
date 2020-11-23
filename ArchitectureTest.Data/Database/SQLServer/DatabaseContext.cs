@@ -18,13 +18,12 @@ namespace ArchitectureTest.Data.Database.SQLServer.Entities
         public virtual DbSet<Checklist> Checklist { get; set; }
         public virtual DbSet<ChecklistDetail> ChecklistDetail { get; set; }
         public virtual DbSet<Note> Note { get; set; }
+        public virtual DbSet<TokenType> TokenType { get; set; }
         public virtual DbSet<User> User { get; set; }
+        public virtual DbSet<UserToken> UserToken { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,7 +46,7 @@ namespace ArchitectureTest.Data.Database.SQLServer.Entities
                     .WithMany(p => p.Checklist)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Checklist__UserI__2E1BDC42");
+                    .HasConstraintName("FK__Checklist__UserI__33D4B598");
             });
 
             modelBuilder.Entity<ChecklistDetail>(entity =>
@@ -69,7 +68,7 @@ namespace ArchitectureTest.Data.Database.SQLServer.Entities
                     .WithMany(p => p.ChecklistDetail)
                     .HasForeignKey(d => d.ChecklistId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Checklist__Check__32E0915F");
+                    .HasConstraintName("FK__Checklist__Check__38996AB5");
             });
 
             modelBuilder.Entity<Note>(entity =>
@@ -92,7 +91,14 @@ namespace ArchitectureTest.Data.Database.SQLServer.Entities
                     .WithMany(p => p.Note)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Note__UserId__29572725");
+                    .HasConstraintName("FK__Note__UserId__2F10007B");
+            });
+
+            modelBuilder.Entity<TokenType>(entity =>
+            {
+                entity.Property(e => e.Name)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -109,9 +115,34 @@ namespace ArchitectureTest.Data.Database.SQLServer.Entities
                     .HasColumnType("datetime")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.UserName)
+                entity.Property(e => e.Name)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.Property(e => e.Password)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<UserToken>(entity =>
+            {
+                entity.Property(e => e.ExpiryTime).HasColumnType("datetime");
+
+                entity.Property(e => e.Token)
+                    .HasMaxLength(256)
+                    .IsUnicode(false);
+
+                entity.HasOne(d => d.TokenType)
+                    .WithMany(p => p.UserToken)
+                    .HasForeignKey(d => d.TokenTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__UserToken__Token__3C69FB99");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.UserToken)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__UserToken__UserI__3B75D760");
             });
         }
     }

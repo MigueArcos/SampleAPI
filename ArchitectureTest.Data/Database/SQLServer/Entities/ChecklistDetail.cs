@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ArchitectureTest.Data.Database.SQLServer.Entities
 {
-    public partial class ChecklistDetail 
+    public partial class ChecklistDetail
     {
         public long Id { get; set; }
         public long ChecklistId { get; set; }

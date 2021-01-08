@@ -12,18 +12,18 @@ using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Services {
 	public class JwtManager : IJwtManager {
-		private const int TokenTTLMinutes = 60;
-		private const int RefreshTokenTTLHours = 720;
-
 		private readonly JwtSecurityTokenHandler tokenHandler;
 		private readonly TokenValidationParameters tokenValidationParameters;
-		private readonly IRepository<UserToken> tokensRepository;
-		public JwtManager(TokenValidationParameters tokenValidationParameters, IRepository<UserToken> tokensRepository) {
+
+        public int TokenTTLSeconds => 3600;
+
+        public int RefreshTokenTTLSeconds => 720 * TokenTTLSeconds; // 720 hours (30 days)
+
+        public JwtManager(TokenValidationParameters tokenValidationParameters, IRepository<UserToken> tokensRepository) {
 			tokenHandler = new JwtSecurityTokenHandler();
 			this.tokenValidationParameters = tokenValidationParameters;
-			this.tokensRepository = tokensRepository;
 		}
-		public async Task<JsonWebToken> GenerateToken(JwtUser user) {
+		public JsonWebToken GenerateToken(JwtUser user) {
 			var tokenDescriptor = new SecurityTokenDescriptor {
 				Subject = new ClaimsIdentity(new Claim[]
 					{
@@ -31,42 +31,31 @@ namespace ArchitectureTest.Domain.Services {
 					new Claim(ClaimTypes.Email, user.Email),
 					new Claim(ClaimTypes.Name, user.Name)
 					}),
-				Expires = DateTime.UtcNow.AddMinutes(TokenTTLMinutes),
+				Expires = DateTime.UtcNow.AddSeconds(TokenTTLSeconds),
 				Issuer = tokenValidationParameters.ValidIssuer,
 				Audience = tokenValidationParameters.ValidAudience,
 				SigningCredentials = new SigningCredentials(tokenValidationParameters.IssuerSigningKey, SecurityAlgorithms.HmacSha256Signature)
 			};
 			var token = tokenHandler.CreateToken(tokenDescriptor);
 			var refreshToken = GenerateRefreshToken();
-			await tokensRepository.Post(new UserToken {
-				UserId = user.Id,
-				Token = refreshToken,
-				TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
-				ExpiryTime = DateTime.Now.AddHours(RefreshTokenTTLHours)
-			});
 			return new JsonWebToken {
 				Token = tokenHandler.WriteToken(token),
 				Email = user.Email,
 				RefreshToken = refreshToken,
 				UserId = user.Id,
-				ExpiresIn = TokenTTLMinutes * 60
+				ExpiresIn = TokenTTLSeconds
 			};
 		}
 
-		public async Task<JwtWithClaims> ExchangeRefreshToken(string accessToken, string refreshToken) {
-			// validate refreshToken in DB
-			var tokenSearch = await tokensRepository.Get(t => t.Token == refreshToken);
-			if (tokenSearch == null || tokenSearch.Count == 0) throw ErrorStatusCode.RefreshTokenExpired;
-			var token = tokenSearch[0];
+		public JwtWithClaims ExchangeRefreshToken(string accessToken, string refreshToken) {
 			ClaimsPrincipal oldClaims = ReadToken(accessToken, false);
 			var user = new JwtUser {
 				Email = oldClaims.FindFirst(ClaimTypes.Email)?.Value,
 				Id = long.Parse(oldClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value),
 				Name = oldClaims.FindFirst(ClaimTypes.Name)?.Value
 			};
-			await tokensRepository.DeleteById(token.Id);
 			return new JwtWithClaims {
-				JsonWebToken = await GenerateToken(user),
+				JsonWebToken = GenerateToken(user),
 				Claims = oldClaims
 			};
 		}

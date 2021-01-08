@@ -4,17 +4,20 @@ using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
 using ArchitectureTest.Domain.StatusCodes;
 using ArchitectureTest.Domain.UnitOfWork;
+using System;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Domain {
 	public class UsersDomain {
 		private readonly IRepository<User> usersRepository;
-		private readonly IJwtManager jwtManager;
+        private readonly IRepository<UserToken> tokensRepository;
+        private readonly IJwtManager jwtManager;
 		private readonly IPasswordHasher passwordHasher;
 		public UsersDomain(IUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher) {
 			this.jwtManager = jwtManager;
 			this.passwordHasher = passwordHasher;
-			usersRepository = unitOfWork.Repository<User>();
+            this.usersRepository = unitOfWork.Repository<User>();
+			this.tokensRepository = unitOfWork.Repository<UserToken>();
 		}
 
 		public async Task<JsonWebToken> SignIn(SignInModel signInModel) {
@@ -23,11 +26,8 @@ namespace ArchitectureTest.Domain.Domain {
 			User user = userSearch[0];
 			var (Verified, NeedsUpgrade) = passwordHasher.Check(user.Password, signInModel.Password);
 			if (!Verified) throw ErrorStatusCode.WrongPassword;
-			return await jwtManager.GenerateToken(new JwtUser {
-				Name = user.Name,
-				Email = user.Email,
-				Id = user.Id
-			});
+            var userJwt = await CreateUserJwt(user.Id, user.Email, user.Name);
+            return userJwt;
 		}
 
 		public async Task<JsonWebToken> SignUp(SignUpModel signUpModel) {
@@ -38,11 +38,22 @@ namespace ArchitectureTest.Domain.Domain {
 				Email = signUpModel.Email,
 				Password = passwordHasher.Hash(signUpModel.Password)
 			});
-			return await jwtManager.GenerateToken(new JwtUser {
-				Name = user.Name,
-				Email = user.Email,
-				Id = user.Id
-			});
-		}
+            var userJwt = await CreateUserJwt(user.Id, user.Email, user.Name);
+            return userJwt;
+        }
+        private async Task<JsonWebToken> CreateUserJwt(long userId, string email, string name) {
+            var userJwt = jwtManager.GenerateToken(new JwtUser {
+                Name = name,
+                Email = email,
+                Id = userId
+            });
+            await tokensRepository.Post(new UserToken {
+                UserId = userJwt.UserId,
+                Token = userJwt.RefreshToken,
+                TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
+                ExpiryTime = DateTime.Now.AddSeconds(jwtManager.RefreshTokenTTLSeconds)
+            });
+            return userJwt;
+        }
 	}
 }

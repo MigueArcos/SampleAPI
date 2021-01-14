@@ -14,9 +14,7 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
 	public class NotesController : EntityController<Note, NoteDTO> {
-		private readonly IHttpContextAccessor httpContextAccessor;
-		public NotesController(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor) : base(new NotesDomain(unitOfWork)) {
-			this.httpContextAccessor = httpContextAccessor;
+		public NotesController(BaseDomain<Note, NoteDTO> domain) : base(domain) {
 		}
 
 		[HttpGet("list")]

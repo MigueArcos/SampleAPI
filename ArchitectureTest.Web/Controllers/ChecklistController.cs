@@ -12,8 +12,7 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
 	public class ChecklistController : EntityController<Checklist, ChecklistDTO> {
-		public ChecklistController(IUnitOfWork unitOfWork) : base(new ChecklistDomain(unitOfWork)) {
-
+		public ChecklistController(BaseDomain<Checklist, ChecklistDTO> domain) : base(domain) {
 		}
 
 		[HttpGet("list")]

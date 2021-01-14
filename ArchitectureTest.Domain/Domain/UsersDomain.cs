@@ -8,7 +8,7 @@ using System;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Domain {
-	public class UsersDomain {
+	public class UsersDomain : IUsersDomain {
 		private readonly IRepository<User> usersRepository;
         private readonly IRepository<UserToken> tokensRepository;
         private readonly IJwtManager jwtManager;
@@ -29,7 +29,6 @@ namespace ArchitectureTest.Domain.Domain {
             var userJwt = await CreateUserJwt(user.Id, user.Email, user.Name);
             return userJwt;
 		}
-
 		public async Task<JsonWebToken> SignUp(SignUpModel signUpModel) {
 			var userSearch = await usersRepository.Get(u => u.Email == signUpModel.Email);
 			if (userSearch != null && userSearch.Count > 0) throw ErrorStatusCode.EmailAlreadyInUse;

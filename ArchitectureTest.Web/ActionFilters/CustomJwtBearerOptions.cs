@@ -3,6 +3,7 @@ using ArchitectureTest.Domain.Contracts;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
 using ArchitectureTest.Domain.StatusCodes;
+using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Infrastructure.Extensions;
 using ArchitectureTest.Infrastructure.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,9 +18,9 @@ namespace ArchitectureTest.Web.ActionFilters {
 	public class CustomJwtBearerEvents : JwtBearerEvents {
 		private readonly IJwtManager jwtManager;
         private readonly IRepository<UserToken> tokensRepository;
-        public CustomJwtBearerEvents(IJwtManager jwtManager, IRepository<UserToken> tokensRepository) {
+        public CustomJwtBearerEvents(IJwtManager jwtManager, IUnitOfWork unitOfWork) {
 			this.jwtManager = jwtManager;
-            this.tokensRepository = tokensRepository;
+            this.tokensRepository = unitOfWork.Repository<UserToken>();
 		}
 		public override Task MessageReceived(MessageReceivedContext context) {
 			GetTokensFromRequestContext(context.HttpContext.Request, out string accessToken, out string refreshToken);

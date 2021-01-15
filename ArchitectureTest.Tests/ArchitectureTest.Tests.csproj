@@ -21,8 +21,4 @@
     <ProjectReference Include="..\ArchitectureTest.Web\ArchitectureTest.Web.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

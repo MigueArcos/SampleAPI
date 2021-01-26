@@ -6,6 +6,7 @@ using ArchitectureTest.Domain.UnitOfWork;
 using ArchitectureTest.Tests.Shared.Mocks;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -86,6 +87,35 @@ namespace ArchitectureTest.Tests.Domain {
             //The thrown exception can be used for even more detailed assertions.
             Assert.Equal(ErrorStatusCode.EntityNotFound.StatusCode.Message, exception.StatusCode.Message);
             Assert.Equal(404, ErrorStatusCode.EntityNotFound.HttpStatusCode);
+        }
+        [Fact]
+        public async Task NotesDomain_GetUserNotes_ReturnsListOfNotes() {
+            // Arrange
+            var resultNotes = new List<Note> {
+                new Note{ Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2 }
+            };
+            mockNotesRepo.SetupGetMultipleResults(resultNotes);
+
+            // Act
+            var result = await notesDomain.GetUserNotes(userId);
+
+            // Assert
+            mockNotesRepo.VerifyGetCalls(Times.Once());
+            Assert.IsType<List<NoteDTO>>(result);
+        }
+        [Fact]
+        public async Task NotesDomain_GetUserNotes_ThrowsUserIdNotSupplied() {
+            // Arrange
+
+            // Act
+            Task act() => notesDomain.GetUserNotes(0);
+
+            // Assert
+            ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
+            mockNotesRepo.VerifyGetCalls(Times.Never());
+            //The thrown exception can be used for even more detailed assertions.
+            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(400, ErrorStatusCode.UserIdNotSupplied.HttpStatusCode);
         }
         [Fact]
         public async Task NotesDomain_Post_ReturnsNote() {

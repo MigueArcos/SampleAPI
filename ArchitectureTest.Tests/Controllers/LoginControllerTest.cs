@@ -26,7 +26,7 @@ namespace ArchitectureTest.Tests.Controllers {
         }
 
         [Fact]
-        public async Task LoginController_SignIn_ReturnJwt() {
+        public async Task LoginController_SignIn_ReturnsJwt() {
             // Arrange
             var jwtMockResult = new JsonWebToken { UserId = userId, Email = email, ExpiresIn = 3600, Token = randomToken };
             var requestData = new SignInModel { Email = email, Password = password };

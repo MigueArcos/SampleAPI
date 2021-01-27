@@ -1,6 +1,6 @@
-﻿using ArchitectureTest.Domain.Domain;
-using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.StatusCodes;
+﻿using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.StatusCodes;
+using ArchitectureTest.Domain.ServiceLayer.AuthService;
 using ArchitectureTest.Infrastructure.Extensions;
 using ArchitectureTest.Infrastructure.Helpers;
 using ArchitectureTest.Infrastructure.HttpExtensions;
@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Web.Controllers {
 	[Route("api/[controller]")]
 	public class LoginController : BaseController {
-		private readonly IUsersDomain usersDomain;
+		private readonly IAuthService usersDomain;
 
-		public LoginController(IUsersDomain usersDomain) {
+		public LoginController(IAuthService usersDomain) {
 			this.usersDomain = usersDomain;
 		}
 

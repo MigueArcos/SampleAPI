@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Domain.StatusCodes;
+﻿using ArchitectureTest.Domain.Models.StatusCodes;
 using System.ComponentModel.DataAnnotations;
 
 namespace ArchitectureTest.Domain.Models {

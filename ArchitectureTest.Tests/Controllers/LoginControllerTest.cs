@@ -1,6 +1,5 @@
-﻿using ArchitectureTest.Domain.Domain;
-using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.StatusCodes;
+﻿using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,17 +11,18 @@ using Xunit;
 using System.Linq;
 using System;
 using ArchitectureTest.Tests.Shared;
+using ArchitectureTest.Domain.ServiceLayer.AuthService;
 
 namespace ArchitectureTest.Tests.Controllers {
     public class LoginControllerTest {
-        private readonly Mock<IUsersDomain> mockUsersDomain;
+        private readonly Mock<IAuthService> mockAuthService;
         private readonly LoginController loginController;
         private const string email = "anyEmail@anyDomain.com", password = "anyPassword", name = "anyName";
         private const string randomToken = "eyzhdhhdhd.fhfhhf.fggg", randomRefreshToken = "4nyR3fr35hT0k3n";
         private const long userId = 1;
         public LoginControllerTest() {
-            mockUsersDomain = new Mock<IUsersDomain>();
-            loginController = new LoginController(mockUsersDomain.Object);
+            mockAuthService = new Mock<IAuthService>();
+            loginController = new LoginController(mockAuthService.Object);
         }
 
         [Fact]
@@ -30,12 +30,12 @@ namespace ArchitectureTest.Tests.Controllers {
             // Arrange
             var jwtMockResult = new JsonWebToken { UserId = userId, Email = email, ExpiresIn = 3600, Token = randomToken };
             var requestData = new SignInModel { Email = email, Password = password };
-            mockUsersDomain.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ReturnsAsync(jwtMockResult);
+            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ReturnsAsync(jwtMockResult);
             // Act
             var result = await loginController.SignIn(requestData, false) as ObjectResult;
 
             // Assert
-            mockUsersDomain.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Once());
+            mockAuthService.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Once());
             Assert.NotNull(result);
             Assert.IsType<JsonWebToken>(result.Value);
             Assert.Equal(userId, (result.Value as JsonWebToken).UserId);
@@ -52,7 +52,7 @@ namespace ArchitectureTest.Tests.Controllers {
             var result = await loginController.SignIn(requestData, false) as ObjectResult;
 
             // Assert
-            mockUsersDomain.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Never());
+            mockAuthService.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Never());
             Assert.NotNull(result);
             Assert.IsType<ErrorDetail>(result.Value);
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -64,17 +64,17 @@ namespace ArchitectureTest.Tests.Controllers {
             // Arrange
             var requestData = new SignInModel { Email = email, Password = password };
             if (useCustomException) {
-                mockUsersDomain.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+                mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(ErrorStatusCode.UnknownError);
             }
             else {
-                mockUsersDomain.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(new Exception("Any exception message"));
+                mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(new Exception("Any exception message"));
             }
             
             // Act
             var result = await loginController.SignIn(requestData, false) as ObjectResult;
 
             // Assert
-            mockUsersDomain.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Once());
+            mockAuthService.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Once());
             Assert.NotNull(result);
             Assert.IsType<ErrorDetail>(result.Value);
             Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
@@ -119,12 +119,12 @@ namespace ArchitectureTest.Tests.Controllers {
             // Arrange
             var jwtMockResult = new JsonWebToken { UserId = userId, Email = email, ExpiresIn = 3600, Token = randomToken };
             var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
-            mockUsersDomain.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ReturnsAsync(jwtMockResult);
+            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ReturnsAsync(jwtMockResult);
             // Act
             var result = await loginController.SignUp(requestData, false) as ObjectResult;
 
             // Assert
-            mockUsersDomain.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Once());
+            mockAuthService.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Once());
             Assert.NotNull(result);
             Assert.IsType<JsonWebToken>(result.Value);
             Assert.Equal(userId, (result.Value as JsonWebToken).UserId);
@@ -141,7 +141,7 @@ namespace ArchitectureTest.Tests.Controllers {
             var result = await loginController.SignUp(requestData, false) as ObjectResult;
 
             // Assert
-            mockUsersDomain.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Never());
+            mockAuthService.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Never());
             Assert.NotNull(result);
             Assert.IsType<ErrorDetail>(result.Value);
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -153,17 +153,17 @@ namespace ArchitectureTest.Tests.Controllers {
             // Arrange
             var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
             if (useCustomException) {
-                mockUsersDomain.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+                mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(ErrorStatusCode.UnknownError);
             }
             else {
-                mockUsersDomain.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(new Exception("Any exception message"));
+                mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(new Exception("Any exception message"));
             }
 
             // Act
             var result = await loginController.SignUp(requestData, false) as ObjectResult;
 
             // Assert
-            mockUsersDomain.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Once());
+            mockAuthService.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Once());
             Assert.NotNull(result);
             Assert.IsType<ErrorDetail>(result.Value);
             Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);

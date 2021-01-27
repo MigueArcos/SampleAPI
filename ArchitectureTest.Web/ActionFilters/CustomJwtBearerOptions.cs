@@ -1,8 +1,7 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.Contracts;
-using ArchitectureTest.Domain.Repositories.BasicRepo;
-using ArchitectureTest.Domain.StatusCodes;
-using ArchitectureTest.Domain.UnitOfWork;
+using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
+using ArchitectureTest.Domain.Models.StatusCodes;
+using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Infrastructure.Extensions;
 using ArchitectureTest.Infrastructure.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 
 namespace ArchitectureTest.Web.ActionFilters {
 	public class CustomJwtBearerEvents : JwtBearerEvents {

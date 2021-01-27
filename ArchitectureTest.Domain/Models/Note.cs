@@ -1,5 +1,5 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.Contracts;
+using ArchitectureTest.Domain.Models.Converters;
 using System;
 
 namespace ArchitectureTest.Domain.Models {

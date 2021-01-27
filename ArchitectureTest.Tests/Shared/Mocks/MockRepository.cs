@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Domain.Repositories.BasicRepo;
+﻿using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 using Moq;
 using System;
 using System.Linq.Expressions;

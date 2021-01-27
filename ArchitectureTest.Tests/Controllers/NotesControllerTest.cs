@@ -1,8 +1,6 @@
-﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.Domain;
-using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.StatusCodes;
-using ArchitectureTest.Domain.UnitOfWork;
+﻿using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.StatusCodes;
+using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 namespace ArchitectureTest.Tests.Controllers {
     public class NotesControllerTest {
-        private readonly Mock<NotesDomain> mockNotesDomain;
+        private readonly Mock<NotesCrudService> mockNotesDomain;
         private readonly NotesController notesController;
         private readonly Mock<IUnitOfWork> mockUnitOfWork;
 
@@ -25,7 +24,7 @@ namespace ArchitectureTest.Tests.Controllers {
 
         public NotesControllerTest() {
             mockUnitOfWork = new Mock<IUnitOfWork>();
-            mockNotesDomain = new Mock<NotesDomain>(mockUnitOfWork.Object);
+            mockNotesDomain = new Mock<NotesCrudService>(mockUnitOfWork.Object);
             notesController = new NotesController(mockNotesDomain.Object);
         }
 

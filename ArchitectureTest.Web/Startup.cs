@@ -1,9 +1,6 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.Contracts;
-using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Services;
-using ArchitectureTest.Domain.UnitOfWork;
+using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Infrastructure.AppConfiguration;
 using ArchitectureTest.Web.ActionFilters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +14,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 using System.Text;
+using ArchitectureTest.Domain.ServiceLayer.JwtManager;
+using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
+using ArchitectureTest.Domain.ServiceLayer.AuthService;
+using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 namespace ArchitectureTest.Web {
 	public class Startup {
@@ -44,11 +45,11 @@ namespace ArchitectureTest.Web {
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			services.AddSingleton(config);
 			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, s.GetService<IUnitOfWork>().Repository<UserToken>()));
+			services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters));
 			services.AddScoped<IPasswordHasher, PasswordHasher>();
-            services.AddScoped<IUsersDomain, UsersDomain>();
-            services.AddScoped<BaseDomain<Note, NoteDTO>, NotesDomain>();
-            services.AddScoped<BaseDomain<Checklist, ChecklistDTO>, ChecklistDomain>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<BaseEntityCrud<Note, NoteDTO>, NotesCrudService>();
+            services.AddScoped<BaseEntityCrud<Checklist, ChecklistDTO>, ChecklistCrudService>();
             services.AddScoped<CustomJwtBearerEvents>();
 			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
 				options.TokenValidationParameters = tokenValidationParameters;

@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Domain.StatusCodes;
+﻿using ArchitectureTest.Domain.Models.StatusCodes;
 using Microsoft.AspNetCore.Mvc;
 using System;
 

@@ -2,13 +2,11 @@
 using ArchitectureTest.Domain.Contracts;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
-using ArchitectureTest.Domain.StatusCodes;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Services {
 	public class JwtManager : IJwtManager {
@@ -47,22 +45,15 @@ namespace ArchitectureTest.Domain.Services {
 			};
 		}
 
-		public JwtWithClaims ExchangeRefreshToken(string accessToken, string refreshToken) {
-			ClaimsPrincipal oldClaims = ReadToken(accessToken, false);
-			var user = new JwtUser {
-				Email = oldClaims.FindFirst(ClaimTypes.Email)?.Value,
-				Id = long.Parse(oldClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value),
-				Name = oldClaims.FindFirst(ClaimTypes.Name)?.Value
-			};
-			return new JwtWithClaims {
-				JsonWebToken = GenerateToken(user),
-				Claims = oldClaims
-			};
-		}
-		public ClaimsPrincipal ReadToken(string token, bool validateLifeTime) {
+		public (ClaimsPrincipal claims, JwtUser jwtUser) ReadToken(string token, bool validateLifeTime) {
 			tokenValidationParameters.ValidateLifetime = validateLifeTime;
 			var claims = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-			return claims;
+            var user = new JwtUser {
+                Email = claims.FindFirst(ClaimTypes.Email)?.Value,
+                Id = long.Parse(claims.FindFirst(ClaimTypes.NameIdentifier)?.Value),
+                Name = claims.FindFirst(ClaimTypes.Name)?.Value
+            };
+            return (claims, user);
 		}
 		private string GenerateRefreshToken() {
 			var randomNumber = new byte[32];

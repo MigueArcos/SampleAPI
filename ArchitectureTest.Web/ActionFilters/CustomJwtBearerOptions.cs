@@ -1,6 +1,5 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.Contracts;
-using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Repositories.BasicRepo;
 using ArchitectureTest.Domain.StatusCodes;
 using ArchitectureTest.Domain.UnitOfWork;
@@ -41,27 +40,28 @@ namespace ArchitectureTest.Web.ActionFilters {
 				GetTokensFromRequestContext(context.HttpContext.Request, out string token, out string refreshToken);
 				if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
                     // validate refreshToken in DB
-                    var tokenSearch = await tokensRepository.Get(t => t.Token == refreshToken);
-                    if (tokenSearch == null || tokenSearch.Count == 0) {
+                    var refreshTokenSearch = await tokensRepository.Get(t => t.Token == refreshToken);
+                    if (refreshTokenSearch == null || refreshTokenSearch.Count == 0) {
                         WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.RefreshTokenExpired);
                         throw ErrorStatusCode.RefreshTokenExpired;
                     }
-                    JwtWithClaims newToken = jwtManager.ExchangeRefreshToken(token, refreshToken);
+                    var (claims, jwtUser) = jwtManager.ReadToken(token, false);
+                    var newToken = jwtManager.GenerateToken(jwtUser);
                     // Delete previous token from database
-                    await tokensRepository.DeleteById(tokenSearch[0].Id);
+                    await tokensRepository.DeleteById(refreshTokenSearch[0].Id);
                     // Create a new token in Database
                     await tokensRepository.Post(new UserToken {
-                        UserId = newToken.JsonWebToken.UserId,
-                        Token = newToken.JsonWebToken.RefreshToken,
+                        UserId = newToken.UserId,
+                        Token = newToken.RefreshToken,
                         TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
                         ExpiryTime = DateTime.Now.AddSeconds(jwtManager.RefreshTokenTTLSeconds)
                     });
-                    context.Principal = newToken.Claims;
+                    context.Principal = claims;
 					// if there was a cookie, then set again the cookie with the new value
 					if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])) {
 						context.HttpContext.SetCookie(AppConstants.SessionCookie, Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
-							[AppConstants.Token] = newToken.JsonWebToken.Token,
-							[AppConstants.RefreshToken] = newToken.JsonWebToken.RefreshToken
+							[AppConstants.Token] = newToken.Token,
+							[AppConstants.RefreshToken] = newToken.RefreshToken
 						}));
 					}
 					// If everything goes ok set request principal (In this point authentication is done and ok)

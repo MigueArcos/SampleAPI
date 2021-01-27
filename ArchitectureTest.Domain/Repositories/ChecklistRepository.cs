@@ -11,8 +11,8 @@ namespace ArchitectureTest.Domain.Repositories {
 	public class ChecklistRepository : Repository<Checklist> {
 		public ChecklistRepository(DatabaseContext dbContext) : base(dbContext) {
 		}
-		public override Task<List<Checklist>> Get(Expression<Func<Checklist, bool>> whereFilters = null) {
-			return whereFilters != null ? dbSet.Include("ChecklistDetail").Where(whereFilters).ToListAsync() : dbSet.Include("ChecklistDetail").ToListAsync();
+		public override Task<IList<Checklist>> Get(Expression<Func<Checklist, bool>> whereFilters = null) {
+			return Task.FromResult<IList<Checklist>>(whereFilters != null ? dbSet.Include("ChecklistDetail").Where(whereFilters).ToList() : dbSet.Include("ChecklistDetail").ToList());
 		}
 
 		public override Task<Checklist> GetById(long id) {

@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Tests.Shared.Mocks {
     public class MockRepository<TEntity> : Mock<IRepository<TEntity>> where TEntity : class {
         public void SetupGetByIdResult(TEntity result) {
-            Setup(repo => repo.GetById(It.IsAny<long>()))
-                .Returns(Task.FromResult(result));
+            Setup(repo => repo.GetById(It.IsAny<long>())).ReturnsAsync(result);
         }
         /// <summary>
         /// This method is called when start a search by a field that should return only a single result (Ex. email), like FirstOrDefault
@@ -17,23 +16,22 @@ namespace ArchitectureTest.Tests.Shared.Mocks {
         /// <param name="result"></param>
         public void SetupGetSingleResultInList(TEntity result) {
             Setup(repo => repo.Get(It.IsAny<Expression<Func<TEntity, bool>>>()))
-                .Returns(Task.FromResult(new List<TEntity> { result }));
+                .ReturnsAsync(new List<TEntity> { result });
         }
         public void SetupGetMultipleResults(List<TEntity> results) {
             Setup(repo => repo.Get(It.IsAny<Expression<Func<TEntity, bool>>>()))
-                .Returns(Task.FromResult(results));
+                .ReturnsAsync(results);
         }
         public void SetupPostResult(TEntity result) {
-            Setup(repo => repo.Post(It.IsAny<TEntity>()))
-                .Returns(Task.FromResult(result));
+            Setup(repo => repo.Post(It.IsAny<TEntity>())).ReturnsAsync(result);
         }
         public void SetupPutResult(bool result) {
             Setup(repo => repo.Put(It.IsAny<TEntity>()))
-                .Returns(Task.FromResult(result));
+                .ReturnsAsync(result);
         }
         public void SetupDeleteResult(bool result) {
             Setup(repo => repo.DeleteById(It.IsAny<long>()))
-                .Returns(Task.FromResult(result));
+                .ReturnsAsync(result);
         }
         public void VerifyGetByIdCalls(Times times) {
             Verify(repo => repo.GetById(It.IsAny<long>()), times);

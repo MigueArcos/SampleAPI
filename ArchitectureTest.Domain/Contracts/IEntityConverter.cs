@@ -5,6 +5,6 @@ namespace ArchitectureTest.Domain.Contracts {
 		TEntity ToEntity();
 	}
 	public interface IChildEntityConverter<TEntity> where TEntity : class {
-		List<TEntity> GetChildEntities();
+		IList<TEntity> GetChildEntities();
 	}
 }

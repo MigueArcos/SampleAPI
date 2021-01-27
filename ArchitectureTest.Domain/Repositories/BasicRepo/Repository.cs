@@ -14,7 +14,6 @@ namespace ArchitectureTest.Domain.Repositories.BasicRepo {
 			this.dbContext = dbContext;
 			dbSet = dbContext.Set<TEntity>();
 		}
-		//We should never expose real databaseErrors, so we will catch those exception and rethrow an unknown exception
 		public virtual async Task<bool> DeleteById(long id) {
 			TEntity entity = dbSet.Find(id);
 			var deletedEntity = dbSet.Remove(entity);
@@ -22,8 +21,9 @@ namespace ArchitectureTest.Domain.Repositories.BasicRepo {
 			return deletedEntity.State == EntityState.Deleted;
 		}
 
-		public virtual Task<List<TEntity>> Get(Expression<Func<TEntity, bool>> whereFilters = null) {
-			return whereFilters != null ? dbSet.Where(whereFilters).ToListAsync() : dbSet.ToListAsync();
+        public virtual Task<IList<TEntity>> Get(Expression<Func<TEntity, bool>> whereFilters = null) {
+            /// TODO: Analyze if it's better to mark this method as async and return await ...ToListAsync(), remeber that we cannot use directly return ...ToListAsync() since it returns Task<List<T>> instead o Task<IList<T>> and this cannot be directly converted
+            return Task.FromResult<IList<TEntity>>(whereFilters != null ? dbSet.Where(whereFilters).ToList() : dbSet.ToList());
 		}
 
 		public virtual Task<TEntity> GetById(long id) {

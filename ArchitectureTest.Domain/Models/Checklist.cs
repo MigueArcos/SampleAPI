@@ -10,8 +10,8 @@ namespace ArchitectureTest.Domain.Models {
 		public string Title { get; set; }
 		public DateTime CreationDate { get; set; }
 		public DateTime ModificationDate { get; set; }
-		public List<ChecklistDetailDTO> Details { get; set; }
-		public List<ChecklistDetail> GetChildEntities() {
+		public IList<ChecklistDetailDTO> Details { get; set; }
+		public IList<ChecklistDetail> GetChildEntities() {
 			return Details.Select(d => d.ToEntity()).ToList();
 		}
 
@@ -32,7 +32,7 @@ namespace ArchitectureTest.Domain.Models {
 		public bool Status { get; set; }
 		public DateTime CreationDate { get; set; }
 		public DateTime ModificationDate { get; set; }
-		public List<ChecklistDetailDTO> SubItems { get; set; }
+		public IList<ChecklistDetailDTO> SubItems { get; set; }
 
 		public ChecklistDetail ToEntity() {
 			return new ChecklistDetail {

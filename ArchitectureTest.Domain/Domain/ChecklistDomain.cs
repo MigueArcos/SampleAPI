@@ -68,7 +68,7 @@ namespace ArchitectureTest.Domain.Domain {
 		public override IList<ChecklistDTO> ToDTOs(IList<Checklist> entities) {
 			return entities.Select(n => ToDTO(n)).ToList();
 		}
-		private List<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null){
+		private IList<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null){
 			var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetailDTO {
 				Id = cD.Id,
 				ChecklistId = cD.ChecklistId,
@@ -84,7 +84,7 @@ namespace ArchitectureTest.Domain.Domain {
 			return selection;
 		}
 
-		private async Task<bool> PostDetails(long parentChecklistId, List<ChecklistDetailDTO> details, long? parentDetailId = null) {
+		private async Task<bool> PostDetails(long parentChecklistId, IList<ChecklistDetailDTO> details, long? parentDetailId = null) {
 			for(int i = 0; i < details.Count; i++){
 				var d = details[i];
 				d.ChecklistId = parentChecklistId;

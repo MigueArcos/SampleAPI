@@ -71,7 +71,7 @@ namespace ArchitectureTest.Web.Controllers {
 		}
 		protected ObjectResult DefaultCatch(ErrorStatusCode error) {
 			//var error = exception is ErrorStatusCode ? exception as ErrorStatusCode : ErrorStatusCode.UnknownError;
-			return new ObjectResult(error.StatusCode) {
+			return new ObjectResult(error.Detail) {
 				StatusCode = error.HttpStatusCode
 			};
 		}

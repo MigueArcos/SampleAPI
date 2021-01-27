@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ArchitectureTest.Domain.Models {
 	public class SignInModel {
-        [Required(ErrorMessage = CustomMessages.InvalidEmail)]
-        [EmailAddress(ErrorMessage = CustomMessages.InvalidEmail)]
+        [Required(ErrorMessage = ErrorMessages.InvalidEmail)]
+        [EmailAddress(ErrorMessage = ErrorMessages.InvalidEmail)]
 		public string Email { get; set; }
-        [Required(ErrorMessage = CustomMessages.InvalidEmail)]
-        [MinLength(6, ErrorMessage = CustomMessages.InvalidPassword)]
+        [Required(ErrorMessage = ErrorMessages.InvalidEmail)]
+        [MinLength(6, ErrorMessage = ErrorMessages.InvalidPassword)]
 		public string Password { get; set; }
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using ArchitectureTest.Domain.Domain;
 using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.StatusCodes;
 using ArchitectureTest.Infrastructure.Extensions;
 using ArchitectureTest.Infrastructure.Helpers;
 using ArchitectureTest.Infrastructure.HttpExtensions;
@@ -39,8 +40,8 @@ namespace ArchitectureTest.Web.Controllers {
 			}
 			else{
 				var errors = ModelState.GetErrors();
-				return BadRequest(new {
-					StatusCode = 400,
+				return BadRequest(new ErrorDetail {
+					ErrorCode = ErrorCodes.ValidationsFailed,
 					Message = errors[0]
 				});
 			}
@@ -65,8 +66,8 @@ namespace ArchitectureTest.Web.Controllers {
 			}
 			else {
 				var errors = ModelState.GetErrors();
-				return BadRequest(new {
-					StatusCode = 400,
+				return BadRequest(new ErrorDetail {
+					ErrorCode = ErrorCodes.ValidationsFailed,
 					Message = errors[0]
 				});
 			}

@@ -76,7 +76,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
             mockUsersTokenRepo.VerifyPostCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.UserNotFound.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.UserNotFound.Detail.Message, exception.Detail.Message);
             Assert.Equal(404, ErrorStatusCode.UserNotFound.HttpStatusCode);
         }
         [Fact]
@@ -98,7 +98,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
             mockUsersTokenRepo.VerifyPostCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.WrongPassword.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.WrongPassword.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.WrongPassword.HttpStatusCode);
         }
         [Fact]
@@ -142,7 +142,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
             mockUsersTokenRepo.VerifyPostCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.EmailAlreadyInUse.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.EmailAlreadyInUse.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.EmailAlreadyInUse.HttpStatusCode);
         }
     }

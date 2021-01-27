@@ -79,7 +79,7 @@ namespace ArchitectureTest.Web.ActionFilters {
 		}
 
         private void WriteExceptionToHttpResponse(HttpResponse httpResponseContext, ErrorStatusCode exception) {
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(exception.StatusCode);
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(exception.Detail);
             byte[] bytes = Encoding.UTF8.GetBytes(json);
             httpResponseContext.StatusCode = exception.HttpStatusCode;
             httpResponseContext.Headers.Add("Content-Type", "application/json");

@@ -64,7 +64,7 @@ namespace ArchitectureTest.Tests.Domain {
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.EntityDoesNotBelongToUser.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.EntityDoesNotBelongToUser.Detail.Message, exception.Detail.Message);
             Assert.Equal(403, ErrorStatusCode.EntityDoesNotBelongToUser.HttpStatusCode);
         }
         [Theory]
@@ -85,7 +85,7 @@ namespace ArchitectureTest.Tests.Domain {
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.EntityNotFound.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.EntityNotFound.Detail.Message, exception.Detail.Message);
             Assert.Equal(404, ErrorStatusCode.EntityNotFound.HttpStatusCode);
         }
         [Fact]
@@ -114,7 +114,7 @@ namespace ArchitectureTest.Tests.Domain {
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
             mockNotesRepo.VerifyGetCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.UserIdNotSupplied.HttpStatusCode);
         }
         [Fact]
@@ -146,7 +146,7 @@ namespace ArchitectureTest.Tests.Domain {
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
             mockNotesRepo.VerifyPostCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.UserIdNotSupplied.HttpStatusCode);
         }
         [Theory]
@@ -164,7 +164,7 @@ namespace ArchitectureTest.Tests.Domain {
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
             mockNotesRepo.VerifyPostCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.NoteTitleNotFound.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.NoteTitleNotFound.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.NoteTitleNotFound.HttpStatusCode);
         }
         [Theory]
@@ -203,7 +203,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Never());
             mockNotesRepo.VerifyPutCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.UserIdNotSupplied.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.UserIdNotSupplied.HttpStatusCode);
         }
 
@@ -223,7 +223,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Never());
             mockNotesRepo.VerifyPutCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.NoteTitleNotFound.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.NoteTitleNotFound.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.NoteTitleNotFound.HttpStatusCode);
         }
         [Theory]
@@ -246,7 +246,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             mockNotesRepo.VerifyPutCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.EntityNotFound.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.EntityNotFound.Detail.Message, exception.Detail.Message);
             Assert.Equal(404, ErrorStatusCode.EntityNotFound.HttpStatusCode);
         }
         [Fact]
@@ -264,7 +264,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             mockNotesRepo.VerifyPutCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.EntityDoesNotBelongToUser.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.EntityDoesNotBelongToUser.Detail.Message, exception.Detail.Message);
             Assert.Equal(403, ErrorStatusCode.EntityDoesNotBelongToUser.HttpStatusCode);
         }
         [Fact]
@@ -282,7 +282,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             mockNotesRepo.VerifyPutCalls(Times.Once());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.RepoProblem.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.RepoProblem.Detail.Message, exception.Detail.Message);
             Assert.Equal(500, ErrorStatusCode.RepoProblem.HttpStatusCode);
         }
         [Theory]
@@ -317,7 +317,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Never());
             mockNotesRepo.VerifyDeleteCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.NoteIdNotSupplied.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.NoteIdNotSupplied.Detail.Message, exception.Detail.Message);
             Assert.Equal(400, ErrorStatusCode.NoteIdNotSupplied.HttpStatusCode);
         }
         [Fact]
@@ -334,7 +334,7 @@ namespace ArchitectureTest.Tests.Domain {
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             mockNotesRepo.VerifyDeleteCalls(Times.Never());
             //The thrown exception can be used for even more detailed assertions.
-            Assert.Equal(ErrorStatusCode.EntityDoesNotBelongToUser.StatusCode.Message, exception.StatusCode.Message);
+            Assert.Equal(ErrorStatusCode.EntityDoesNotBelongToUser.Detail.Message, exception.Detail.Message);
             Assert.Equal(403, ErrorStatusCode.EntityDoesNotBelongToUser.HttpStatusCode);
         }
     }

@@ -63,8 +63,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockNotesDomain.Verify(nD => nD.GetById(It.IsAny<long>(), It.IsAny<long>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
 
@@ -103,8 +103,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockNotesDomain.Verify(nD => nD.GetUserNotes(It.IsAny<long>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
 
@@ -144,8 +144,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockNotesDomain.Verify(nD => nD.Post(It.IsAny<NoteDTO>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
 
@@ -187,8 +187,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockNotesDomain.Verify(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>(), It.IsAny<long>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
 
@@ -225,8 +225,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockNotesDomain.Verify(nD => nD.Delete(It.IsAny<long>(), It.IsAny<long>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
     }

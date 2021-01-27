@@ -14,7 +14,7 @@ namespace ArchitectureTest.Web.Controllers {
 				Console.WriteLine(exception);
 				error = ErrorStatusCode.UnknownError;
 			}
-			return new ObjectResult(error.StatusCode) {
+			return new ObjectResult(error.Detail) {
 				StatusCode = error.HttpStatusCode
 			};
 		}

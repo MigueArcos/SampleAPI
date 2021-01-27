@@ -47,14 +47,14 @@ namespace ArchitectureTest.Tests.Controllers {
         public async Task LoginController_SignIn_ThrowsBadRequestModelStateNotValid() {
             // Arrange
             var requestData = new SignInModel { Email = "emailWrong", Password = password };
-            loginController.ModelState.AddModelError("Email", CustomMessages.InvalidEmail);
+            loginController.ModelState.AddModelError("Email", ErrorMessages.InvalidEmail);
             // Act
             var result = await loginController.SignIn(requestData, false) as ObjectResult;
 
             // Assert
             mockUsersDomain.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Never());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
+            Assert.IsType<ErrorDetail>(result.Value);
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
         }
         [Theory]
@@ -76,8 +76,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockUsersDomain.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
         [Theory]
@@ -94,8 +94,8 @@ namespace ArchitectureTest.Tests.Controllers {
             //Assert
             Assert.False(isModelStateValid);
             var possibleErrorMessages = new List<string> {
-                CustomMessages.InvalidEmail,
-                CustomMessages.InvalidPassword
+                ErrorMessages.InvalidEmail,
+                ErrorMessages.InvalidPassword
             };
             Assert.Contains(results[0].ErrorMessage, possibleErrorMessages);
         }
@@ -136,14 +136,14 @@ namespace ArchitectureTest.Tests.Controllers {
         public async Task LoginController_SignUp_ThrowsBadRequestModelStateNotValid() {
             // Arrange
             var requestData = new SignUpModel { Email = "emailWrong", Password = password, UserName = name };
-            loginController.ModelState.AddModelError("Email", CustomMessages.InvalidEmail);
+            loginController.ModelState.AddModelError("Email", ErrorMessages.InvalidEmail);
             // Act
             var result = await loginController.SignUp(requestData, false) as ObjectResult;
 
             // Assert
             mockUsersDomain.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Never());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
+            Assert.IsType<ErrorDetail>(result.Value);
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
         }
         [Theory]
@@ -165,8 +165,8 @@ namespace ArchitectureTest.Tests.Controllers {
             // Assert
             mockUsersDomain.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Once());
             Assert.NotNull(result);
-            Assert.IsType<CustomCode>(result.Value);
-            Assert.Equal(CustomMessages.UnknownError, (result.Value as CustomCode).Message);
+            Assert.IsType<ErrorDetail>(result.Value);
+            Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
             Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
         }
         [Theory]
@@ -183,9 +183,9 @@ namespace ArchitectureTest.Tests.Controllers {
             //Assert
             Assert.False(isModelStateValid);
             var possibleErrorMessages = new List<string> {
-                CustomMessages.InvalidEmail,
-                CustomMessages.InvalidPassword,
-                CustomMessages.InvalidUserName
+                ErrorMessages.InvalidEmail,
+                ErrorMessages.InvalidPassword,
+                ErrorMessages.InvalidUserName
             };
             Assert.Contains(results[0].ErrorMessage, possibleErrorMessages);
         }

@@ -7,9 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
-	public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO> {
+	public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, IChecklistCrudService {
 		public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 		public override bool RequestIsValid(RequestType requestType, long? entityId = null, ChecklistDTO dto = null) {
 			switch (requestType) {

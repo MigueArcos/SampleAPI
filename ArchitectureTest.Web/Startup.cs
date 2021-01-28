@@ -3,11 +3,11 @@ using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.ServiceLayer.AuthService;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
+using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
 using ArchitectureTest.Infrastructure.AppConfiguration;
 using ArchitectureTest.Web.ActionFilters;
-using ArchitectureTest.Web.Services.UserIdentity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -49,14 +49,13 @@ namespace ArchitectureTest.Web {
 			services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters));
 			services.AddScoped<IPasswordHasher, PasswordHasher>();
 			services.AddScoped<IAuthService, AuthService>();
-			services.AddScoped<EntityCrudService<Note, NoteDTO>, NotesCrudService>();
-			services.AddScoped<EntityCrudService<Checklist, ChecklistDTO>, ChecklistCrudService>();
+			services.AddScoped<ICrudService<Note, NoteDTO>, NotesCrudService>();
+			services.AddScoped<ICrudService<Checklist, ChecklistDTO>, ChecklistCrudService>();
 			services.AddScoped<CustomJwtBearerEvents>();
 			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
 				options.TokenValidationParameters = tokenValidationParameters;
 				options.EventsType = typeof(CustomJwtBearerEvents);
 			});
-			services.AddScoped<IClaimsUserAccesor<JwtUser>, ClaimsUserAccesor>();
 			services.AddMvc().AddJsonOptions(o => {
 				o.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
 				o.SerializerSettings.ContractResolver = new DefaultContractResolver();

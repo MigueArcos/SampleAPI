@@ -6,9 +6,10 @@ using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
-	public class NotesCrudService : EntityCrudService<Note, NoteDTO> {
+	public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService {
 		public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 		public override bool RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO dto = null) {
 			switch (requestType) {
@@ -26,17 +27,12 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 					if (string.IsNullOrWhiteSpace(dto.Title)) throw ErrorStatusCode.NoteTitleNotFound;
 					break;
 				case RequestType.Delete:
-					if (entityId < 0) throw ErrorStatusCode.NoteIdNotSupplied;
+					if (entityId < 1) throw ErrorStatusCode.NoteIdNotSupplied;
 					break;
 			}
 			return true;
 		}
-		public async Task<IList<NoteDTO>> GetUserNotes() {
-			//A more complete validation can be performed here since we have the unitOfWork and access to all repos
-			if (CrudSettings.UserId < 1) throw ErrorStatusCode.UserIdNotSupplied;
-			var notes = await repository.Get(n => n.UserId == CrudSettings.UserId);
-			return ToDTOs(notes);
-		}
+		
 		public override NoteDTO ToDTO(Note entity) {
 			return new NoteDTO {
 				Title = entity.Title,
@@ -54,5 +50,12 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 		public override bool EntityBelongsToUser(Note entity) {
 			return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
 		}
-	}
+
+        public async Task<IList<NoteDTO>> GetUserNotes() {
+            //A more complete validation can be performed here since we have the unitOfWork and access to all repos
+            if (CrudSettings.UserId < 1) throw ErrorStatusCode.UserIdNotSupplied;
+            var notes = await repository.Get(n => n.UserId == CrudSettings.UserId);
+            return ToDTOs(notes);
+        }
+    }
 }

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
-	public class ChecklistCrudService : BaseEntityCrud<Checklist, ChecklistDTO> {
+	public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO> {
 		public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 		public override bool RequestIsValid(RequestType requestType, long? entityId = null, ChecklistDTO dto = null) {
 			switch (requestType) {
@@ -31,10 +31,10 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			}
 			return true;
 		}
-		public async Task<IList<ChecklistDTO>> GetUserChecklists(long userId) {
+		public async Task<IList<ChecklistDTO>> GetUserChecklists() {
 			//A more complete validation can be performed here since we have the unitOfWork and access to all repos
-			if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
-			var notes = await repository.Get(n => n.UserId == userId);
+			if (CrudSettings.UserId < 1) throw ErrorStatusCode.UserIdNotSupplied;
+			var notes = await repository.Get(n => n.UserId == CrudSettings.UserId);
 			return ToDTOs(notes);
 		}
 
@@ -97,8 +97,8 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			return true;
 		}
 
-		public override bool EntityBelongsToUser(Checklist entity, long userId) {
-			return entity.UserId == userId;
+		public override bool EntityBelongsToUser(Checklist entity) {
+			return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
 		}
 	}
 }

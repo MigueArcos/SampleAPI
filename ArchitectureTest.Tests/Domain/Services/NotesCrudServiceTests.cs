@@ -35,13 +35,12 @@ namespace ArchitectureTest.Tests.Domain.Services {
             // Arrange
             var resultNote = new Note { Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
-
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+            if (performOwnershipValidation){
+                notesCrudService.CrudSettings.UserId = userId;
+			}
             // Act
-            ////// If there is a userId then we should perform an Ownership Validation check
-            var result = await (performOwnershipValidation ? 
-                notesCrudService.GetById(noteId, userId) : 
-                notesCrudService.GetById(noteId)
-            );
+            var result = await notesCrudService.GetById(noteId);
 
             // Assert
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
@@ -57,8 +56,10 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var resultNote = new Note { Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
 
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
+            notesCrudService.CrudSettings.UserId = 25; // 25 is not the owner of the resultNote
             // Act
-            Task act() => notesCrudService.GetById(noteId, 25);
+            Task act() => notesCrudService.GetById(noteId);
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
@@ -73,13 +74,13 @@ namespace ArchitectureTest.Tests.Domain.Services {
         public async Task NotesCrudService_GetById_ThrowsEntityNotFound(bool performOwnershipValidation) {
             //Arrange
             mockNotesRepo.SetupGetByIdResult(null);
-
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+            if (performOwnershipValidation) {
+                notesCrudService.CrudSettings.UserId = userId;
+            }
             // Act
             ////// If there is a userId then we should perform an Ownership Validation check
-            Task act() => (performOwnershipValidation ?
-                notesCrudService.GetById(noteId, userId) :
-                notesCrudService.GetById(noteId)
-            );
+            Task act() => notesCrudService.GetById(noteId);
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
@@ -95,9 +96,10 @@ namespace ArchitectureTest.Tests.Domain.Services {
                 new Note{ Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2 }
             };
             mockNotesRepo.SetupGetMultipleResults(resultNotes);
-
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
+            notesCrudService.CrudSettings.UserId = userId;
             // Act
-            var result = await notesCrudService.GetUserNotes(userId);
+            var result = await notesCrudService.GetUserNotes();
 
             // Assert
             mockNotesRepo.VerifyGetCalls(Times.Once());
@@ -106,9 +108,11 @@ namespace ArchitectureTest.Tests.Domain.Services {
         [Fact]
         public async Task NotesCrudService_GetUserNotes_ThrowsUserIdNotSupplied() {
             // Arrange
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
+            notesCrudService.CrudSettings.UserId = 0;
 
             // Act
-            Task act() => notesCrudService.GetUserNotes(0);
+            Task act() => notesCrudService.GetUserNotes();
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
@@ -177,12 +181,13 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var resultNote = new Note { Title = title, Content = content, UserId = noteUserId, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
             mockNotesRepo.SetupPutResult(true);
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+            if (performOwnershipValidation) {
+                notesCrudService.CrudSettings.UserId = userId;
+            }
             // Act
             ////// If there is a userId then we should perform an Ownership Validation check
-            var result = await (performOwnershipValidation ?
-                notesCrudService.Put(noteId, inputData, userId) :
-                notesCrudService.Put(noteId, inputData)
-            );
+            var result = await notesCrudService.Put(noteId, inputData);
             // Assert
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             mockNotesRepo.VerifyPutCalls(Times.Once());
@@ -234,12 +239,12 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var inputData = new NoteDTO { Title = title, Content = content, UserId = userId, Id = noteId };
             mockNotesRepo.SetupGetByIdResult(null);
             mockNotesRepo.SetupPutResult(false);
-
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+            if (performOwnershipValidation) {
+                notesCrudService.CrudSettings.UserId = userId;
+            }
             // Act
-            Task act() => (performOwnershipValidation ?
-                notesCrudService.Put(noteId, inputData, userId) :
-                notesCrudService.Put(noteId, inputData)
-            );
+            Task act() => notesCrudService.Put(noteId, inputData);
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
@@ -256,8 +261,10 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var resultNote = new Note { Title = title, Content = content, UserId = 25, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
             mockNotesRepo.SetupPutResult(false);
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
+            notesCrudService.CrudSettings.UserId = userId;
             // Act
-            Task act() => notesCrudService.Put(noteId, inputData, userId);
+            Task act() => notesCrudService.Put(noteId, inputData);
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
@@ -274,8 +281,11 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var resultNote = new Note { Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
             mockNotesRepo.SetupPutResult(false);
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
+            notesCrudService.CrudSettings.UserId = userId;
+
             // Act
-            Task act() => notesCrudService.Put(noteId, inputData, userId);
+            Task act() => notesCrudService.Put(noteId, inputData);
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
@@ -294,12 +304,13 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var resultNote = new Note { Title = title, Content = content, UserId = noteUserId, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
             mockNotesRepo.SetupDeleteResult(true);
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+            if (performOwnershipValidation) {
+                notesCrudService.CrudSettings.UserId = userId;
+            }
             // Act
             ////// If there is a userId then we should perform an Ownership Validation check
-            var result = await (performOwnershipValidation ?
-                notesCrudService.Delete(noteId, userId) :
-                notesCrudService.Delete(noteId)
-            );
+            var result = await notesCrudService.Delete(noteId);
             // Assert
             mockNotesRepo.VerifyGetByIdCalls(Times.Once());
             mockNotesRepo.VerifyDeleteCalls(Times.Once());
@@ -326,8 +337,10 @@ namespace ArchitectureTest.Tests.Domain.Services {
             var resultNote = new Note { Title = title, Content = content, UserId = 25, Id = noteId, CreationDate = date1, ModificationDate = date2 };
             mockNotesRepo.SetupGetByIdResult(resultNote);
             mockNotesRepo.SetupDeleteResult(false);
+            notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
+            notesCrudService.CrudSettings.UserId = userId;
             // Act
-            Task act() => notesCrudService.Delete(noteId, userId);
+            Task act() => notesCrudService.Delete(noteId);
 
             // Assert
             ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);

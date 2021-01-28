@@ -8,10 +8,17 @@ using System.Threading.Tasks;
 using ArchitectureTest.Domain.Models;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
-	public abstract class BaseEntityCrud<TEntity, TDto> : IDtoConverter<TEntity, TDto> where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
+	public class EntityCrudSettings {
+		public bool ValidateEntityBelongsToUser { get; set; }
+		public long UserId { get; set; }
+	}
+	public abstract class EntityCrudService<TEntity, TDto> : IDtoConverter<TEntity, TDto> where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
 		protected readonly IRepository<TEntity> repository;
 		protected readonly IUnitOfWork unitOfWork;
-		public BaseEntityCrud(IUnitOfWork unitOfWork) {
+		public EntityCrudSettings CrudSettings { get; set; } = new EntityCrudSettings {
+			ValidateEntityBelongsToUser = false
+		};
+		public EntityCrudService(IUnitOfWork unitOfWork) {
 			this.repository = unitOfWork.Repository<TEntity>();
 			this.unitOfWork = unitOfWork;
 		}
@@ -23,11 +30,11 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			throw ErrorStatusCode.UnknownError;
 		}
 
-		public virtual async Task<TDto> GetById(long entityId, long? userId = null) {
+		public virtual async Task<TDto> GetById(long entityId) {
 			if (RequestIsValid(RequestType.Get, entityId: entityId)) {
 				var entity = await repository.GetById(entityId);
 				if (entity != null) {
-					if (userId != null && !EntityBelongsToUser(entity, userId.Value)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
+					if (!EntityBelongsToUser(entity)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
 					return ToDTO(entity);
 				}
 				throw ErrorStatusCode.EntityNotFound;
@@ -35,10 +42,10 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			throw ErrorStatusCode.UnknownError;
 		}
 
-		public virtual async Task<TDto> Put(long entityId, TDto dto, long? userId = null) {
+		public virtual async Task<TDto> Put(long entityId, TDto dto) {
 			if (RequestIsValid(RequestType.Put, entityId: entityId, dto: dto)) {
 				var entity = await repository.GetById(entityId);
-				if (entity != null && userId != null && !EntityBelongsToUser(entity, userId.Value)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
+				if (entity != null && !EntityBelongsToUser(entity)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
 				dto.Id = entityId;
 				var result = await repository.Put(dto.ToEntity());
 				if (result) return dto;
@@ -47,10 +54,10 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			throw ErrorStatusCode.UnknownError;
 		}
 
-		public virtual async Task<bool> Delete(long entityId, long? userId = null) {
+		public virtual async Task<bool> Delete(long entityId) {
 			if (RequestIsValid(RequestType.Delete, entityId: entityId)) {
 				var entity = await repository.GetById(entityId);
-				if (entity != null && userId != null && !EntityBelongsToUser(entity, userId.Value)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
+				if (entity != null && !EntityBelongsToUser(entity)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
 				var result = await repository.DeleteById(entityId);
 				return result;
 			}
@@ -58,7 +65,7 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 		}
 
 		public abstract bool RequestIsValid(RequestType requestType, long? entityId = null, TDto dto = null);
-		public abstract bool EntityBelongsToUser(TEntity entity, long userId);
+		public abstract bool EntityBelongsToUser(TEntity entity);
 		public abstract TDto ToDTO(TEntity entity);
 		public abstract IList<TDto> ToDTOs(IList<TEntity> entities);
 	}

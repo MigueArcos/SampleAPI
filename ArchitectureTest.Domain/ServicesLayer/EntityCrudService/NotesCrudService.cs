@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
-	public class NotesCrudService : BaseEntityCrud<Note, NoteDTO> {
+	public class NotesCrudService : EntityCrudService<Note, NoteDTO> {
 		public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 		public override bool RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO dto = null) {
 			switch (requestType) {
@@ -31,10 +31,10 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			}
 			return true;
 		}
-		public async Task<IList<NoteDTO>> GetUserNotes(long userId) {
+		public async Task<IList<NoteDTO>> GetUserNotes() {
 			//A more complete validation can be performed here since we have the unitOfWork and access to all repos
-			if (userId < 1) throw ErrorStatusCode.UserIdNotSupplied;
-			var notes = await repository.Get(n => n.UserId == userId);
+			if (CrudSettings.UserId < 1) throw ErrorStatusCode.UserIdNotSupplied;
+			var notes = await repository.Get(n => n.UserId == CrudSettings.UserId);
 			return ToDTOs(notes);
 		}
 		public override NoteDTO ToDTO(Note entity) {
@@ -51,8 +51,8 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 			return entities.Select(n => ToDTO(n)).ToList();
 		}
 
-		public override bool EntityBelongsToUser(Note entity, long userId) {
-			return entity.UserId == userId;
+		public override bool EntityBelongsToUser(Note entity) {
+			return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
 		}
 	}
 }

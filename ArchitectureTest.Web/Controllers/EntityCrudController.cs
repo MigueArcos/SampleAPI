@@ -1,24 +1,20 @@
-﻿using ArchitectureTest.Domain.Models.Converters;
-using ArchitectureTest.Domain.Models;
-using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.Converters;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading.Tasks;
 
 namespace ArchitectureTest.Web.Controllers {
-    public abstract class EntityCrudController<TEntity, TDto> : BaseController where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
-		protected readonly BaseEntityCrud<TEntity, TDto> domain;
-		private readonly bool validateEntityBelongsToUser;
-		public EntityCrudController(BaseEntityCrud<TEntity, TDto> domain, bool validateEntityBelongsToUser = true) {
-			this.domain = domain;
-			this.validateEntityBelongsToUser = validateEntityBelongsToUser;
+	public abstract class EntityCrudController<TEntity, TDto> : BaseController where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
+		protected readonly EntityCrudService<TEntity, TDto> entityCrudService;
+		public EntityCrudController(EntityCrudService<TEntity, TDto> entityCrudService) {
+			this.entityCrudService = entityCrudService;
 		}
 		[HttpPost]
 		public virtual async Task<IActionResult> Post([FromBody] TDto dto) {
 			try {
-				var result = await domain.Post(dto);
+				var result = await entityCrudService.Post(dto);
 				return Ok(dto);
 			}
 			catch (Exception exception) {
@@ -28,11 +24,7 @@ namespace ArchitectureTest.Web.Controllers {
 		[HttpGet("{id}")]
 		public virtual async Task<IActionResult> GetById([FromRoute] long id) {
 			try {
-				var result = await (validateEntityBelongsToUser ?
-					domain.GetById(id, long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value))
-					:
-					domain.GetById(id)
-				);
+				var result = await entityCrudService.GetById(id);
 				return Ok(result);
 			}
 			catch (Exception exception) {
@@ -42,11 +34,7 @@ namespace ArchitectureTest.Web.Controllers {
 		[HttpPut("{id}")]
 		public virtual async Task<IActionResult> Put([FromRoute] long id, [FromBody] TDto dto) {
 			try {
-				var result = await (validateEntityBelongsToUser ?
-					domain.Put(id, dto, long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value))
-					:
-					domain.Put(id, dto)
-				);
+				var result = await entityCrudService.Put(id, dto);
 				return Ok(dto);
 			}
 			catch (Exception exception) {
@@ -56,11 +44,7 @@ namespace ArchitectureTest.Web.Controllers {
 		[HttpDelete("{id}")]
 		public virtual async Task<IActionResult> Delete([FromRoute] long id) {
 			try {
-				var result = await (validateEntityBelongsToUser ?
-					domain.Delete(id, long.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value))
-					:
-					domain.Delete(id)
-				);
+				var result = await entityCrudService.Delete(id);
 				return Ok(new { Id = id });
 			}
 			catch (Exception exception) {

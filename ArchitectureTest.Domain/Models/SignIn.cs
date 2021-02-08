@@ -6,7 +6,7 @@ namespace ArchitectureTest.Domain.Models {
         [Required(ErrorMessage = ErrorMessages.InvalidEmail)]
         [EmailAddress(ErrorMessage = ErrorMessages.InvalidEmail)]
 		public string Email { get; set; }
-        [Required(ErrorMessage = ErrorMessages.InvalidEmail)]
+        [Required(ErrorMessage = ErrorMessages.InvalidPassword)]
         [MinLength(6, ErrorMessage = ErrorMessages.InvalidPassword)]
 		public string Password { get; set; }
 	}

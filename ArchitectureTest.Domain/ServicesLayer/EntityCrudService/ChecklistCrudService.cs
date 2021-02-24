@@ -19,15 +19,15 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService {
 					if (string.IsNullOrWhiteSpace(dto.Title)) throw ErrorStatusCode.NoteTitleNotFound;
 					break;
 				case RequestType.Get:
-					if (entityId < 1) throw ErrorStatusCode.NoteIdNotSupplied;
+					if (entityId < 1) throw ErrorStatusCode.ChecklistIdNotSupplied;
 					break;
 				case RequestType.Put:
-					if (entityId == null) throw ErrorStatusCode.NoteIdNotSupplied;
+					if (entityId == null) throw ErrorStatusCode.ChecklistIdNotSupplied;
 					if (dto.UserId < 1) throw ErrorStatusCode.UserIdNotSupplied;
 					if (string.IsNullOrWhiteSpace(dto.Title)) throw ErrorStatusCode.NoteTitleNotFound;
 					break;
 				case RequestType.Delete:
-					if (entityId < 0) throw ErrorStatusCode.NoteIdNotSupplied;
+					if (entityId < 0) throw ErrorStatusCode.ChecklistIdNotSupplied;
 					break;
 			}
 			return true;

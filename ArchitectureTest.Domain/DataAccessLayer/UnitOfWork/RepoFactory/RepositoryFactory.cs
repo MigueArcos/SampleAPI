@@ -4,7 +4,7 @@ using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 
 namespace ArchitectureTest.Domain.DataAccessLayer.UnitOfWork.RepoFactory {
 	public class RepositoryFactory : IRepositoryFactory {
-		private DatabaseContext databaseContext;
+		private readonly DatabaseContext databaseContext;
 
 		public RepositoryFactory(DatabaseContext databaseContext) {
 			this.databaseContext = databaseContext;

@@ -102,6 +102,7 @@ namespace ArchitectureTest.Domain.Models.StatusCodes {
         public static readonly ErrorStatusCode NoteDoesNotExists = new ErrorStatusCode(404, ErrorCodes.NoteDoesNotExists, ErrorMessages.NoteDoesNotExists);
         public static readonly ErrorStatusCode NoteTitleNotFound = new ErrorStatusCode(400, ErrorCodes.NoteTitleNotFound, ErrorMessages.NoteTitleNotFound);
 
+        public static readonly ErrorStatusCode ChecklistIdNotSupplied = new ErrorStatusCode(400, ErrorCodes.ChecklistIdNotSupplied, ErrorMessages.ChecklistIdNotSupplied);
         public static readonly ErrorStatusCode ChecklistDoesNotExists = new ErrorStatusCode(404, ErrorCodes.ChecklistDoesNotExists, ErrorMessages.ChecklistDoesNotExists);
 
         public static readonly ErrorStatusCode UserIdNotSupplied = new ErrorStatusCode(400, ErrorCodes.UserIdNotSupplied, ErrorMessages.UserIdNotSupplied);

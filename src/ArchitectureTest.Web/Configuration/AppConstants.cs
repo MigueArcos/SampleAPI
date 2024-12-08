@@ -1,8 +1,7 @@
-﻿namespace ArchitectureTest.Infrastructure.Helpers;
+namespace ArchitectureTest.Web.Configuration;
 
 public class AppConstants {
 	public const string SessionCookie = "__session";
-
 	public const string Token = "tkn";
 	public const string RefreshToken = "rfshTkn";
 	public const string RefreshTokenHeader = "Refresh_Token";

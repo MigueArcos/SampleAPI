@@ -3,7 +3,7 @@ using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
-using ArchitectureTest.Infrastructure.HttpExtensions;
+using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

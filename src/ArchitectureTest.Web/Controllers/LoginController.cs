@@ -1,9 +1,10 @@
-﻿using ArchitectureTest.Domain.Models;
+﻿using System.Text.Json;
+using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Domain.ServiceLayer.AuthService;
-using ArchitectureTest.Infrastructure.Extensions;
-using ArchitectureTest.Infrastructure.Helpers;
+using ArchitectureTest.Web.Configuration;
 using ArchitectureTest.Infrastructure.HttpExtensions;
+using ArchitectureTest.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArchitectureTest.Web.Controllers;
@@ -29,7 +30,7 @@ public class LoginController : BaseController {
 				if (saveAuthInCookie) {
 					HttpContext.SetCookie(
 						AppConstants.SessionCookie, 
-						Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+						JsonSerializer.Serialize(new Dictionary<string, string> {
 							[AppConstants.Token] = token.Token,
 							[AppConstants.RefreshToken] = token.RefreshToken
 						})
@@ -62,7 +63,7 @@ public class LoginController : BaseController {
 				if (saveAuthInCookie) {
 					HttpContext.SetCookie(
 						AppConstants.SessionCookie,
-						Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+						JsonSerializer.Serialize(new Dictionary<string, string> {
 							[AppConstants.Token] = token.Token,
 							[AppConstants.RefreshToken] = token.RefreshToken
 						})

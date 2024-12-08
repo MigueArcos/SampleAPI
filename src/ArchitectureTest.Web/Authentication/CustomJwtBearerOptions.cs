@@ -2,14 +2,15 @@
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
-using ArchitectureTest.Infrastructure.Extensions;
-using ArchitectureTest.Infrastructure.Helpers;
+using ArchitectureTest.Web.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Net.Http.Headers;
 using System.Text;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
+using ArchitectureTest.Web.Extensions;
+using System.Text.Json;
 
-namespace ArchitectureTest.Web.ActionFilters;
+namespace ArchitectureTest.Web.Authentication;
 
 public class CustomJwtBearerEvents : JwtBearerEvents {
 	private readonly IJwtManager jwtManager;
@@ -25,12 +26,11 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 		return Task.CompletedTask;
 	}
 
-	public override Task Challenge(JwtBearerChallengeContext context) {
+	public override async Task Challenge(JwtBearerChallengeContext context) {
 		if (context.AuthenticateFailure != null) {
-		WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.AuthorizationFailed);
+			await WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.AuthorizationFailed);
 			context.HandleResponse();
 		}
-		return Task.CompletedTask;
 	}
 	
 	// AuthenticationFailed, try again using the refreshToken
@@ -38,29 +38,29 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 		try {
 			GetTokensFromRequestContext(context.HttpContext.Request, out string token, out string refreshToken);
 			if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
-			// validate refreshToken in DB
-			var refreshTokenSearch = await tokensRepository.Get(t => t.Token == refreshToken);
-			if (refreshTokenSearch == null || refreshTokenSearch.Count == 0) {
-				WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.RefreshTokenExpired);
-				throw ErrorStatusCode.RefreshTokenExpired;
-			}
-			var (claims, jwtUser) = jwtManager.ReadToken(token, false);
-			var newToken = jwtManager.GenerateToken(jwtUser);
-			// Delete previous token from database
-			await tokensRepository.DeleteById(refreshTokenSearch[0].Id);
-			// Create a new token in Database
-			await tokensRepository.Post(new UserToken {
-				UserId = newToken.UserId,
-				Token = newToken.RefreshToken,
-				TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
-				ExpiryTime = DateTime.Now.AddSeconds(jwtManager.RefreshTokenTTLSeconds)
-			});
-			context.Principal = claims;
+				// validate refreshToken in DB
+				var refreshTokenSearch = await tokensRepository.Get(t => t.Token == refreshToken);
+				if (refreshTokenSearch == null || refreshTokenSearch.Count == 0) {
+					await WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.RefreshTokenExpired);
+					throw ErrorStatusCode.RefreshTokenExpired;
+				}
+				var (claims, jwtUser) = jwtManager.ReadToken(token, false);
+				var newToken = jwtManager.GenerateToken(jwtUser);
+				// Delete previous token from database
+				await tokensRepository.DeleteById(refreshTokenSearch[0].Id);
+				// Create a new token in Database
+				await tokensRepository.Post(new UserToken {
+					UserId = newToken.UserId,
+					Token = newToken.RefreshToken,
+					TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
+					ExpiryTime = DateTime.Now.AddSeconds(jwtManager.RefreshTokenTTLSeconds)
+				});
+				context.Principal = claims;
 				// if there was a cookie, then set again the cookie with the new value
 				if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])) {
 					context.HttpContext.SetCookie(
 						AppConstants.SessionCookie,
-						Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> {
+						JsonSerializer.Serialize(new Dictionary<string, string> {
 							[AppConstants.Token] = newToken.Token,
 							[AppConstants.RefreshToken] = newToken.RefreshToken
 						})
@@ -80,18 +80,18 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 		return Task.CompletedTask;
 	}
 
-    private void WriteExceptionToHttpResponse(HttpResponse httpResponseContext, ErrorStatusCode exception) {
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(exception.Detail);
+    private async Task WriteExceptionToHttpResponse(HttpResponse httpResponseContext, ErrorStatusCode exception) {
+        var json = JsonSerializer.Serialize(exception.Detail);
         byte[] bytes = Encoding.UTF8.GetBytes(json);
         httpResponseContext.StatusCode = exception.HttpStatusCode;
-        httpResponseContext.Headers.Add("Content-Type", "application/json");
-        httpResponseContext.Body.Write(bytes, 0, bytes.Length);
+        httpResponseContext.Headers.Append("Content-Type", "application/json");
+        await httpResponseContext.Body.WriteAsync(bytes, 0, bytes.Length);
     }
 
 	private bool GetTokensFromRequestContext(HttpRequest requestContext, out string accessToken, out string refreshToken) {
 		const string defaultBearerValue = "Bearer ";
 		try {
-			var cookieObj = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(
+			var cookieObj = JsonSerializer.Deserialize<Dictionary<string, string>>(
 				requestContext.Cookies[AppConstants.SessionCookie] ?? "{}"
 			);
 			var authorizationHeader = requestContext.Headers[HeaderNames.Authorization].ToString();

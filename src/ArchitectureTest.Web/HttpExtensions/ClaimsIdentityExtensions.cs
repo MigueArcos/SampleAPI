@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
-namespace ArchitectureTest.Infrastructure.HttpExtensions;
+namespace ArchitectureTest.Web.HttpExtensions;
 
 public static class ClaimsIdentityExtensions {
     public static (long UserId, string Email, string Name) GetUserIdentity(this IHttpContextAccessor httpContextAccessor) {

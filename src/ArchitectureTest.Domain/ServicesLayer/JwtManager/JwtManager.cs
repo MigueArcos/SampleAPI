@@ -12,13 +12,13 @@ public class JwtManager : IJwtManager {
 	private readonly TokenValidationParameters tokenValidationParameters;
 
     public int TokenTTLSeconds => 3600;
-
     public int RefreshTokenTTLSeconds => 720 * TokenTTLSeconds; // 720 hours (30 days)
 
     public JwtManager(TokenValidationParameters tokenValidationParameters) {
 		tokenHandler = new JwtSecurityTokenHandler();
 		this.tokenValidationParameters = tokenValidationParameters;
 	}
+
 	public JsonWebToken GenerateToken(JwtUser user) {
 		var tokenDescriptor = new SecurityTokenDescriptor {
 			Subject = new ClaimsIdentity(new Claim[] {

@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-
-namespace ArchitectureTest.Infrastructure.Extensions;
+﻿namespace ArchitectureTest.Web.Extensions;
 
 public static class CookieExtensions {
 	public static void SetCookie(this HttpContext context, string cookieName, string value) {
@@ -33,17 +30,20 @@ public static class CookieExtensions {
 			);
 		}
 	}
+
 	public static void RemoveCookie(this HttpContext context, string cookieName) {
 		if (context.CookieExists(cookieName)) {
 			context.Response.Cookies.Delete(cookieName);
 		}
 	}
+
 	public static string GetCookieValue(this HttpContext context, string cookieName) {
 		if (context.CookieExists(cookieName)) {
 			return context.Request.Cookies[cookieName];
 		}
 		return string.Empty;
 	}
+
 	public static bool CookieExists(this HttpContext context, string cookieName) {
 		return context.Request.Cookies[cookieName] != null;
 	}

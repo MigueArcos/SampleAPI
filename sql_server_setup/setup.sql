@@ -52,7 +52,8 @@ CREATE TABLE ChecklistDetail (
 
 ---- INSERTS
 INSERT INTO [TokenType] ([Name]) VALUES ('RefreshToken')
-INSERT INTO [User] (Email, [Name]) VALUES ('migue300995@gmail.com', 'Miguel Angel'); -- SignUp user in api
+-- zeusensacion is the password for migue300995@gmail.com
+INSERT INTO [User] (Email, [Name], Password) VALUES ('migue300995@gmail.com', 'Miguel Angel', '10000.9f71G4vvx5BdkPshEU3SSw==.a8ma/2AEyDCDRAGyaznoTRUICR6zvwMS4U1mQGi+nok=');
 
 INSERT INTO Note (UserId, Title, Content) VALUES (1, 'Note 1', ''), (1, 'Note 2', ''), (1, 'Note 3', ''), (1, 'Note 4', ''), (1, 'Note 5', ''), (1, 'Note 16', ''), (1, 'Note 7', '');
 INSERT INTO Checklist(UserId, Title) VALUES (1, 'Checklist 1')

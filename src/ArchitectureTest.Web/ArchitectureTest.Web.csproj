@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ArchitectureTest.Domain\ArchitectureTest.Domain.csproj" />
-    <ProjectReference Include="..\ArchitectureTest.Infrastructure\ArchitectureTest.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

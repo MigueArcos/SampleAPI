@@ -17,7 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ArchitectureTest.Data\ArchitectureTest.Data.csproj" />
     <ProjectReference Include="..\..\src\ArchitectureTest.Domain\ArchitectureTest.Domain.csproj" />
-    <ProjectReference Include="..\..\src\ArchitectureTest.Infrastructure\ArchitectureTest.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\ArchitectureTest.Web\ArchitectureTest.Web.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Domain.Models;
@@ -7,7 +8,7 @@ using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
-using ArchitectureTest.Web.ActionFilters;
+using ArchitectureTest.Web.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -23,7 +24,8 @@ TokenValidationParameters tokenValidationParameters = new()
     ValidateIssuerSigningKey = true,
     ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer")!,
     ValidAudience = configuration.GetValue<string>("ConfigData:Jwt:Audience"),
-    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!))
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!)),
+    ClockSkew = Debugger.IsAttached ? TimeSpan.Zero : TimeSpan.FromMinutes(10)
 };
 
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(configuration.GetConnectionString("SQLServer")));
@@ -37,6 +39,7 @@ builder.Services.AddScoped<ICrudService<Checklist, ChecklistDTO>, ChecklistCrudS
 builder.Services.AddScoped<CustomJwtBearerEvents>();
 builder.Services.AddAuthentication().AddJwtBearer(options => {
     options.TokenValidationParameters = tokenValidationParameters;
+    options.EventsType = typeof(CustomJwtBearerEvents);
 });
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

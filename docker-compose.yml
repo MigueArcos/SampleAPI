@@ -1,0 +1,32 @@
+services:
+  sqlserver:
+    image: custom-sql-server:latest
+    build:
+      context: ./sql_server_setup
+      dockerfile: ./Dockerfile
+    container_name: sqlserver_container
+    ports:
+      - 1433:1433
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: P455w0rd
+      SA_PASSWORD: P455w0rd
+      SSQL_PID: Express
+    networks:
+      - demo
+  
+  app:
+    image: web-api:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: web_api_container
+    ports:
+      - 5001:8080
+    environment:
+      DOTNET_ENVIRONMENT: Docker
+    networks:
+      - demo
+
+networks:
+  demo:

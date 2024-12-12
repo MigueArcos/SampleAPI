@@ -125,11 +125,21 @@ public static class HttpResponses
             ErrorCode = ErrorCodes.EntityNotFound,
             Message = ErrorMessages.EntityNotFound
         },
+        [ErrorCodes.InputDataNotFound] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status400BadRequest,
+            ErrorCode = ErrorCodes.InputDataNotFound,
+        },
         [ErrorCodes.EntityDoesNotBelongToUser] = new HttpErrorInfo
         {
             HttpStatusCode = StatusCodes.Status403Forbidden,
             ErrorCode = ErrorCodes.EntityDoesNotBelongToUser,
             Message = ErrorMessages.EntityDoesNotBelongToUser
+        },
+        [ErrorCodes.CannotCreateDataForThisUserId] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status403Forbidden,
+            ErrorCode = ErrorCodes.CannotCreateDataForThisUserId,
         },
         [ErrorCodes.RepoProblem] = new HttpErrorInfo
         {

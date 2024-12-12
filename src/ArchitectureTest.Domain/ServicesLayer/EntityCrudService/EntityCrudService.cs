@@ -20,18 +20,18 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 	where TEntity : class
 	where TDto : BasicDTO, IEntityConverter<TEntity> 
 {
-	protected readonly IRepository<TEntity> repository;
-	protected readonly IUnitOfWork unitOfWork;
+	protected readonly IRepository<long, TEntity> _repository;
+	protected readonly IUnitOfWork _unitOfWork;
 	public EntityCrudSettings CrudSettings { get; set; } = new EntityCrudSettings {
 		ValidateEntityBelongsToUser = false
 	};
 	public EntityCrudService(IUnitOfWork unitOfWork) {
-		this.repository = unitOfWork.Repository<TEntity>();
-		this.unitOfWork = unitOfWork;
+		_repository = unitOfWork.Repository<TEntity>();
+		_unitOfWork = unitOfWork;
 	}
-	public virtual async Task<TDto> Post(TDto dto) {
+	public virtual async Task<TDto> Add(TDto dto) {
 		if (RequestIsValid(RequestType.Post, dto: dto)) {
-			var entity = await repository.Post(dto.ToEntity());
+			var entity = await _repository.Add(dto.ToEntity());
 			return ToDTO(entity);
 		}
 		throw new Exception(ErrorCodes.UnknownError);
@@ -39,7 +39,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 
 	public virtual async Task<TDto> GetById(long entityId) {
 		if (RequestIsValid(RequestType.Get, entityId: entityId)) {
-			var entity = await repository.GetById(entityId);
+			var entity = await _repository.GetById(entityId);
 			if (entity != null) {
 				if (!EntityBelongsToUser(entity)) throw new Exception(ErrorCodes.EntityDoesNotBelongToUser);
 				return ToDTO(entity);
@@ -49,13 +49,13 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 		throw new Exception(ErrorCodes.UnknownError);
 	}
 
-	public virtual async Task<TDto> Put(long entityId, TDto dto) {
+	public virtual async Task<TDto> Update(long entityId, TDto dto) {
 		if (RequestIsValid(RequestType.Put, entityId: entityId, dto: dto)) {
-			var entity = await repository.GetById(entityId);
+			var entity = await _repository.GetById(entityId);
 			if (entity != null) {
 				if (!EntityBelongsToUser(entity)) throw new Exception(ErrorCodes.EntityDoesNotBelongToUser);
 				dto.Id = entityId;
-				var result = await repository.Put(dto.ToEntity());
+				var result = await _repository.Update(dto.ToEntity());
 				if (result) return dto;
 				else throw new Exception(ErrorCodes.RepoProblem);
 			}
@@ -66,10 +66,10 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 
 	public virtual async Task<bool> Delete(long entityId) {
 		if (RequestIsValid(RequestType.Delete, entityId: entityId)) {
-			var entity = await repository.GetById(entityId);
+			var entity = await _repository.GetById(entityId);
 		if (entity != null) {
 			if (!EntityBelongsToUser(entity)) throw new Exception(ErrorCodes.EntityDoesNotBelongToUser);
-			var result = await repository.DeleteById(entityId);
+			var result = await _repository.DeleteById(entityId);
 			return result;
 		}
 		throw new Exception(ErrorCodes.EntityNotFound);
@@ -77,7 +77,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 		throw new Exception(ErrorCodes.UnknownError);
 	}
 
-	public abstract bool RequestIsValid(RequestType requestType, long? entityId = null, TDto dto = null);
+	public abstract bool RequestIsValid(RequestType requestType, long? entityId = null, TDto? dto = null);
 	public abstract bool EntityBelongsToUser(TEntity entity);
 	public abstract TDto ToDTO(TEntity entity);
 	public abstract IList<TDto> ToDTOs(IList<TEntity> entities);

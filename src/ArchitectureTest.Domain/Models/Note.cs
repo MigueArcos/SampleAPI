@@ -6,8 +6,8 @@ namespace ArchitectureTest.Domain.Models;
 
 public class NoteDTO : BasicDTO, IEntityConverter<Note> {
 	public long UserId { get; set; }
-	public string Title { get; set; }
-	public string Content { get; set; }
+	public string Title { get; set; } = string.Empty;
+	public string? Content { get; set; }
 	public DateTime CreationDate { get; set; }
 	public DateTime ModificationDate { get; set; }
 	public Note ToEntity() {

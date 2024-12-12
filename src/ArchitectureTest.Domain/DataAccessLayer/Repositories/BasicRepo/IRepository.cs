@@ -4,10 +4,13 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo; 
-public interface IRepository<TEntity> where TEntity : class {
-	Task<TEntity> Post(TEntity entity);
-	Task<bool> Put(TEntity entity);
-	Task<IList<TEntity>> Get(Expression<Func<TEntity, bool>> whereFilters = null);
-	Task<TEntity> GetById(long id);
-	Task<bool> DeleteById(long id);
+public interface IRepository<TId, TEntity> 
+	where TEntity : class
+{
+	Task<TEntity> Add(TEntity entity);
+	Task<bool> Update(TEntity entity);
+	Task<bool> DeleteById(TId id);
+	Task<IList<TEntity>> Find(Expression<Func<TEntity, bool>>? whereFilters = null);
+	Task<TEntity?> FindSingle(Expression<Func<TEntity, bool>> whereFilters);
+	Task<TEntity?> GetById(TId id);
 }

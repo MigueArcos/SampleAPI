@@ -7,7 +7,7 @@ public static class SessionExtensions {
 		session.SetString(key, JsonSerializer.Serialize(value));
 	}
 
-	public static T GetObject<T>(this ISession session, string key) {
+	public static T? GetObject<T>(this ISession session, string key) {
 		var value = session.GetString(key);
 		return value == null ? default(T) : JsonSerializer.Deserialize<T>(value);
 	}
@@ -18,7 +18,7 @@ public static class SessionExtensions {
 		}));
 	}
 
-	public static T GetTypedObject<T>(this ISession session, string key) {
+	public static T? GetTypedObject<T>(this ISession session, string key) {
 		var value = session.GetString(key);
 		return value == null ? default(T) : JsonSerializer.Deserialize<T>(value, new JsonSerializerOptions {
 			// TypeNameHandling = TypeNameHandling.Auto

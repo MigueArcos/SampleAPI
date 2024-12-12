@@ -6,9 +6,9 @@ namespace ArchitectureTest.Domain.Models;
 public class SignInModel {
     [Required(ErrorMessage = ErrorCodes.InvalidEmail)]
     [EmailAddress(ErrorMessage = ErrorCodes.InvalidEmail)]
-	public string Email { get; set; }
+	public required string Email { get; set; }
 
     [Required(ErrorMessage = ErrorCodes.InvalidPassword)]
     [MinLength(6, ErrorMessage = ErrorCodes.InvalidPassword)]
-	public string Password { get; set; }
+	public required string Password { get; set; }
 }

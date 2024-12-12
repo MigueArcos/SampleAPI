@@ -37,9 +37,9 @@ public static class CookieExtensions {
 		}
 	}
 
-	public static string GetCookieValue(this HttpContext context, string cookieName) {
+	public static string? GetCookieValue(this HttpContext context, string cookieName) {
 		if (context.CookieExists(cookieName)) {
-			return context.Request.Cookies[cookieName];
+			return context.Request?.Cookies[cookieName];
 		}
 		return string.Empty;
 	}

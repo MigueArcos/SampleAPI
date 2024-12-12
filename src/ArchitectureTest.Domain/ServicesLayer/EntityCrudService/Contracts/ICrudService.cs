@@ -11,9 +11,9 @@ public interface ICrudService<TEntity, TDto> where TEntity : class where TDto : 
     Task<bool> Delete(long entityId);
     bool EntityBelongsToUser(TEntity entity);
     Task<TDto> GetById(long entityId);
-    Task<TDto> Post(TDto dto);
-    Task<TDto> Put(long entityId, TDto dto);
-    bool RequestIsValid(RequestType requestType, long? entityId = null, TDto dto = null);
+    Task<TDto> Add(TDto dto);
+    Task<TDto> Update(long entityId, TDto dto);
+    bool RequestIsValid(RequestType requestType, long? entityId = null, TDto? dto = null);
     TDto ToDTO(TEntity entity);
     IList<TDto> ToDTOs(IList<TEntity> entities);
 }

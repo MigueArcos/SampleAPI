@@ -13,7 +13,7 @@ namespace ArchitectureTest.Web.Controllers;
 [Authorize]
 public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO> {
 	public ChecklistController(
-		ICrudService<Checklist, ChecklistDTO> entityCrudService, 
+		IChecklistCrudService entityCrudService, 
 		IHttpContextAccessor httpContextAccesor, 
 		ILogger<ChecklistController> logger
 	) : base(entityCrudService, httpContextAccesor, logger)
@@ -28,7 +28,7 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
 	[HttpGet("list")]
 	public async Task<IActionResult> GetAll() {
 		try {
-			var result = await (entityCrudService as IChecklistCrudService).GetUserChecklists();
+			var result = await (_entityCrudService as IChecklistCrudService)!.GetUserChecklists();
 			return Ok(result);
 		}
 		catch (Exception error) {

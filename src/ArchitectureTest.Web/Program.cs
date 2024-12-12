@@ -8,6 +8,7 @@ using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
+using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Web.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -37,7 +38,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICrudService<Note, NoteDTO>, NotesCrudService>();
-builder.Services.AddScoped<ICrudService<Checklist, ChecklistDTO>, ChecklistCrudService>();
+builder.Services.AddScoped<IChecklistCrudService, ChecklistCrudService>();
 builder.Services.AddScoped<CustomJwtBearerEvents>();
 builder.Services.AddAuthentication().AddJwtBearer(options => {
     options.TokenValidationParameters = tokenValidationParameters;

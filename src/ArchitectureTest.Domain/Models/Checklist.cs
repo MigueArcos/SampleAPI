@@ -8,12 +8,12 @@ namespace ArchitectureTest.Domain.Models;
 
 public class ChecklistDTO : BasicDTO, IEntityConverter<Checklist>, IChildEntityConverter<ChecklistDetail> {
 	public long UserId { get; set; }
-	public string Title { get; set; }
+	public string Title { get; set; } = string.Empty;
 	public DateTime CreationDate { get; set; }
 	public DateTime ModificationDate { get; set; }
-	public IList<ChecklistDetailDTO> Details { get; set; }
-	public IList<ChecklistDetail> GetChildEntities() {
-		return Details.Select(d => d.ToEntity()).ToList();
+	public IList<ChecklistDetailDTO>? Details { get; set; }
+	public IList<ChecklistDetail>? GetChildEntities() {
+		return Details?.Select(d => d.ToEntity())?.ToList();
 	}
 
 	public Checklist ToEntity() {
@@ -26,14 +26,15 @@ public class ChecklistDTO : BasicDTO, IEntityConverter<Checklist>, IChildEntityC
 		};
 	}
 }
+
 public class ChecklistDetailDTO : BasicDTO, IEntityConverter<ChecklistDetail> {
 	public long ChecklistId { get; set; }
 	public long? ParentDetailId { get; set; }
-	public string TaskName { get; set; }
+	public string? TaskName { get; set; }
 	public bool Status { get; set; }
 	public DateTime CreationDate { get; set; }
 	public DateTime ModificationDate { get; set; }
-	public IList<ChecklistDetailDTO> SubItems { get; set; }
+	public IList<ChecklistDetailDTO>? SubItems { get; set; }
 
 	public ChecklistDetail ToEntity() {
 		return new ChecklistDetail {

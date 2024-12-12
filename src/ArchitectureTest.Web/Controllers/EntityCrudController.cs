@@ -9,21 +9,21 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
 	where TEntity : class
 	where TDto : BasicDTO, IEntityConverter<TEntity>
 {
-	protected readonly ICrudService<TEntity, TDto> entityCrudService;
-    protected readonly IHttpContextAccessor httpContextAccessor;
+	protected readonly ICrudService<TEntity, TDto> _entityCrudService;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
 	public EntityCrudController(
 		ICrudService<TEntity, TDto> entityCrudService, IHttpContextAccessor httpContextAccessor, ILogger<BaseController> logger
 	) : base(logger) 
 	{
-		this.entityCrudService = entityCrudService;
-        this.httpContextAccessor = httpContextAccessor;
+		_entityCrudService = entityCrudService;
+        _httpContextAccessor = httpContextAccessor;
 	}
 
 	[HttpPost]
 	public virtual async Task<IActionResult> Post([FromBody] TDto dto) {
 		try {
-			TDto result = await entityCrudService.Post(dto);
-			string location = $"{httpContextAccessor.HttpContext.Request.Path.Value}/{result.Id}";
+			TDto result = await _entityCrudService.Add(dto);
+			string location = $"{_httpContextAccessor.HttpContext?.Request.Path.Value}/{result.Id}";
 			return Created(location, result);
 		}
 		catch (Exception exception) {
@@ -34,7 +34,7 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
 	[HttpGet("{id}")]
 	public virtual async Task<IActionResult> GetById([FromRoute] long id) {
 		try {
-			var result = await entityCrudService.GetById(id);
+			var result = await _entityCrudService.GetById(id);
 			return Ok(result);
 		}
 		catch (Exception exception) {
@@ -45,7 +45,7 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
 	[HttpPut("{id}")]
 	public virtual async Task<IActionResult> Put([FromRoute] long id, [FromBody] TDto dto) {
 		try {
-			var result = await entityCrudService.Put(id, dto);
+			var result = await _entityCrudService.Update(id, dto);
 			return Ok(result);
 		}
 		catch (Exception exception) {
@@ -56,7 +56,7 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
 	[HttpDelete("{id}")]
 	public virtual async Task<IActionResult> Delete([FromRoute] long id) {
 		try {
-			var result = await entityCrudService.Delete(id);
+			var result = await _entityCrudService.Delete(id);
 			return NoContent();
 		}
 		catch (Exception exception) {

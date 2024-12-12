@@ -27,6 +27,6 @@ public class BaseController : ControllerBase {
             logger.LogInformation(exception.Message);
             errorInfo = HttpResponses.CommonErrors[ErrorCodes.UnknownError];
         }
-		return errorInfo;
+		return errorInfo!;
 	}
 }

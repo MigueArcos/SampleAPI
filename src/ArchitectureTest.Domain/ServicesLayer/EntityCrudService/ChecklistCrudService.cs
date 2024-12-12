@@ -13,22 +13,41 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, IChecklistCrudService {
 	public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
-	public override bool RequestIsValid(RequestType requestType, long? entityId = null, ChecklistDTO dto = null) {
+	public override bool RequestIsValid(RequestType requestType, long? entityId = null, ChecklistDTO? dto = null) {
 		switch (requestType) {
 			case RequestType.Post:
-				if (dto.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-				if (string.IsNullOrWhiteSpace(dto.Title)) throw new Exception(ErrorCodes.NoteTitleNotFound);
+				if (dto is null)
+					throw new Exception(ErrorCodes.InputDataNotFound);
+
+				if (dto.UserId < 1)
+					throw new Exception(ErrorCodes.UserIdNotSupplied);
+				
+				if (dto.UserId != CrudSettings.UserId)
+					throw new Exception(ErrorCodes.CannotCreateDataForThisUserId);
+
+				if (string.IsNullOrWhiteSpace(dto.Title))
+					throw new Exception(ErrorCodes.NoteTitleNotFound);
 				break;
 			case RequestType.Get:
-				if (entityId < 1) throw new Exception(ErrorCodes.ChecklistIdNotSupplied);
+				if (entityId < 1)
+					throw new Exception(ErrorCodes.ChecklistIdNotSupplied);
 				break;
 			case RequestType.Put:
-				if (entityId == null) throw new Exception(ErrorCodes.ChecklistIdNotSupplied);
-				if (dto.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-				if (string.IsNullOrWhiteSpace(dto.Title)) throw new Exception(ErrorCodes.NoteTitleNotFound);
+				if (entityId == null)
+					throw new Exception(ErrorCodes.ChecklistIdNotSupplied);
+				
+				if (dto is null)
+					throw new Exception(ErrorCodes.InputDataNotFound);
+
+				if (dto.UserId < 1)
+					throw new Exception(ErrorCodes.UserIdNotSupplied);
+
+				if (string.IsNullOrWhiteSpace(dto.Title))
+					throw new Exception(ErrorCodes.NoteTitleNotFound);
 				break;
 			case RequestType.Delete:
-				if (entityId < 0) throw new Exception(ErrorCodes.ChecklistIdNotSupplied);
+				if (entityId < 0)
+					throw new Exception(ErrorCodes.ChecklistIdNotSupplied);
 				break;
 		}
 		return true;
@@ -36,25 +55,25 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 	public async Task<IList<ChecklistDTO>> GetUserChecklists() {
 		//A more complete validation can be performed here since we have the unitOfWork and access to all repos
 		if (CrudSettings.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-		var notes = await repository.Get(n => n.UserId == CrudSettings.UserId);
+		var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId);
 		return ToDTOs(notes);
 	}
 
-	public override async Task<ChecklistDTO> Post(ChecklistDTO dto) {
+	public override async Task<ChecklistDTO> Add(ChecklistDTO dto) {
 		try {
-			unitOfWork.StartTransaction();
-			var insertResult = await base.Post(dto);
-			if (dto.Details != null && dto.Details.Count > 0) await PostDetails(insertResult.Id ?? 0, dto.Details);
-			unitOfWork.Commit();
+			_unitOfWork.StartTransaction();
+			var insertResult = await base.Add(dto);
+
+			if (dto.Details != null && dto.Details.Count > 0)
+				await PostDetails(insertResult.Id ?? 0, dto.Details);
+
+			_unitOfWork.Commit();
 			dto.Id = insertResult.Id;
 			return dto;
 		}
-		catch (Exception exception) {
-			unitOfWork.Rollback();
-			// We should never expose real exceptions, so we will catch all unknown exceptions 
-			// (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
-			Console.WriteLine(exception);
-			throw new Exception(ErrorCodes.UnknownError);
+		catch {
+			_unitOfWork.Rollback();
+			throw;
 		}
 	}
 	public override ChecklistDTO ToDTO(Checklist entity) {
@@ -92,7 +111,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 			var d = details[i];
 			d.ChecklistId = parentChecklistId;
 			d.ParentDetailId = parentDetailId;
-			ChecklistDetail checklistDetailEntity = await unitOfWork.Repository<ChecklistDetail>().Post(d.ToEntity());
+			ChecklistDetail checklistDetailEntity = await _unitOfWork.Repository<ChecklistDetail>().Add(d.ToEntity());
 			if (d.SubItems != null && d.SubItems.Count > 0) {	
 				await PostDetails(parentChecklistId, d.SubItems, checklistDetailEntity.Id);
 			}

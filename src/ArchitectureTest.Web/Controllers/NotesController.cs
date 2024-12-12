@@ -25,7 +25,7 @@ public class NotesController : EntityCrudController<Note, NoteDTO> {
 	[HttpGet("list")]
 	public async Task<IActionResult> GetAll() {
 		try {
-			var result = await (entityCrudService as INotesCrudService).GetUserNotes();
+			var result = await (_entityCrudService as INotesCrudService)!.GetUserNotes();
 			return Ok(result);
 		}
 		catch (Exception error) {

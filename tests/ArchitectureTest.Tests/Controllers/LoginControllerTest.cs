@@ -31,7 +31,13 @@ public class LoginControllerTest {
     [Fact]
     public async Task LoginController_SignIn_ReturnsJwt() {
         // Arrange
-        var jwtMockResult = new JsonWebToken { UserId = userId, Email = email, ExpiresIn = 3600, Token = randomToken };
+        var jwtMockResult = new JsonWebToken {
+            UserId = userId,
+            Email = email,
+            ExpiresIn = 3600,
+            Token = randomToken,
+            RefreshToken = randomRefreshToken
+        };
         var requestData = new SignInModel { Email = email, Password = password };
         mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ReturnsAsync(jwtMockResult);
         // Act
@@ -124,7 +130,13 @@ public class LoginControllerTest {
     [Fact]
     public async Task LoginController_SignUp_ReturnJwt() {
         // Arrange
-        var jwtMockResult = new JsonWebToken { UserId = userId, Email = email, ExpiresIn = 3600, Token = randomToken };
+        var jwtMockResult = new JsonWebToken {
+            UserId = userId,
+            Email = email,
+            ExpiresIn = 3600,
+            Token = randomToken,
+            RefreshToken = randomRefreshToken
+        };
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
         mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ReturnsAsync(jwtMockResult);
         // Act

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace ArchitectureTest.Tests.Shared.Mocks;
 
-public class MockRepository<TEntity> : Mock<IRepository<TEntity>> where TEntity : class {
+public class MockRepository<TEntity> : Mock<IRepository<long, TEntity>> where TEntity : class {
     public void SetupGetByIdResult(TEntity result) {
         Setup(repo => repo.GetById(It.IsAny<long>())).ReturnsAsync(result);
     }
@@ -15,19 +15,19 @@ public class MockRepository<TEntity> : Mock<IRepository<TEntity>> where TEntity 
     /// a single result (Ex. email), like FirstOrDefault
     /// </summary>
     /// <param name="result"></param>
-    public void SetupGetSingleResultInList(TEntity result) {
-        Setup(repo => repo.Get(It.IsAny<Expression<Func<TEntity, bool>>>()))
-            .ReturnsAsync(new List<TEntity> { result });
+    public void SetupFindSingleResult(TEntity result) {
+        Setup(repo => repo.FindSingle(It.IsAny<Expression<Func<TEntity, bool>>>()))
+            .ReturnsAsync(result);
     }
-    public void SetupGetMultipleResults(List<TEntity> results) {
-        Setup(repo => repo.Get(It.IsAny<Expression<Func<TEntity, bool>>>()))
+    public void SetupFindMultipleResults(List<TEntity> results) {
+        Setup(repo => repo.Find(It.IsAny<Expression<Func<TEntity, bool>>>()))
             .ReturnsAsync(results);
     }
-    public void SetupPostResult(TEntity result) {
-        Setup(repo => repo.Post(It.IsAny<TEntity>())).ReturnsAsync(result);
+    public void SetupAddEntityResult(TEntity result) {
+        Setup(repo => repo.Add(It.IsAny<TEntity>())).ReturnsAsync(result);
     }
-    public void SetupPutResult(bool result) {
-        Setup(repo => repo.Put(It.IsAny<TEntity>()))
+    public void SetupUpdateEntityResult(bool result) {
+        Setup(repo => repo.Update(It.IsAny<TEntity>()))
             .ReturnsAsync(result);
     }
     public void SetupDeleteResult(bool result) {
@@ -37,14 +37,17 @@ public class MockRepository<TEntity> : Mock<IRepository<TEntity>> where TEntity 
     public void VerifyGetByIdCalls(Times times) {
         Verify(repo => repo.GetById(It.IsAny<long>()), times);
     }
-    public void VerifyGetCalls(Times times) {
-        Verify(repo => repo.Get(It.IsAny<Expression<Func<TEntity, bool>>>()), times);
+    public void VerifyFindCalls(Times times) {
+        Verify(repo => repo.Find(It.IsAny<Expression<Func<TEntity, bool>>>()), times);
     }
-    public void VerifyPostCalls(Times times) {
-        Verify(repo => repo.Post(It.IsAny<TEntity>()), times);
+    public void VerifyFindSingleCalls(Times times) {
+        Verify(repo => repo.FindSingle(It.IsAny<Expression<Func<TEntity, bool>>>()), times);
     }
-    public void VerifyPutCalls(Times times) {
-        Verify(repo => repo.Put(It.IsAny<TEntity>()), times);
+    public void VerifyAddEntityCalls(Times times) {
+        Verify(repo => repo.Add(It.IsAny<TEntity>()), times);
+    }
+    public void VerifyUpdateEntityCalls(Times times) {
+        Verify(repo => repo.Update(It.IsAny<TEntity>()), times);
     }
     public void VerifyDeleteCalls(Times times) {
         Verify(repo => repo.DeleteById(It.IsAny<long>()), times);

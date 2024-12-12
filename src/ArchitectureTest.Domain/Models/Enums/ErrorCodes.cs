@@ -22,7 +22,9 @@ public struct ErrorCodes {
     public const string ChecklistDoesNotExists = "checklis-does-not-exists";
     public const string UserIdNotSupplied = "missing-uid";
     public const string EntityNotFound = "data-not-found";
+    public const string InputDataNotFound = "input-data-not-found";
     public const string EntityDoesNotBelongToUser = "missing-permissions-over-entry";
+    public const string CannotCreateDataForThisUserId = "cannot-create-data-for-this-user-id";
     public const string ValidationsFailed = "validations-failed";
     public const string RepoProblem = "repo-error";     
 }

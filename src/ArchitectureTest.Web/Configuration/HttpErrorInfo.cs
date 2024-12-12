@@ -8,9 +8,9 @@ public class HttpErrorInfo
     public int HttpStatusCode { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string ErrorCode { get; set; }
+    public required string ErrorCode { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 }
 

@@ -13,23 +13,44 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService {
 	public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
-	public override bool RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO dto = null) {
+	public override bool RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO? dto = null) {
 		switch (requestType) {
 			case RequestType.Post:
-				if (dto.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-				if (string.IsNullOrWhiteSpace(dto.Title)) throw new Exception(ErrorCodes.NoteTitleNotFound);
-				if (string.IsNullOrEmpty(dto.Content)) dto.Content = string.Empty;
+				if (dto is null)
+					throw new Exception(ErrorCodes.InputDataNotFound);
+
+				if (dto.UserId < 1)
+					throw new Exception(ErrorCodes.UserIdNotSupplied);
+				
+				if (dto.UserId != CrudSettings.UserId)
+					throw new Exception(ErrorCodes.CannotCreateDataForThisUserId);
+
+				if (string.IsNullOrWhiteSpace(dto.Title))
+					throw new Exception(ErrorCodes.NoteTitleNotFound);
+
+				if (string.IsNullOrEmpty(dto.Content))
+					dto.Content = string.Empty;
 				break;
 			case RequestType.Get:
-				if (entityId < 1) throw new Exception(ErrorCodes.NoteIdNotSupplied);
+				if (entityId < 1)
+					throw new Exception(ErrorCodes.NoteIdNotSupplied);
 				break;
 			case RequestType.Put:
-				if (entityId == null) throw new Exception(ErrorCodes.NoteIdNotSupplied);
-				if (dto.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-				if (string.IsNullOrWhiteSpace(dto.Title)) throw new Exception(ErrorCodes.NoteTitleNotFound);
+				if (entityId == null)
+					throw new Exception(ErrorCodes.NoteIdNotSupplied);
+
+				if (dto is null)
+					throw new Exception(ErrorCodes.InputDataNotFound);
+
+				if (dto.UserId < 1)
+					throw new Exception(ErrorCodes.UserIdNotSupplied);
+
+				if (string.IsNullOrWhiteSpace(dto.Title))
+					throw new Exception(ErrorCodes.NoteTitleNotFound);
 				break;
 			case RequestType.Delete:
-				if (entityId < 1) throw new Exception(ErrorCodes.NoteIdNotSupplied);
+				if (entityId < 1)
+					throw new Exception(ErrorCodes.NoteIdNotSupplied);
 				break;
 		}
 		return true;
@@ -37,6 +58,7 @@ public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudServ
 	
 	public override NoteDTO ToDTO(Note entity) {
 		return new NoteDTO {
+			Id = entity.Id,
 			Title = entity.Title,
 			Content = entity.Content,
 			UserId = entity.UserId,
@@ -56,7 +78,7 @@ public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudServ
     public async Task<IList<NoteDTO>> GetUserNotes() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-        var notes = await repository.Get(n => n.UserId == CrudSettings.UserId);
+        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId);
         return ToDTOs(notes);
     }
 }

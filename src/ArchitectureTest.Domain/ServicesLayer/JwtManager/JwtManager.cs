@@ -8,15 +8,15 @@ using System.Security.Cryptography;
 namespace ArchitectureTest.Domain.ServiceLayer.JwtManager;
 
 public class JwtManager : IJwtManager {
-	private readonly JwtSecurityTokenHandler tokenHandler;
-	private readonly TokenValidationParameters tokenValidationParameters;
+	private readonly JwtSecurityTokenHandler _tokenHandler;
+	private readonly TokenValidationParameters _tokenValidationParameters;
 
     public int TokenTTLSeconds => 3600;
     public int RefreshTokenTTLSeconds => 720 * TokenTTLSeconds; // 720 hours (30 days)
 
     public JwtManager(TokenValidationParameters tokenValidationParameters) {
-		tokenHandler = new JwtSecurityTokenHandler();
-		this.tokenValidationParameters = tokenValidationParameters;
+		_tokenHandler = new JwtSecurityTokenHandler();
+		_tokenValidationParameters = tokenValidationParameters;
 	}
 
 	public JsonWebToken GenerateToken(JwtUser user) {
@@ -27,16 +27,16 @@ public class JwtManager : IJwtManager {
 				new Claim(ClaimTypes.Name, user.Name)
 			}),
 			Expires = DateTime.UtcNow.AddSeconds(TokenTTLSeconds),
-			Issuer = tokenValidationParameters.ValidIssuer,
-			Audience = tokenValidationParameters.ValidAudience,
+			Issuer = _tokenValidationParameters.ValidIssuer,
+			Audience = _tokenValidationParameters.ValidAudience,
 			SigningCredentials = new SigningCredentials(
-				tokenValidationParameters.IssuerSigningKey, SecurityAlgorithms.HmacSha256Signature
+				_tokenValidationParameters.IssuerSigningKey, SecurityAlgorithms.HmacSha256Signature
 			)
 		};
-		var token = tokenHandler.CreateToken(tokenDescriptor);
+		var token = _tokenHandler.CreateToken(tokenDescriptor);
 		var refreshToken = GenerateRefreshToken();
 		return new JsonWebToken {
-			Token = tokenHandler.WriteToken(token),
+			Token = _tokenHandler.WriteToken(token),
 			Email = user.Email,
 			RefreshToken = refreshToken,
 			UserId = user.Id,
@@ -45,12 +45,12 @@ public class JwtManager : IJwtManager {
 	}
 
 	public (ClaimsPrincipal claims, JwtUser jwtUser) ReadToken(string token, bool validateLifeTime) {
-		tokenValidationParameters.ValidateLifetime = validateLifeTime;
-		var claims = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+		_tokenValidationParameters.ValidateLifetime = validateLifeTime;
+		var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken validatedToken);
 		var user = new JwtUser {
-			Email = claims.FindFirst(ClaimTypes.Email)?.Value,
-			Id = long.Parse(claims.FindFirst(ClaimTypes.NameIdentifier)?.Value),
-			Name = claims.FindFirst(ClaimTypes.Name)?.Value
+			Email = claims.FindFirst(ClaimTypes.Email)?.Value ?? "user@default.io",
+			Id = long.Parse(claims.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
+			Name = claims.FindFirst(ClaimTypes.Name)?.Value ?? "Default"
 		};
 		return (claims, user);
 	}

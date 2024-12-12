@@ -132,7 +132,7 @@ public class NotesControllerTest {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         var outputData = new NoteDTO { Id = noteId, Title = title, Content = content, UserId = userId };
-        mockNotesCrudService.Setup(nD => nD.Post(It.IsAny<NoteDTO>())).ReturnsAsync(outputData);
+        mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ReturnsAsync(outputData);
         
         string path = "/api/notes";
         mockHttpContextAccessor.Object.HttpContext.Request.Path = new PathString(path);
@@ -140,7 +140,7 @@ public class NotesControllerTest {
         var result = await notesController.Post(inputData) as CreatedResult;
 
         // Assert
-        mockNotesCrudService.Verify(nD => nD.Post(It.IsAny<NoteDTO>()), Times.Once());
+        mockNotesCrudService.Verify(nD => nD.Add(It.IsAny<NoteDTO>()), Times.Once());
         Assert.IsType<CreatedResult>(result);
         Assert.NotNull(result);
         Assert.IsType<NoteDTO>(result.Value);
@@ -156,17 +156,17 @@ public class NotesControllerTest {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.Post(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+            mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
-            mockNotesCrudService.Setup(nD => nD.Post(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception("Any exception message"));
+            mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception("Any exception message"));
         }
         
         // Act
         var result = await notesController.Post(inputData) as ObjectResult;
 
         // Assert
-        mockNotesCrudService.Verify(nD => nD.Post(It.IsAny<NoteDTO>()), Times.Once());
+        mockNotesCrudService.Verify(nD => nD.Add(It.IsAny<NoteDTO>()), Times.Once());
         Assert.NotNull(result);
         Assert.IsType<HttpErrorInfo>(result.Value);
         Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
@@ -181,12 +181,12 @@ public class NotesControllerTest {
         var outputData = new NoteDTO { Id = noteId, Title = title, Content = content, UserId = userId };
         // domain.Put will always be called validating if entity belongs to user because that is a 
         // behavior of the domain and cannot be changed by user
-        mockNotesCrudService.Setup(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>())).ReturnsAsync(outputData);
+        mockNotesCrudService.Setup(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>())).ReturnsAsync(outputData);
         // Act
         var result = await notesController.Put(noteId, inputData) as ObjectResult;
 
         // Assert
-        mockNotesCrudService.Verify(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>()), Times.Once());
+        mockNotesCrudService.Verify(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>()), Times.Once());
         Assert.NotNull(result);
         Assert.IsType<NoteDTO>(result.Value);
         Assert.Equal(noteId, (result.Value as NoteDTO).Id);
@@ -201,12 +201,12 @@ public class NotesControllerTest {
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         if (useCustomException) {
             mockNotesCrudService
-                .Setup(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>()))
+                .Setup(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>()))
                 .ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService
-                .Setup(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>()))
+                .Setup(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>()))
                 .ThrowsAsync(new Exception("Any exception message"));
         }
 
@@ -214,7 +214,7 @@ public class NotesControllerTest {
         var result = await notesController.Put(noteId, inputData) as ObjectResult;
 
         // Assert
-        mockNotesCrudService.Verify(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>()), Times.Once());
+        mockNotesCrudService.Verify(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>()), Times.Once());
         Assert.NotNull(result);
         Assert.IsType<HttpErrorInfo>(result.Value);
         Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);

@@ -4,19 +4,19 @@ using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 
 namespace ArchitectureTest.Domain.DataAccessLayer.UnitOfWork.RepoFactory; 
 public class RepositoryFactory : IRepositoryFactory {
-	private readonly DatabaseContext databaseContext;
+	private readonly DatabaseContext _databaseContext;
 
 	public RepositoryFactory(DatabaseContext databaseContext) {
-		this.databaseContext = databaseContext;
+		_databaseContext = databaseContext;
 	}
 
-	public IRepository<TEntity> Create<TEntity>() where TEntity : class {
+	public IRepository<long, TEntity>? Create<TEntity>() where TEntity : class {
 		string typeName = typeof(TEntity).Name;
-	if (typeName == typeof(Checklist).Name) {
-		return new ChecklistRepository(databaseContext) as IRepository<TEntity>;
-	}
-	else {
-		return new Repository<TEntity>(databaseContext);
-	}
+		if (typeName == typeof(Checklist).Name) {
+			return new ChecklistRepository(_databaseContext) as IRepository<long, TEntity>;
+		}
+		else {
+			return new Repository<TEntity>(_databaseContext);
+		}
 	}
 }

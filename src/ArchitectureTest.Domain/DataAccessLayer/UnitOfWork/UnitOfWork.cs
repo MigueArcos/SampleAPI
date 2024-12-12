@@ -1,60 +1,62 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork.RepoFactory;
+using ArchitectureTest.Domain.Models.Enums;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 
 namespace ArchitectureTest.Domain.DataAccessLayer.UnitOfWork; 
 public class UnitOfWork : IUnitOfWork, IDisposable {
-	private readonly DatabaseContext databaseContext;
-	private IDbContextTransaction transaction;
-	private IRepositoryFactory repositoryFactory;
-	private Dictionary<string, object> repos = new Dictionary<string, object>();
+	private readonly DatabaseContext _databaseContext;
+	private IDbContextTransaction? _transaction;
+	private readonly IRepositoryFactory _repositoryFactory;
+	private readonly Dictionary<string, object> _repos = new();
+
 	public UnitOfWork(DatabaseContext databaseContext) {
-		this.databaseContext = databaseContext;
-		repositoryFactory = new RepositoryFactory(databaseContext);
+		_databaseContext = databaseContext;
+		_repositoryFactory = new RepositoryFactory(databaseContext);
 	}
 
-	public IRepository<TEntity> Repository<TEntity>() where TEntity : class {
+	public IRepository<long, TEntity> Repository<TEntity>() where TEntity : class {
 		string typeName = typeof(TEntity).Name;
-		repos.TryGetValue(typeName, out object repo);
-		if (repo == null) {
-			repo = repositoryFactory.Create<TEntity>();
-			repos.Add(typeName, repo);
+		bool found = _repos.TryGetValue(typeName, out var repo);
+		if (!found) {
+			repo = _repositoryFactory.Create<TEntity>() ?? throw new Exception(ErrorCodes.RepoProblem);
+			_repos.Add(typeName, repo);
 		}
-		return repo as IRepository<TEntity>;
+		return repo as IRepository<long, TEntity> ?? throw new Exception(ErrorCodes.RepoProblem);
 	}
 
 	public void Commit() {
 		try {
-			databaseContext.SaveChanges();
-			transaction.Commit();
+			_databaseContext.SaveChanges();
+			_transaction!.Commit();
 		}
 		finally {
-			transaction.Dispose();
+			_transaction!.Dispose();
 		}
 	}
 
 	public void Rollback() {
-		transaction.Rollback();
-		transaction.Dispose();
+		_transaction!.Rollback();
+		_transaction!.Dispose();
 	}
 
 	public void StartTransaction() {
-		this.transaction = databaseContext.Database.BeginTransaction();
+		_transaction = _databaseContext.Database.BeginTransaction();
 	}
 
 
-	private bool disposed = false;
+	private bool _disposed = false;
 
 	protected virtual void Dispose(bool disposing) {
-		if (!this.disposed) {
+		if (!_disposed) {
 			if (disposing) {
-				databaseContext.Dispose();
+				_databaseContext.Dispose();
 			}
 		}
-		this.disposed = true;
+		_disposed = true;
 	}
 
 	public void Dispose() {

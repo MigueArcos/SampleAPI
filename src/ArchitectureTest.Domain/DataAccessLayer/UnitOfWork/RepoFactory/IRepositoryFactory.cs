@@ -2,5 +2,5 @@
 
 namespace ArchitectureTest.Domain.DataAccessLayer.UnitOfWork.RepoFactory; 
 public interface IRepositoryFactory {
-	IRepository<TEntity> Create<TEntity>() where TEntity : class;
+	IRepository<long, TEntity>? Create<TEntity>() where TEntity : class;
 }

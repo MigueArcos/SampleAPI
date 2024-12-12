@@ -2,7 +2,7 @@
 
 namespace ArchitectureTest.Domain.DataAccessLayer.UnitOfWork; 
 public interface IUnitOfWork {
-	IRepository<TEntity> Repository<TEntity>() where TEntity : class;
+	IRepository<long, TEntity> Repository<TEntity>() where TEntity : class;
 	void StartTransaction();
 	void Commit();
 	void Rollback();

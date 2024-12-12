@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace ArchitectureTest.Domain.Models;
 
-public class ChecklistDTO : BasicDTO, IEntityConverter<Checklist>, IChildEntityConverter<ChecklistDetail> {
+public class ChecklistDTO : BasicDTO<long>, IEntityConverter<Checklist>, IChildEntityConverter<ChecklistDetail> {
 	public long UserId { get; set; }
 	public string Title { get; set; } = string.Empty;
 	public DateTime CreationDate { get; set; }
@@ -18,7 +18,7 @@ public class ChecklistDTO : BasicDTO, IEntityConverter<Checklist>, IChildEntityC
 
 	public Checklist ToEntity() {
 		return new Checklist {
-			Id = Id ?? 0,
+			Id = Id,
 			UserId = UserId,
 			Title = Title,
 			CreationDate = CreationDate,
@@ -27,7 +27,7 @@ public class ChecklistDTO : BasicDTO, IEntityConverter<Checklist>, IChildEntityC
 	}
 }
 
-public class ChecklistDetailDTO : BasicDTO, IEntityConverter<ChecklistDetail> {
+public class ChecklistDetailDTO : BasicDTO<long>, IEntityConverter<ChecklistDetail> {
 	public long ChecklistId { get; set; }
 	public long? ParentDetailId { get; set; }
 	public string? TaskName { get; set; }
@@ -38,7 +38,7 @@ public class ChecklistDetailDTO : BasicDTO, IEntityConverter<ChecklistDetail> {
 
 	public ChecklistDetail ToEntity() {
 		return new ChecklistDetail {
-			Id = Id ?? 0,
+			Id = Id,
 			ChecklistId = ChecklistId,
 			ParentDetailId = ParentDetailId,
 			TaskName = TaskName,

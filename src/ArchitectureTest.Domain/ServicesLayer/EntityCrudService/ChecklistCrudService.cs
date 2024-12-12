@@ -65,7 +65,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 			var insertResult = await base.Add(dto);
 
 			if (dto.Details != null && dto.Details.Count > 0)
-				await PostDetails(insertResult.Id ?? 0, dto.Details);
+				await PostDetails(insertResult.Id, dto.Details);
 
 			_unitOfWork.Commit();
 			dto.Id = insertResult.Id;

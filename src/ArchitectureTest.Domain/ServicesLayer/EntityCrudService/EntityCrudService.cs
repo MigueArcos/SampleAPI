@@ -18,7 +18,7 @@ public class EntityCrudSettings {
 
 public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, TDto> 
 	where TEntity : class
-	where TDto : BasicDTO, IEntityConverter<TEntity> 
+	where TDto : BasicDTO<long>, IEntityConverter<TEntity> 
 {
 	protected readonly IRepository<long, TEntity> _repository;
 	protected readonly IUnitOfWork _unitOfWork;

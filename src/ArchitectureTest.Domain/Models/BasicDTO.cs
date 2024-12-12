@@ -1,5 +1,5 @@
 ﻿namespace ArchitectureTest.Domain.Models;
 
-public class BasicDTO {
-	public long? Id { get; set; }
+public class BasicDTO<K> {
+	public K? Id { get; set; }
 }

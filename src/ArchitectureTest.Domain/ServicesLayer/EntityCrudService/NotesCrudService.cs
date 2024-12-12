@@ -62,8 +62,8 @@ public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudServ
 			Title = entity.Title,
 			Content = entity.Content,
 			UserId = entity.UserId,
-			CreationDate = entity.CreationDate ?? new System.DateTime(default),
-			ModificationDate = entity.ModificationDate ?? new System.DateTime(default)
+			CreationDate = entity.CreationDate ?? new DateTime(default),
+			ModificationDate = entity.ModificationDate ?? new DateTime(default)
 		};
 	}
 

@@ -7,7 +7,7 @@ namespace ArchitectureTest.Web.Controllers;
 
 public abstract class EntityCrudController<TEntity, TDto> : BaseController
 	where TEntity : class
-	where TDto : BasicDTO, IEntityConverter<TEntity>
+	where TDto : BasicDTO<long>, IEntityConverter<TEntity>
 {
 	protected readonly ICrudService<TEntity, TDto> _entityCrudService;
     protected readonly IHttpContextAccessor _httpContextAccessor;

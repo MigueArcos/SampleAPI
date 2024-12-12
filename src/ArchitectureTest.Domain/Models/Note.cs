@@ -4,7 +4,7 @@ using System;
 
 namespace ArchitectureTest.Domain.Models; 
 
-public class NoteDTO : BasicDTO, IEntityConverter<Note> {
+public class NoteDTO : BasicDTO<long>, IEntityConverter<Note> {
 	public long UserId { get; set; }
 	public string Title { get; set; } = string.Empty;
 	public string? Content { get; set; }
@@ -15,7 +15,7 @@ public class NoteDTO : BasicDTO, IEntityConverter<Note> {
 			Title = Title,
 			Content = Content,
 			UserId = UserId,
-			Id = Id ?? 0
+			Id = Id
 		};
 	}
 }

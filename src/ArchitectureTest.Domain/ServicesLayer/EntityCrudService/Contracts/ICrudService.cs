@@ -6,7 +6,7 @@ using ArchitectureTest.Domain.Models.Converters;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 
-public interface ICrudService<TEntity, TDto> where TEntity : class where TDto : BasicDTO, IEntityConverter<TEntity> {
+public interface ICrudService<TEntity, TDto> where TEntity : class where TDto : BasicDTO<long>, IEntityConverter<TEntity> {
     EntityCrudSettings CrudSettings { get; set; }
     Task<bool> Delete(long entityId);
     bool EntityBelongsToUser(TEntity entity);

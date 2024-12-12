@@ -1,19 +1,20 @@
 ﻿using System.Text.Json;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Domain.ServiceLayer.AuthService;
 using ArchitectureTest.Web.Configuration;
 using ArchitectureTest.Infrastructure.HttpExtensions;
 using ArchitectureTest.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ArchitectureTest.Web.Controllers;
 
+[AllowAnonymous]
 [Route("api/[controller]")]
 public class LoginController : BaseController {
 	private readonly IAuthService usersDomain;
 
-	public LoginController(IAuthService usersDomain) {
+	public LoginController(IAuthService usersDomain, ILogger<LoginController> logger) : base(logger) {
 		this.usersDomain = usersDomain;
 	}
 
@@ -44,9 +45,8 @@ public class LoginController : BaseController {
 		}
 		else{
 			var errors = ModelState.GetErrors();
-			return BadRequest(new ErrorDetail {
-				ErrorCode = ErrorCodes.ValidationsFailed,
-				Message = errors[0]
+			return BadRequest(new BadRequestHttpErrorInfo {
+				Errors = errors.Select(e => new HttpErrorInfo { ErrorCode = e }).ToList()
 			});
 		}
 	}
@@ -77,9 +77,8 @@ public class LoginController : BaseController {
 		}
 		else {
 			var errors = ModelState.GetErrors();
-			return BadRequest(new ErrorDetail {
-				ErrorCode = ErrorCodes.ValidationsFailed,
-				Message = errors[0]
+			return BadRequest(new BadRequestHttpErrorInfo {
+				Errors = errors.Select(e => new HttpErrorInfo { ErrorCode = e }).ToList()
 			});
 		}
 	}

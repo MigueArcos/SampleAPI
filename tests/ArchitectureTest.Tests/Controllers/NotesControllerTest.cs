@@ -1,5 +1,4 @@
 ﻿using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +9,9 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Security.Claims;
 using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Models.Enums;
+using ArchitectureTest.Web.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ArchitectureTest.Tests.Controllers;
 
@@ -39,7 +41,9 @@ public class NotesControllerTest {
             User = new ClaimsPrincipal(identity)
         };
         mockHttpContextAccessor.SetupGet(hCA => hCA.HttpContext).Returns(httpContext);
-        notesController = new NotesController(mockNotesCrudService.Object, mockHttpContextAccessor.Object);
+        notesController = new NotesController(
+            mockNotesCrudService.Object, mockHttpContextAccessor.Object, new Mock<ILogger<NotesController>>().Object
+        );
     }
 
     [Fact]
@@ -64,7 +68,7 @@ public class NotesControllerTest {
     public async Task NotesController_GetById_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
         // Arrange
         if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+            mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ThrowsAsync(new Exception("Any exception message"));
@@ -76,8 +80,9 @@ public class NotesControllerTest {
         // Assert
         mockNotesCrudService.Verify(nD => nD.GetById(It.IsAny<long>()), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 
@@ -104,7 +109,7 @@ public class NotesControllerTest {
     public async Task NotesController_GetAll_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
         // Arrange
         if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ThrowsAsync(ErrorStatusCode.UnknownError);
+            mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ThrowsAsync(new Exception("Any exception message"));
@@ -116,8 +121,9 @@ public class NotesControllerTest {
         // Assert
         mockNotesCrudService.Verify(nD => nD.GetUserNotes(), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 
@@ -150,7 +156,7 @@ public class NotesControllerTest {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.Post(It.IsAny<NoteDTO>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+            mockNotesCrudService.Setup(nD => nD.Post(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService.Setup(nD => nD.Post(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception("Any exception message"));
@@ -162,8 +168,9 @@ public class NotesControllerTest {
         // Assert
         mockNotesCrudService.Verify(nD => nD.Post(It.IsAny<NoteDTO>()), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 
@@ -195,7 +202,7 @@ public class NotesControllerTest {
         if (useCustomException) {
             mockNotesCrudService
                 .Setup(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>()))
-                .ThrowsAsync(ErrorStatusCode.UnknownError);
+                .ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService
@@ -209,8 +216,9 @@ public class NotesControllerTest {
         // Assert
         mockNotesCrudService.Verify(nD => nD.Put(It.IsAny<long>(), It.IsAny<NoteDTO>()), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 
@@ -235,7 +243,7 @@ public class NotesControllerTest {
     public async Task NotesController_Delete_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
         // Arrange
         if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+            mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ThrowsAsync(new Exception("Any exception message"));
@@ -247,8 +255,9 @@ public class NotesControllerTest {
         // Assert
         mockNotesCrudService.Verify(nD => nD.Delete(It.IsAny<long>()), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 }

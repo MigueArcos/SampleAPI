@@ -1,5 +1,4 @@
 ﻿using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +11,9 @@ using System.Linq;
 using System;
 using ArchitectureTest.Tests.Shared;
 using ArchitectureTest.Domain.ServiceLayer.AuthService;
+using ArchitectureTest.Domain.Models.Enums;
+using ArchitectureTest.Web.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ArchitectureTest.Tests.Controllers;
 
@@ -23,7 +25,7 @@ public class LoginControllerTest {
     private const long userId = 1;
     public LoginControllerTest() {
         mockAuthService = new Mock<IAuthService>();
-        loginController = new LoginController(mockAuthService.Object);
+        loginController = new LoginController(mockAuthService.Object, new Mock<ILogger<LoginController>>().Object);
     }
 
     [Fact]
@@ -55,7 +57,7 @@ public class LoginControllerTest {
         // Assert
         mockAuthService.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Never());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
+        Assert.IsType<BadRequestHttpErrorInfo>(result.Value);
         Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
     }
 
@@ -66,7 +68,7 @@ public class LoginControllerTest {
         // Arrange
         var requestData = new SignInModel { Email = email, Password = password };
         if (useCustomException) {
-            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(new Exception("Any exception message"));
@@ -78,8 +80,9 @@ public class LoginControllerTest {
         // Assert
         mockAuthService.Verify(uD => uD.SignIn(It.IsAny<SignInModel>()), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 
@@ -97,8 +100,8 @@ public class LoginControllerTest {
         //Assert
         Assert.False(isModelStateValid);
         var possibleErrorMessages = new List<string> {
-            ErrorMessages.InvalidEmail,
-            ErrorMessages.InvalidPassword
+            ErrorCodes.InvalidEmail,
+            ErrorCodes.InvalidPassword
         };
         Assert.Contains(results[0].ErrorMessage, possibleErrorMessages);
     }
@@ -147,7 +150,7 @@ public class LoginControllerTest {
         // Assert
         mockAuthService.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Never());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
+        Assert.IsType<BadRequestHttpErrorInfo>(result.Value);
         Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
     }
 
@@ -158,7 +161,7 @@ public class LoginControllerTest {
         // Arrange
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
         if (useCustomException) {
-            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(ErrorStatusCode.UnknownError);
+            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
         }
         else {
             mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(new Exception("Any exception message"));
@@ -170,8 +173,9 @@ public class LoginControllerTest {
         // Assert
         mockAuthService.Verify(uD => uD.SignUp(It.IsAny<SignUpModel>()), Times.Once());
         Assert.NotNull(result);
-        Assert.IsType<ErrorDetail>(result.Value);
-        Assert.Equal(ErrorMessages.UnknownError, (result.Value as ErrorDetail).Message);
+        Assert.IsType<HttpErrorInfo>(result.Value);
+        Assert.Equal(ErrorMessages.UnknownError, (result.Value as HttpErrorInfo).Message);
+        Assert.Equal(ErrorCodes.UnknownError, (result.Value as HttpErrorInfo).ErrorCode);
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
     }
 
@@ -189,9 +193,9 @@ public class LoginControllerTest {
         //Assert
         Assert.False(isModelStateValid);
         var possibleErrorMessages = new List<string> {
-            ErrorMessages.InvalidEmail,
-            ErrorMessages.InvalidPassword,
-            ErrorMessages.InvalidUserName
+            ErrorCodes.InvalidEmail,
+            ErrorCodes.InvalidPassword,
+            ErrorCodes.InvalidUserName
         };
         Assert.Contains(results[0].ErrorMessage, possibleErrorMessages);
     }

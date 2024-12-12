@@ -24,7 +24,9 @@ TokenValidationParameters tokenValidationParameters = new()
     ValidateIssuerSigningKey = true,
     ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer")!,
     ValidAudience = configuration.GetValue<string>("ConfigData:Jwt:Audience"),
-    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!)),
+    IssuerSigningKey = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!)
+    ),
     ClockSkew = Debugger.IsAttached ? TimeSpan.Zero : TimeSpan.FromMinutes(10)
 };
 

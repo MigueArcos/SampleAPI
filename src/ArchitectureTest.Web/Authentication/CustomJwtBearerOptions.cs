@@ -1,6 +1,5 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,26 +8,36 @@ using System.Text;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Web.Extensions;
 using System.Text.Json;
+using ArchitectureTest.Domain.Models.Enums;
+using ArchitectureTest.Web.Controllers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ArchitectureTest.Web.Authentication;
 
 public class CustomJwtBearerEvents : JwtBearerEvents {
-	private readonly IJwtManager jwtManager;
-    private readonly IRepository<UserToken> tokensRepository;
-    public CustomJwtBearerEvents(IJwtManager jwtManager, IUnitOfWork unitOfWork) {
-		this.jwtManager = jwtManager;
-        this.tokensRepository = unitOfWork.Repository<UserToken>();
+	private readonly IJwtManager _jwtManager;
+    private readonly IRepository<UserToken> _tokensRepository;
+	private readonly ILogger<CustomJwtBearerEvents> _logger;
+
+    public CustomJwtBearerEvents(IJwtManager jwtManager, IUnitOfWork unitOfWork, ILogger<CustomJwtBearerEvents> logger) {
+		_jwtManager = jwtManager;
+        _tokensRepository = unitOfWork.Repository<UserToken>();
+		_logger = logger;
 	}
 
 	public override Task MessageReceived(MessageReceivedContext context) {
-		GetTokensFromRequestContext(context.HttpContext.Request, out string accessToken, out string refreshToken);
-		context.Token = accessToken;
+		var endpoint = context.HttpContext.GetEndpoint();
+		bool isAnonymous = endpoint == null || endpoint.Metadata?.GetMetadata<IAllowAnonymous>() != null;
+		if (!isAnonymous){
+			GetTokensFromRequestContext(context.HttpContext.Request, out string accessToken, out string _);
+			context.Token = accessToken;
+		}
 		return Task.CompletedTask;
 	}
 
 	public override async Task Challenge(JwtBearerChallengeContext context) {
 		if (context.AuthenticateFailure != null) {
-			await WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.AuthorizationFailed);
+			await WriteExceptionToHttpResponse(context.HttpContext.Response, new Exception(ErrorCodes.AuthorizationFailed));
 			context.HandleResponse();
 		}
 	}
@@ -39,21 +48,21 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 			GetTokensFromRequestContext(context.HttpContext.Request, out string token, out string refreshToken);
 			if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
 				// validate refreshToken in DB
-				var refreshTokenSearch = await tokensRepository.Get(t => t.Token == refreshToken);
+				var refreshTokenSearch = await _tokensRepository.Get(t => t.Token == refreshToken);
 				if (refreshTokenSearch == null || refreshTokenSearch.Count == 0) {
-					await WriteExceptionToHttpResponse(context.HttpContext.Response, ErrorStatusCode.RefreshTokenExpired);
-					throw ErrorStatusCode.RefreshTokenExpired;
+					await WriteExceptionToHttpResponse(context.HttpContext.Response, new Exception(ErrorCodes.RefreshTokenExpired));
+					throw new Exception(ErrorCodes.RefreshTokenExpired);
 				}
-				var (claims, jwtUser) = jwtManager.ReadToken(token, false);
-				var newToken = jwtManager.GenerateToken(jwtUser);
+				var (claims, jwtUser) = _jwtManager.ReadToken(token, false);
+				var newToken = _jwtManager.GenerateToken(jwtUser);
 				// Delete previous token from database
-				await tokensRepository.DeleteById(refreshTokenSearch[0].Id);
+				await _tokensRepository.DeleteById(refreshTokenSearch[0].Id);
 				// Create a new token in Database
-				await tokensRepository.Post(new UserToken {
+				await _tokensRepository.Post(new UserToken {
 					UserId = newToken.UserId,
 					Token = newToken.RefreshToken,
 					TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
-					ExpiryTime = DateTime.Now.AddSeconds(jwtManager.RefreshTokenTTLSeconds)
+					ExpiryTime = DateTime.Now.AddSeconds(_jwtManager.RefreshTokenTTLSeconds)
 				});
 				context.Principal = claims;
 				// if there was a cookie, then set again the cookie with the new value
@@ -80,10 +89,11 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 		return Task.CompletedTask;
 	}
 
-    private async Task WriteExceptionToHttpResponse(HttpResponse httpResponseContext, ErrorStatusCode exception) {
-        var json = JsonSerializer.Serialize(exception.Detail);
+    private async Task WriteExceptionToHttpResponse(HttpResponse httpResponseContext, Exception exception) {
+		var errorInfo = BaseController.GetHttpErrorFromException(exception, _logger);
+        var json = JsonSerializer.Serialize(errorInfo);
         byte[] bytes = Encoding.UTF8.GetBytes(json);
-        httpResponseContext.StatusCode = exception.HttpStatusCode;
+        httpResponseContext.StatusCode = errorInfo.HttpStatusCode;
         httpResponseContext.Headers.Append("Content-Type", "application/json");
         await httpResponseContext.Body.WriteAsync(bytes, 0, bytes.Length);
     }

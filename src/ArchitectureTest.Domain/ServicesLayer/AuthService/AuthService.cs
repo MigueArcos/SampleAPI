@@ -1,12 +1,12 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using System;
 using System.Threading.Tasks;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
+using ArchitectureTest.Domain.Models.Enums;
 
 namespace ArchitectureTest.Domain.ServiceLayer.AuthService;
 
@@ -27,17 +27,17 @@ public class AuthService : IAuthService {
 		var userSearch = await usersRepository.Get(u => u.Email == signInModel.Email);
 		// userSearch[0].Password = passwordHasher.Hash(signInModel.Password);
 		// await usersRepository.Put(userSearch[0]);
-		if (userSearch == null || userSearch.Count == 0) throw ErrorStatusCode.UserNotFound;
+		if (userSearch == null || userSearch.Count == 0) throw new Exception(ErrorCodes.UserNotFound);
 		User user = userSearch[0];
 		var (Verified, NeedsUpgrade) = passwordHasher.Check(user.Password, signInModel.Password);
-		if (!Verified) throw ErrorStatusCode.WrongPassword;
+		if (!Verified) throw new Exception(ErrorCodes.WrongPassword);
 		var userJwt = await CreateUserJwt(user.Id, user.Email, user.Name);
 		return userJwt;
 	}
 
 	public async Task<JsonWebToken> SignUp(SignUpModel signUpModel) {
 		var userSearch = await usersRepository.Get(u => u.Email == signUpModel.Email);
-		if (userSearch != null && userSearch.Count > 0) throw ErrorStatusCode.EmailAlreadyInUse;
+		if (userSearch != null && userSearch.Count > 0) throw new Exception(ErrorCodes.EmailAlreadyInUse);
 		var user = await usersRepository.Post(new User {
 			Name = signUpModel.UserName,
 			Email = signUpModel.Email,

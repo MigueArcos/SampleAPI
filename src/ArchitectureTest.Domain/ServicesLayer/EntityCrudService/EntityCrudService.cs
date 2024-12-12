@@ -2,11 +2,12 @@
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Domain.Models.Converters;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
+using System;
+using ArchitectureTest.Domain.Models.Enums;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
@@ -33,47 +34,47 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 			var entity = await repository.Post(dto.ToEntity());
 			return ToDTO(entity);
 		}
-		throw ErrorStatusCode.UnknownError;
+		throw new Exception(ErrorCodes.UnknownError);
 	}
 
 	public virtual async Task<TDto> GetById(long entityId) {
 		if (RequestIsValid(RequestType.Get, entityId: entityId)) {
 			var entity = await repository.GetById(entityId);
 			if (entity != null) {
-				if (!EntityBelongsToUser(entity)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
+				if (!EntityBelongsToUser(entity)) throw new Exception(ErrorCodes.EntityDoesNotBelongToUser);
 				return ToDTO(entity);
 			}
-			throw ErrorStatusCode.EntityNotFound;
+			throw new Exception(ErrorCodes.EntityNotFound);
 		}
-		throw ErrorStatusCode.UnknownError;
+		throw new Exception(ErrorCodes.UnknownError);
 	}
 
 	public virtual async Task<TDto> Put(long entityId, TDto dto) {
 		if (RequestIsValid(RequestType.Put, entityId: entityId, dto: dto)) {
 			var entity = await repository.GetById(entityId);
-		if (entity != null) {
-			if (!EntityBelongsToUser(entity)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
-			dto.Id = entityId;
-			var result = await repository.Put(dto.ToEntity());
-			if (result) return dto;
-			else throw ErrorStatusCode.RepoProblem;
+			if (entity != null) {
+				if (!EntityBelongsToUser(entity)) throw new Exception(ErrorCodes.EntityDoesNotBelongToUser);
+				dto.Id = entityId;
+				var result = await repository.Put(dto.ToEntity());
+				if (result) return dto;
+				else throw new Exception(ErrorCodes.RepoProblem);
+			}
+			throw new Exception(ErrorCodes.EntityNotFound);
 		}
-		throw ErrorStatusCode.EntityNotFound;
-	}
-		throw ErrorStatusCode.UnknownError;
+		throw new Exception(ErrorCodes.UnknownError);
 	}
 
 	public virtual async Task<bool> Delete(long entityId) {
 		if (RequestIsValid(RequestType.Delete, entityId: entityId)) {
 			var entity = await repository.GetById(entityId);
 		if (entity != null) {
-			if (!EntityBelongsToUser(entity)) throw ErrorStatusCode.EntityDoesNotBelongToUser;
+			if (!EntityBelongsToUser(entity)) throw new Exception(ErrorCodes.EntityDoesNotBelongToUser);
 			var result = await repository.DeleteById(entityId);
 			return result;
 		}
-		throw ErrorStatusCode.EntityNotFound;
+		throw new Exception(ErrorCodes.EntityNotFound);
 	}
-		throw ErrorStatusCode.UnknownError;
+		throw new Exception(ErrorCodes.UnknownError);
 	}
 
 	public abstract bool RequestIsValid(RequestType requestType, long? entityId = null, TDto dto = null);

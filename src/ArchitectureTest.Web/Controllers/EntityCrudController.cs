@@ -11,7 +11,10 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
 {
 	protected readonly ICrudService<TEntity, TDto> entityCrudService;
     protected readonly IHttpContextAccessor httpContextAccessor;
-	public EntityCrudController(ICrudService<TEntity, TDto> entityCrudService, IHttpContextAccessor httpContextAccessor) {
+	public EntityCrudController(
+		ICrudService<TEntity, TDto> entityCrudService, IHttpContextAccessor httpContextAccessor, ILogger<BaseController> logger
+	) : base(logger) 
+	{
 		this.entityCrudService = entityCrudService;
         this.httpContextAccessor = httpContextAccessor;
 	}
@@ -20,7 +23,7 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
 	public virtual async Task<IActionResult> Post([FromBody] TDto dto) {
 		try {
 			TDto result = await entityCrudService.Post(dto);
-		string location = $"{httpContextAccessor.HttpContext.Request.Path.Value}/{result.Id}";
+			string location = $"{httpContextAccessor.HttpContext.Request.Path.Value}/{result.Id}";
 			return Created(location, result);
 		}
 		catch (Exception exception) {

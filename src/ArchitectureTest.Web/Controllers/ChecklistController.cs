@@ -13,8 +13,10 @@ namespace ArchitectureTest.Web.Controllers;
 [Authorize]
 public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO> {
 	public ChecklistController(
-		ICrudService<Checklist, ChecklistDTO> entityCrudService, IHttpContextAccessor httpContextAccesor
-	) : base(entityCrudService, httpContextAccesor)
+		ICrudService<Checklist, ChecklistDTO> entityCrudService, 
+		IHttpContextAccessor httpContextAccesor, 
+		ILogger<ChecklistController> logger
+	) : base(entityCrudService, httpContextAccesor, logger)
 	{
 		long userId = httpContextAccesor.GetUserIdentity().UserId;
 		entityCrudService.CrudSettings = new EntityCrudSettings {

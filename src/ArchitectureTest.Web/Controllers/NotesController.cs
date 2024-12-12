@@ -13,8 +13,8 @@ namespace ArchitectureTest.Web.Controllers;
 [Authorize]
 public class NotesController : EntityCrudController<Note, NoteDTO> {
 	public NotesController(
-		ICrudService<Note, NoteDTO> entityCrudService, IHttpContextAccessor httpContextAccesor
-	) : base(entityCrudService, httpContextAccesor) {
+		ICrudService<Note, NoteDTO> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
+	) : base(entityCrudService, httpContextAccesor, logger) {
 		long userId = httpContextAccesor.GetUserIdentity().UserId;
 		entityCrudService.CrudSettings = new EntityCrudSettings {
 			ValidateEntityBelongsToUser = true,

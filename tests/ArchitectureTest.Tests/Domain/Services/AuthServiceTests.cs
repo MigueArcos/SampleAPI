@@ -1,6 +1,5 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Models.StatusCodes;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Tests.Shared.Mocks;
 using Moq;
@@ -10,6 +9,8 @@ using Xunit;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
 using ArchitectureTest.Domain.ServiceLayer.AuthService;
+using ArchitectureTest.Domain.Models.Enums;
+using System;
 
 namespace ArchitectureTest.Tests.Domain.Services;
 
@@ -71,14 +72,13 @@ public class AuthServiceTests {
         Task act() => usersDomain.SignIn(requestData);
 
         // Assert
-        ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
+        Exception exception = await Assert.ThrowsAsync<Exception>(act);
         mockUsersRepo.VerifyGetCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
         mockUsersTokenRepo.VerifyPostCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorStatusCode.UserNotFound.Detail.Message, exception.Detail.Message);
-        Assert.Equal(404, ErrorStatusCode.UserNotFound.HttpStatusCode);
+        Assert.Equal(ErrorCodes.UserNotFound, exception.Message);
     }
 
     [Fact]
@@ -94,14 +94,13 @@ public class AuthServiceTests {
         Task act() => usersDomain.SignIn(requestData);
 
         // Assert
-        ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
+        Exception exception = await Assert.ThrowsAsync<Exception>(act);
         mockUsersRepo.VerifyGetCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
         mockUsersTokenRepo.VerifyPostCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorStatusCode.WrongPassword.Detail.Message, exception.Detail.Message);
-        Assert.Equal(400, ErrorStatusCode.WrongPassword.HttpStatusCode);
+        Assert.Equal(ErrorCodes.WrongPassword, exception.Message);
     }
 
     [Fact]
@@ -140,13 +139,12 @@ public class AuthServiceTests {
         Task act() => usersDomain.SignUp(requestData);
 
         // Assert
-        ErrorStatusCode exception = await Assert.ThrowsAsync<ErrorStatusCode>(act);
+        Exception exception = await Assert.ThrowsAsync<Exception>(act);
         mockUsersRepo.VerifyGetCalls(Times.Once());
         mockUsersRepo.VerifyPostCalls(Times.Never());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
         mockUsersTokenRepo.VerifyPostCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorStatusCode.EmailAlreadyInUse.Detail.Message, exception.Detail.Message);
-        Assert.Equal(400, ErrorStatusCode.EmailAlreadyInUse.HttpStatusCode);
+        Assert.Equal(ErrorCodes.EmailAlreadyInUse, exception.Message);
     }
 }

@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+﻿using ArchitectureTest.Data.Database.SQLServer;
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork.RepoFactory;
 using ArchitectureTest.Domain.Models.Enums;

@@ -83,7 +83,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 			UserId = entity.UserId,
 			CreationDate = entity.CreationDate ?? new System.DateTime(default),
 			ModificationDate = entity.ModificationDate ?? new System.DateTime(default),
-			Details = GetChecklistDetails(entity.ChecklistDetail)
+			Details = GetChecklistDetails(entity.ChecklistDetails)
 		};
 	}
 

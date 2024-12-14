@@ -1,4 +1,5 @@
-﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+﻿using ArchitectureTest.Data.Database.SQLServer;
+using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.DataAccessLayer.Repositories;
 using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
 

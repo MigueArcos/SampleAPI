@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using ArchitectureTest.Data.Database.SQLServer;
 using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Domain.Models;

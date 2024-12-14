@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+﻿using ArchitectureTest.Data.Database.SQLServer;
 using ArchitectureTest.Domain.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;

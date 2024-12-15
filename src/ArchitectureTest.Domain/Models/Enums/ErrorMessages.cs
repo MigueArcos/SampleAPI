@@ -1,7 +1,7 @@
 namespace ArchitectureTest.Domain.Models.Enums;
 
 public struct ErrorMessages {
-	public const string UnknownError = "Error desconocido";
+    public const string UnknownError = "Error desconocido";
     public const string InvalidEmail = "Correo electrónico inválido";
     public const string InvalidPassword = "La contraseña no es válida";
     public const string UserNameNotFound = "Se debe especificar el nombre de usuario";

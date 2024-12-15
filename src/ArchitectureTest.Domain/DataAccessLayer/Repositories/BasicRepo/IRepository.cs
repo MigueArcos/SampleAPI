@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo; 
 public interface IRepository<TId, TEntity> 
-	where TEntity : class
+    where TEntity : class
 {
-	Task<TEntity> Add(TEntity entity);
-	Task<bool> Update(TEntity entity);
-	Task<bool> DeleteById(TId id);
-	Task<IList<TEntity>> Find(Expression<Func<TEntity, bool>>? whereFilters = null);
-	Task<TEntity?> FindSingle(Expression<Func<TEntity, bool>> whereFilters);
-	Task<TEntity?> GetById(TId id);
+    Task<TEntity> Add(TEntity entity);
+    Task<bool> Update(TEntity entity);
+    Task<bool> DeleteById(TId id);
+    Task<IList<TEntity>> Find(Expression<Func<TEntity, bool>>? whereFilters = null);
+    Task<TEntity?> FindSingle(Expression<Func<TEntity, bool>> whereFilters);
+    Task<TEntity?> GetById(TId id);
 }

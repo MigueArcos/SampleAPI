@@ -43,7 +43,7 @@ public class NotesCrudServiceTests {
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation){
             notesCrudService.CrudSettings.UserId = userId;
-			}
+            }
         // Act
         var result = await notesCrudService.GetById(noteId);
 

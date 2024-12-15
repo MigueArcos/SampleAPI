@@ -51,12 +51,12 @@ public class NotesCrudServiceTests {
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         Assert.NotEqual(0, resultNote.Id);
         Assert.True(resultNote.Id > 0);
-        Assert.True(result.CreationDate != default);
-        Assert.True(result.ModificationDate != default);
+        Assert.True(result.Value.CreationDate != default);
+        Assert.True(result.Value.ModificationDate != default);
     }
 
     [Fact]
-    public async Task NotesCrudService_GetById_OwnershipValidation_ThrowsEntityDoesNotBelongToUser() {
+    public async Task NotesCrudService_GetById_OwnershipValidation_ReturnsEntityDoesNotBelongToUserError() {
         // Arrange
         var resultNote = new Note {
             Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2
@@ -65,20 +65,23 @@ public class NotesCrudServiceTests {
 
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
         notesCrudService.CrudSettings.UserId = 25; // 25 is not the owner of the resultNote
+
         // Act
-        Task act() => notesCrudService.GetById(noteId);
+        var result = await notesCrudService.GetById(noteId);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.EntityDoesNotBelongToUser, exception.Message);
+        Assert.Equal(ErrorCodes.EntityDoesNotBelongToUser, result.Error.Code);
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesCrudService_GetById_ThrowsEntityNotFound(bool performOwnershipValidation) {
+    public async Task NotesCrudService_GetById_ReturnsEntityNotFoundError(bool performOwnershipValidation) {
         //Arrange
         mockNotesRepo.SetupGetByIdResult(null);
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
@@ -87,13 +90,15 @@ public class NotesCrudServiceTests {
         }
         // Act
         ////// If there is a userId then we should perform an Ownership Validation check
-        Task act() => notesCrudService.GetById(noteId);
+        var result = await notesCrudService.GetById(noteId);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.EntityNotFound, exception.Message);
+        Assert.Equal(ErrorCodes.EntityNotFound, result.Error.Code);
     }
 
     [Fact]
@@ -111,28 +116,33 @@ public class NotesCrudServiceTests {
         var result = await notesCrudService.GetUserNotes();
 
         // Assert
+        Assert.NotNull(result);
+        Assert.Null(result.Error);
+        Assert.NotNull(result.Value);
         mockNotesRepo.VerifyFindCalls(Times.Once());
-        Assert.IsType<List<NoteDTO>>(result);
+        Assert.IsType<List<NoteDTO>>(result.Value);
     }
 
     [Fact]
-    public async Task NotesCrudService_GetUserNotes_ThrowsUserIdNotSupplied() {
+    public async Task NotesCrudService_GetUserNotes_ReturnsUserIdNotSuppliedError() {
         // Arrange
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
         notesCrudService.CrudSettings.UserId = 0;
 
         // Act
-        Task act() => notesCrudService.GetUserNotes();
+        var result = await notesCrudService.GetUserNotes();
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyFindCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.UserIdNotSupplied, exception.Message);
+        Assert.Equal(ErrorCodes.UserIdNotSupplied, result.Error.Code);
     }
 
     [Fact]
-    public async Task NotesCrudService_Post_ReturnsNote() {
+    public async Task NotesCrudService_Add_ReturnsNote() {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         var resultNote = new Note {
@@ -147,47 +157,51 @@ public class NotesCrudServiceTests {
         mockNotesRepo.VerifyAddEntityCalls(Times.Once());
         Assert.NotEqual(0, resultNote.Id);
         Assert.True(resultNote.Id > 0);
-        Assert.True(result.CreationDate != default);
-        Assert.True(result.ModificationDate != default);
+        Assert.True(result.Value.CreationDate != default);
+        Assert.True(result.Value.ModificationDate != default);
     }
 
     [Fact]
-    public async Task NotesCrudService_Post_ThrowsUserIdNotSupplied() {
+    public async Task NotesCrudService_Add_ReturnsUserIdNotSuppliedError() {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = 0, Id = noteId };
 
         // Act
-        Task act() => notesCrudService.Add(inputData);
+        var result = await notesCrudService.Add(inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.UserIdNotSupplied, exception.Message);
+        Assert.Equal(ErrorCodes.UserIdNotSupplied, result.Error.Code);
     }
 
     [Theory]
     [InlineData("")]
     [InlineData(null)]
     [InlineData("   ")]
-    public async Task NotesCrudService_Post_ThrowsNoteTitleNotFound(string noteTitle) {
+    public async Task NotesCrudService_Add_ReturnsNoteTitleNotFoundError(string noteTitle) {
         // Arrange
         var inputData = new NoteDTO { Title = noteTitle, Content = content, UserId = userId };
 
         // Act
-        Task act() => notesCrudService.Add(inputData);
+        var result = await notesCrudService.Add(inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.NoteTitleNotFound, exception.Message);
+        Assert.Equal(ErrorCodes.NoteTitleNotFound, result.Error.Code);
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesCrudService_Put_ReturnsModifiedNote(bool performOwnershipValidation) {
+    public async Task NotesCrudService_Update_ReturnsModifiedNote(bool performOwnershipValidation) {
         // Arrange
         long noteUserId = performOwnershipValidation ? userId : 100;
         var inputData = new NoteDTO {
@@ -206,49 +220,55 @@ public class NotesCrudServiceTests {
         // Assert
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         mockNotesRepo.VerifyUpdateEntityCalls(Times.Once());
-        Assert.NotEqual(0, result.Id);
-        Assert.True(result.Id > 0);
-        Assert.True(result.CreationDate != default);
-        Assert.True(result.ModificationDate != default);
+        Assert.NotEqual(0, result.Value.Id);
+        Assert.True(result.Value.Id > 0);
+        Assert.True(result.Value.CreationDate != default);
+        Assert.True(result.Value.ModificationDate != default);
     }
 
     [Fact]
-    public async Task NotesCrudService_Put_ThrowsUserIdNotSupplied() {
+    public async Task NotesCrudService_Update_ReturnsUserIdNotSuppliedError() {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = 0, Id = noteId };
+
         // Act
-        Task act() => notesCrudService.Update(noteId, inputData);
+        var result = await notesCrudService.Update(noteId, inputData);
+
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Never());
         mockNotesRepo.VerifyUpdateEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.UserIdNotSupplied, exception.Message);
+        Assert.Equal(ErrorCodes.UserIdNotSupplied, result.Error.Code);
     }
 
     [Theory]
     [InlineData("")]
     [InlineData(null)]
     [InlineData("   ")]
-    public async Task NotesCrudService_Put_ThrowsNoteTitleNotFound(string noteTitle) {
+    public async Task NotesCrudService_Update_ReturnsNoteTitleNotFoundError(string noteTitle) {
         // Arrange
         var inputData = new NoteDTO { Title = noteTitle, Content = content, UserId = userId, Id = noteId };
 
         // Act
-        Task act() => notesCrudService.Update(noteId, inputData);
+        var result = await notesCrudService.Update(noteId, inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Never());
         mockNotesRepo.VerifyUpdateEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.NoteTitleNotFound, exception.Message);
+        Assert.Equal(ErrorCodes.NoteTitleNotFound, result.Error.Code);
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesCrudService_Put_ThrowsEntityNotFound(bool performOwnershipValidation) {
+    public async Task NotesCrudService_Update_ReturnsEntityNotFoundError(bool performOwnershipValidation) {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId, Id = noteId };
         mockNotesRepo.SetupGetByIdResult(null);
@@ -258,18 +278,20 @@ public class NotesCrudServiceTests {
             notesCrudService.CrudSettings.UserId = userId;
         }
         // Act
-        Task act() => notesCrudService.Update(noteId, inputData);
+        var result = await notesCrudService.Update(noteId, inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         mockNotesRepo.VerifyUpdateEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.EntityNotFound, exception.Message);
+        Assert.Equal(ErrorCodes.EntityNotFound, result.Error.Code);
     }
 
     [Fact]
-    public async Task NotesCrudService_Put_ThrowsEntityDoesNotBelongToUser() {
+    public async Task NotesCrudService_Update_ReturnsEntityDoesNotBelongToUserError() {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         var resultNote = new Note {
@@ -279,19 +301,22 @@ public class NotesCrudServiceTests {
         mockNotesRepo.SetupUpdateEntityResult(false);
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
         notesCrudService.CrudSettings.UserId = userId;
+
         // Act
-        Task act() => notesCrudService.Update(noteId, inputData);
+        var result = await notesCrudService.Update(noteId, inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         mockNotesRepo.VerifyUpdateEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.EntityDoesNotBelongToUser, exception.Message);
+        Assert.Equal(ErrorCodes.EntityDoesNotBelongToUser, result.Error.Code);
     }
 
     [Fact]
-    public async Task NotesCrudService_Put_ThrowsRepoProblem() {
+    public async Task NotesCrudService_Update_ReturnsRepoProblemError() {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
         var resultNote = new Note {
@@ -303,14 +328,16 @@ public class NotesCrudServiceTests {
         notesCrudService.CrudSettings.UserId = userId;
 
         // Act
-        Task act() => notesCrudService.Update(noteId, inputData);
+        var result = await notesCrudService.Update(noteId, inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         mockNotesRepo.VerifyUpdateEntityCalls(Times.Once());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.RepoProblem, exception.Message);
+        Assert.Equal(ErrorCodes.RepoProblem, result.Error.Code);
     }
 
     [Theory]
@@ -328,32 +355,34 @@ public class NotesCrudServiceTests {
         if (performOwnershipValidation) {
             notesCrudService.CrudSettings.UserId = userId;
         }
+
         // Act
         ////// If there is a userId then we should perform an Ownership Validation check
         var result = await notesCrudService.Delete(noteId);
+
         // Assert
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         mockNotesRepo.VerifyDeleteCalls(Times.Once());
-        Assert.True(result);
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task NotesCrudService_Delete_ThrowsNoteIdNotSupplied() {
+    public async Task NotesCrudService_Delete_ReturnsNoteIdNotSuppliedError() {
         // Arrange
         var inputData = 0;
         // Act
-        Task act() => notesCrudService.Delete(inputData);
+        var result = await notesCrudService.Delete(inputData);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
         mockNotesRepo.VerifyGetByIdCalls(Times.Never());
         mockNotesRepo.VerifyDeleteCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.NoteIdNotSupplied, exception.Message);
+        Assert.Equal(ErrorCodes.NoteIdNotSupplied, result.Code);
     }
 
     [Fact]
-    public async Task NotesCrudService_Delete_ThrowsEntityDoesNotBelongToUser() {
+    public async Task NotesCrudService_Delete_ReturnsEntityDoesNotBelongToUserError() {
         // Arrange
         var resultNote = new Note {
             Title = title, Content = content, UserId = 25, Id = noteId, CreationDate = date1, ModificationDate = date2
@@ -362,14 +391,15 @@ public class NotesCrudServiceTests {
         mockNotesRepo.SetupDeleteResult(false);
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = true;
         notesCrudService.CrudSettings.UserId = userId;
+
         // Act
-        Task act() => notesCrudService.Delete(noteId);
+        var result = await notesCrudService.Delete(noteId);
 
         // Assert
-        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
         mockNotesRepo.VerifyGetByIdCalls(Times.Once());
         mockNotesRepo.VerifyDeleteCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.EntityDoesNotBelongToUser, exception.Message);
+        Assert.Equal(ErrorCodes.EntityDoesNotBelongToUser, result.Code);
     }
 }

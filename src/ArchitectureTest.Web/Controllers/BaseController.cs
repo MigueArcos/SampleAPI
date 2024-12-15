@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Domain.Models.Enums;
+﻿using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,21 +12,10 @@ public class BaseController : ControllerBase {
         _logger = logger;
     }
 
-	protected ObjectResult DefaultCatch(Exception exception) {
-		var errorInfo = GetHttpErrorFromException(exception, _logger);
+    protected ObjectResult HandleError(AppError error) {
+		var errorInfo = HttpResponses.TryGetErrorInfo(error.Code, message => _logger.LogError(message));
         return new ObjectResult(errorInfo) {
             StatusCode = errorInfo!.HttpStatusCode
         };
-	}
-
-	public static HttpErrorInfo GetHttpErrorFromException(Exception exception, ILogger logger) {
-		var isAManagedError = HttpResponses.CommonErrors.TryGetValue(exception.Message, out var errorInfo);
-        if (!isAManagedError) {
-            // We should never expose real exceptions, so we will catch all unknown exceptions 
-            // (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
-            logger.LogInformation(exception.Message);
-            errorInfo = HttpResponses.CommonErrors[ErrorCodes.UnknownError];
-        }
-		return errorInfo!;
 	}
 }

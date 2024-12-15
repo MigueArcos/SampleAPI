@@ -41,6 +41,16 @@ public static class HttpResponses
             ErrorCode = ErrorCodes.PasswordsDoNotMatch,
             Message = ErrorMessages.PasswordsDoNotMatch
         },
+        [ErrorCodes.CannotGenerateJwtToken] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status500InternalServerError,
+            ErrorCode = ErrorCodes.CannotGenerateJwtToken
+        },
+        [ErrorCodes.IncompleteJwtTokenData] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status400BadRequest,
+            ErrorCode = ErrorCodes.IncompleteJwtTokenData
+        },
         [ErrorCodes.EmailAlreadyInUse] = new HttpErrorInfo
         {
             HttpStatusCode = StatusCodes.Status400BadRequest,
@@ -146,6 +156,22 @@ public static class HttpResponses
             HttpStatusCode = StatusCodes.Status500InternalServerError,
             ErrorCode = ErrorCodes.RepoProblem,
             Message = ErrorMessages.RepoProblem
+        },
+        [ErrorCodes.IncorrectInputData] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status400BadRequest,
+            ErrorCode = ErrorCodes.IncorrectInputData
         }
     };
+
+    public static HttpErrorInfo TryGetErrorInfo(string errorMessage, Action<string> onUnknownErrorFound){
+        var isAManagedError = CommonErrors.TryGetValue(errorMessage, out var errorInfo);
+        if (!isAManagedError) {
+            // We should never expose real exceptions, so we will catch all unknown exceptions 
+            // (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
+            errorInfo = CommonErrors[ErrorCodes.UnknownError];
+            onUnknownErrorFound(errorMessage);
+        }
+        return errorInfo!;
+    }
 }

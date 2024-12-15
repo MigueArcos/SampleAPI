@@ -9,8 +9,9 @@ using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Web.Extensions;
 using System.Text.Json;
 using ArchitectureTest.Domain.Models.Enums;
-using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Authorization;
+using ArchitectureTest.Domain.Models;
+using System.Security.Claims;
 
 namespace ArchitectureTest.Web.Authentication;
 
@@ -37,7 +38,7 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 
 	public override async Task Challenge(JwtBearerChallengeContext context) {
 		if (context.AuthenticateFailure != null) {
-			await WriteExceptionToHttpResponse(context.HttpContext.Response, new Exception(ErrorCodes.AuthorizationFailed));
+			await WriteErrorToHttpResponse(context.HttpContext.Response, ErrorCodes.AuthorizationFailed).ConfigureAwait(false);
 			context.HandleResponse();
 		}
 	}
@@ -47,23 +48,15 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 		try {
 			GetTokensFromRequestContext(context.HttpContext.Request, out string? token, out string? refreshToken);
 			if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(refreshToken)) {
-				// validate refreshToken in DB
-				var refreshTokenSearch = await _tokensRepository.FindSingle(t => t.Token == refreshToken);
-				if (refreshTokenSearch == null) {
-					await WriteExceptionToHttpResponse(context.HttpContext.Response, new Exception(ErrorCodes.RefreshTokenExpired));
-					throw new Exception(ErrorCodes.RefreshTokenExpired);
+				var tokenExchangeResult = await ExchangeOldTokensForNewToken(token, refreshToken).ConfigureAwait(false);
+				if (tokenExchangeResult.Error != null){
+					await WriteErrorToHttpResponse(context.HttpContext.Response, tokenExchangeResult.Error.Code)
+						.ConfigureAwait(false);
+					return;
 				}
-				var (claims, jwtUser) = _jwtManager.ReadToken(token, false);
-				var newToken = _jwtManager.GenerateToken(jwtUser);
-				// Delete previous token from database
-				await _tokensRepository.DeleteById(refreshTokenSearch.Id);
-				// Create a new token in Database
-				await _tokensRepository.Add(new UserToken {
-					UserId = newToken.UserId,
-					Token = newToken.RefreshToken,
-					TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
-					ExpiryTime = DateTime.Now.AddSeconds(_jwtManager.RefreshTokenTTLSeconds)
-				});
+
+				var (newToken, claims) = tokenExchangeResult.Value;
+
 				context.Principal = claims;
 				// if there was a cookie, then set again the cookie with the new value
 				if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])) {
@@ -89,13 +82,13 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 		return Task.CompletedTask;
 	}
 
-    private async Task WriteExceptionToHttpResponse(HttpResponse httpResponseContext, Exception exception) {
-		var errorInfo = BaseController.GetHttpErrorFromException(exception, _logger);
+    private async Task WriteErrorToHttpResponse(HttpResponse httpResponseContext, string errorCode) {
+		var errorInfo = HttpResponses.TryGetErrorInfo(errorCode, message => _logger.LogError(message));
         var json = JsonSerializer.Serialize(errorInfo);
         byte[] bytes = Encoding.UTF8.GetBytes(json);
-        httpResponseContext.StatusCode = errorInfo.HttpStatusCode;
+        httpResponseContext.StatusCode = errorInfo!.HttpStatusCode;
         httpResponseContext.Headers.Append("Content-Type", "application/json");
-        await httpResponseContext.Body.WriteAsync(bytes, 0, bytes.Length);
+        await httpResponseContext.Body.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
     }
 
 	private bool GetTokensFromRequestContext(HttpRequest requestContext, out string? accessToken, out string? refreshToken) {
@@ -126,5 +119,39 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 			refreshToken = string.Empty;
 			return false;
 		}
+	}
+
+	private async Task<Result<(JsonWebToken Token, ClaimsPrincipal Claims), AppError>> ExchangeOldTokensForNewToken(
+		string token, string refreshToken
+	) {
+		// validate refreshToken in DB
+		var refreshTokenSearch = await _tokensRepository.FindSingle(t => t.Token == refreshToken).ConfigureAwait(false);
+		if (refreshTokenSearch == null) 
+			return new AppError(ErrorCodes.RefreshTokenExpired);
+
+		var resultJwtRead = _jwtManager.ReadToken(token, false);
+
+		if (resultJwtRead.Error != null) 
+			return resultJwtRead.Error;
+		
+		var jwtUser = resultJwtRead.Value;
+
+		var newTokenResult = _jwtManager.GenerateToken(jwtUser.JwtUser);
+
+		if (newTokenResult.Error != null)
+			return newTokenResult.Error;
+
+		var newToken = newTokenResult.Value;
+		// Delete previous token from database
+		await _tokensRepository.DeleteById(refreshTokenSearch.Id).ConfigureAwait(false);
+
+		// Create a new token in Database
+		await _tokensRepository.Add(new UserToken {
+			UserId = newToken!.UserId,
+			Token = newToken.RefreshToken,
+			TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
+			ExpiryTime = DateTime.Now.AddSeconds(_jwtManager.RefreshTokenTTLSeconds)
+		}).ConfigureAwait(false);;
+		return (newToken, jwtUser.Claims);
 	}
 }

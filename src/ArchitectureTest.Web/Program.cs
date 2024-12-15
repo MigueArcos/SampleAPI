@@ -10,6 +10,7 @@ using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
 using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
+using ArchitectureTest.Web;
 using ArchitectureTest.Web.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -45,6 +46,8 @@ builder.Services.AddAuthentication().AddJwtBearer(options => {
     options.TokenValidationParameters = tokenValidationParameters;
     options.EventsType = typeof(CustomJwtBearerEvents);
 });
+builder.Services.AddExceptionHandler<GlobalHttpExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -52,6 +55,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

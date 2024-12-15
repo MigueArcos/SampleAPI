@@ -26,23 +26,22 @@ public class LoginController : BaseController {
 		[FromHeader(Name = AppConstants.SaveAuthInCookieHeader)] bool saveAuthInCookie
 	) {
 		if (ModelState.IsValid){
-			try{
-				var token = await _authService.SignIn(signInModel);
-				// bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
-				if (saveAuthInCookie) {
-					HttpContext.SetCookie(
-						AppConstants.SessionCookie, 
-						JsonSerializer.Serialize(new Dictionary<string, string> {
-							[AppConstants.Token] = token.Token,
-							[AppConstants.RefreshToken] = token.RefreshToken
-						})
-					);
-				}
-				return Ok(token);
+			var tokenResult = await _authService.SignIn(signInModel).ConfigureAwait(false);
+			if (tokenResult.Error is not null)
+				return HandleError(tokenResult.Error);
+
+			var token = tokenResult.Value!;
+			// bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
+			if (saveAuthInCookie) {
+				HttpContext.SetCookie(
+					AppConstants.SessionCookie, 
+					JsonSerializer.Serialize(new Dictionary<string, string> {
+						[AppConstants.Token] = token.Token,
+						[AppConstants.RefreshToken] = token.RefreshToken
+					})
+				);
 			}
-			catch (Exception error) {
-				return DefaultCatch(error);
-			}
+			return Ok(token);
 		}
 		else{
 			var errors = ModelState.GetErrors();
@@ -59,23 +58,22 @@ public class LoginController : BaseController {
 		[FromHeader(Name = AppConstants.SaveAuthInCookieHeader)] bool saveAuthInCookie
 	) {
 		if (ModelState.IsValid) {
-			try {
-				var token = await _authService.SignUp(signUpModel);
-				// bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
-				if (saveAuthInCookie) {
-					HttpContext.SetCookie(
-						AppConstants.SessionCookie,
-						JsonSerializer.Serialize(new Dictionary<string, string> {
-							[AppConstants.Token] = token.Token,
-							[AppConstants.RefreshToken] = token.RefreshToken
-						})
-					);
-				}
-				return Ok(token);
+			var tokenResult = await _authService.SignUp(signUpModel).ConfigureAwait(false);
+			if (tokenResult.Error is not null)
+				return HandleError(tokenResult.Error);
+
+			var token = tokenResult.Value!;
+			// bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
+			if (saveAuthInCookie) {
+				HttpContext.SetCookie(
+					AppConstants.SessionCookie,
+					JsonSerializer.Serialize(new Dictionary<string, string> {
+						[AppConstants.Token] = token.Token,
+						[AppConstants.RefreshToken] = token.RefreshToken
+					})
+				);
 			}
-			catch (Exception error) {
-				return DefaultCatch(error);
-			}
+			return Ok(token);
 		}
 		else {
 			var errors = ModelState.GetErrors();

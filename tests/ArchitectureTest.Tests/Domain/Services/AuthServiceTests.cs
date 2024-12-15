@@ -10,7 +10,6 @@ using ArchitectureTest.Domain.ServiceLayer.JwtManager;
 using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
 using ArchitectureTest.Domain.ServiceLayer.AuthService;
 using ArchitectureTest.Domain.Models.Enums;
-using System;
 
 namespace ArchitectureTest.Tests.Domain.Services;
 
@@ -63,32 +62,34 @@ public class AuthServiceTests {
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Once());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Once());
-        Assert.Equal(userId, result.UserId);
-        Assert.Equal(jwtMockResult.Token, result.Token);
+        Assert.Equal(userId, result.Value.UserId);
+        Assert.Equal(jwtMockResult.Token, result.Value.Token);
     }
 
     [Fact]
-    public async Task AuthService_SignIn_ThrowsUserNotFound() {
+    public async Task AuthService_SignIn_ReturnsUserNotFoundError() {
         // Arrange
         mockUsersRepo.SetupFindMultipleResults(new List<User>());
         var requestData = new SignInModel { Email = email, Password = password };
         var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        Task act() => usersDomain.SignIn(requestData);
+        var result = await usersDomain.SignIn(requestData);
 
         // Assert
-        Exception exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.UserNotFound, exception.Message);
+        Assert.Equal(ErrorCodes.UserNotFound, result.Error.Code);
     }
 
     [Fact]
-    public async Task AuthService_SignIn_ThrowsWrongPassword() {
+    public async Task AuthService_SignIn_ReturnsWrongPasswordError() {
         // Arrange
         var userInfo = new User { Id = userId, Email = email };
         mockUsersRepo.SetupFindSingleResult(userInfo);
@@ -97,16 +98,18 @@ public class AuthServiceTests {
         var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        Task act() => usersDomain.SignIn(requestData);
+        var result = await usersDomain.SignIn(requestData);
 
         // Assert
-        Exception exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.WrongPassword, exception.Message);
+        Assert.Equal(ErrorCodes.WrongPassword, result.Error.Code);
     }
 
     [Fact]
@@ -134,12 +137,12 @@ public class AuthServiceTests {
         mockUsersRepo.VerifyAddEntityCalls(Times.Once());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Once());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Once());
-        Assert.Equal(userId, result.UserId);
-        Assert.Equal(jwtMockResult.Token, result.Token);
+        Assert.Equal(userId, result.Value.UserId);
+        Assert.Equal(jwtMockResult.Token, result.Value.Token);
     }
 
     [Fact]
-    public async Task AuthService_SignUp_ThrowsEmailInUse() {
+    public async Task AuthService_SignUp_ReturnsEmailInUseError() {
         // Arrange
         var userInfo = new User { Id = userId, Email = email };
         mockUsersRepo.SetupFindSingleResult(userInfo);
@@ -148,15 +151,17 @@ public class AuthServiceTests {
         var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        Task act() => usersDomain.SignUp(requestData);
+        var result = await usersDomain.SignUp(requestData);
 
         // Assert
-        Exception exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.NotNull(result);
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Error);
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockUsersRepo.VerifyAddEntityCalls(Times.Never());
         mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
-        Assert.Equal(ErrorCodes.EmailAlreadyInUse, exception.Message);
+        Assert.Equal(ErrorCodes.EmailAlreadyInUse, result.Error.Code);
     }
 }

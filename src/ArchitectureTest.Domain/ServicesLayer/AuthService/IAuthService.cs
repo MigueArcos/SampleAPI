@@ -4,6 +4,6 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Domain.ServiceLayer.AuthService;
 
 public interface IAuthService {
-    Task<JsonWebToken> SignIn(SignInModel signInModel);
-    Task<JsonWebToken> SignUp(SignUpModel signUpModel);
+    Task<Result<JsonWebToken, AppError>> SignIn(SignInModel signInModel);
+    Task<Result<JsonWebToken, AppError>> SignUp(SignUpModel signUpModel);
 }

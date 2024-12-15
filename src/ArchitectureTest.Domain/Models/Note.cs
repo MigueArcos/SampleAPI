@@ -15,7 +15,9 @@ public class NoteDTO : BasicDTO<long>, IEntityConverter<Note> {
 			Title = Title,
 			Content = Content,
 			UserId = UserId,
-			Id = Id
+			Id = Id,
+			CreationDate = CreationDate,
+			ModificationDate = ModificationDate
 		};
 	}
 }

@@ -65,13 +65,13 @@ public class NotesControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesController_GetById_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task NotesController_GetById_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
-        if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+        if (useCustomErrorCode) {
+            mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
-            mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ThrowsAsync(new Exception("Any exception message"));
+            mockNotesCrudService.Setup(nD => nD.GetById(It.IsAny<long>())).ReturnsAsync(new AppError("Any exception message"));
         }
 
         // Act
@@ -106,13 +106,13 @@ public class NotesControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesController_GetAll_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task NotesController_GetAll_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
-        if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+        if (useCustomErrorCode) {
+            mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
-            mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ThrowsAsync(new Exception("Any exception message"));
+            mockNotesCrudService.Setup(nD => nD.GetUserNotes()).ReturnsAsync(new AppError("AnyErrorCode"));
         }
 
         // Act
@@ -152,14 +152,14 @@ public class NotesControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesController_Post_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task NotesController_Post_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
-        if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+        if (useCustomErrorCode) {
+            mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
-            mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ThrowsAsync(new Exception("Any exception message"));
+            mockNotesCrudService.Setup(nD => nD.Add(It.IsAny<NoteDTO>())).ReturnsAsync(new AppError("AnyErrorCode"));
         }
         
         // Act
@@ -196,18 +196,18 @@ public class NotesControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesController_Put_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task NotesController_Put_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
         var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
-        if (useCustomException) {
+        if (useCustomErrorCode) {
             mockNotesCrudService
                 .Setup(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>()))
-                .ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+                .ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
             mockNotesCrudService
                 .Setup(nD => nD.Update(It.IsAny<long>(), It.IsAny<NoteDTO>()))
-                .ThrowsAsync(new Exception("Any exception message"));
+                .ReturnsAsync(new AppError("AnyErrorCode"));
         }
 
         // Act
@@ -227,7 +227,7 @@ public class NotesControllerTest {
         // Arrange
         // domain.Delete will always be called validating if entity belongs to user because 
         // that is a behavior of the domain and cannot be changed by user
-        mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ReturnsAsync(true);
+        mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ReturnsAsync((AppError) null);
         // Act
         var result = await notesController.Delete(noteId) as NoContentResult;
 
@@ -240,13 +240,13 @@ public class NotesControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task NotesController_Delete_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task NotesController_Delete_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
-        if (useCustomException) {
-            mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+        if (useCustomErrorCode) {
+            mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
-            mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ThrowsAsync(new Exception("Any exception message"));
+            mockNotesCrudService.Setup(nD => nD.Delete(It.IsAny<long>())).ReturnsAsync(new AppError("AnyErrorCode"));
         }
 
         // Act

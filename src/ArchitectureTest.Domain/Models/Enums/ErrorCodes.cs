@@ -6,6 +6,8 @@ public struct ErrorCodes {
     public const string InvalidPassword = "auth-invalid-password";
     public const string UserNameNotFound = "auth-username-not-found";
     public const string WeakPassWord = "auth-weak-password";
+    public const string CannotGenerateJwtToken = "auth-cannot-generate-token";
+    public const string IncompleteJwtTokenData = "auth-incomplete-token-data";
     public const string PasswordsDoNotMatch = "auth-passwords-mismatch";
     public const string EmailAlreadyInUse = "auth-email-in-use";
     public const string WrongPassword = "auth-wrong-password";
@@ -23,6 +25,7 @@ public struct ErrorCodes {
     public const string UserIdNotSupplied = "missing-uid";
     public const string EntityNotFound = "data-not-found";
     public const string InputDataNotFound = "input-data-not-found";
+    public const string IncorrectInputData = "incorrect-input-data";
     public const string EntityDoesNotBelongToUser = "missing-permissions-over-entry";
     public const string CannotCreateDataForThisUserId = "cannot-create-data-for-this-user-id";
     public const string ValidationsFailed = "validations-failed";

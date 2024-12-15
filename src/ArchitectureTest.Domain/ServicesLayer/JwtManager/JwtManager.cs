@@ -1,4 +1,5 @@
 ﻿using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.Enums;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,7 +20,10 @@ public class JwtManager : IJwtManager {
 		_tokenValidationParameters = tokenValidationParameters;
 	}
 
-	public JsonWebToken GenerateToken(JwtUser user) {
+	public Result<JsonWebToken, AppError> GenerateToken(JwtUser user) {
+		if (user.Id <= 0 || string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Name))
+			return new AppError(ErrorCodes.CannotGenerateJwtToken);
+
 		var tokenDescriptor = new SecurityTokenDescriptor {
 			Subject = new ClaimsIdentity(new Claim[] {
 				new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -44,13 +48,21 @@ public class JwtManager : IJwtManager {
 		};
 	}
 
-	public (ClaimsPrincipal claims, JwtUser jwtUser) ReadToken(string token, bool validateLifeTime) {
+	public Result<(ClaimsPrincipal Claims, JwtUser JwtUser), AppError> ReadToken(string token, bool validateLifeTime) {
 		_tokenValidationParameters.ValidateLifetime = validateLifeTime;
-		var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken validatedToken);
+		var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken _);
+		
+		var emailClaim = claims.FindFirst(ClaimTypes.Email);
+		var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
+		var nameClaim = claims.FindFirst(ClaimTypes.Name);
+
+		if (userIdClaim is null || emailClaim is null || nameClaim is null)
+			return new AppError(ErrorCodes.IncompleteJwtTokenData);
+	
 		var user = new JwtUser {
-			Email = claims.FindFirst(ClaimTypes.Email)?.Value ?? "user@default.io",
-			Id = long.Parse(claims.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
-			Name = claims.FindFirst(ClaimTypes.Name)?.Value ?? "Default"
+			Email = emailClaim.Value,
+			Id = long.Parse(userIdClaim.Value),
+			Name = nameClaim.Value
 		};
 		return (claims, user);
 	}

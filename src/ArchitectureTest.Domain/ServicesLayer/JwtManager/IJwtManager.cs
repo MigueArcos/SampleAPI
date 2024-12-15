@@ -4,8 +4,8 @@ using System.Security.Claims;
 namespace ArchitectureTest.Domain.ServiceLayer.JwtManager;
 
 public interface IJwtManager {
-    JsonWebToken GenerateToken(JwtUser user);
-    (ClaimsPrincipal claims, JwtUser jwtUser) ReadToken(string token, bool validateLifeTime);
+    Result<JsonWebToken, AppError> GenerateToken(JwtUser user);
+    Result<(ClaimsPrincipal Claims, JwtUser JwtUser), AppError> ReadToken(string token, bool validateLifeTime);
     int TokenTTLSeconds { get; }
     int RefreshTokenTTLSeconds { get; }
 }

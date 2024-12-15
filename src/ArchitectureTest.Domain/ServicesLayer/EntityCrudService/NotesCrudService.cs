@@ -13,47 +13,50 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService {
 	public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
-	public override bool RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO? dto = null) {
+	public override AppError? RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO? dto = null) {
 		switch (requestType) {
 			case RequestType.Post:
 				if (dto is null)
-					throw new Exception(ErrorCodes.InputDataNotFound);
+					return new AppError(ErrorCodes.InputDataNotFound);
 
 				if (dto.UserId < 1)
-					throw new Exception(ErrorCodes.UserIdNotSupplied);
+					return new AppError(ErrorCodes.UserIdNotSupplied);
 				
-				if (dto.UserId != CrudSettings.UserId)
-					throw new Exception(ErrorCodes.CannotCreateDataForThisUserId);
+				if (dto.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser)
+					return new AppError(ErrorCodes.CannotCreateDataForThisUserId);
 
 				if (string.IsNullOrWhiteSpace(dto.Title))
-					throw new Exception(ErrorCodes.NoteTitleNotFound);
+					return new AppError(ErrorCodes.NoteTitleNotFound);
 
 				if (string.IsNullOrEmpty(dto.Content))
 					dto.Content = string.Empty;
 				break;
 			case RequestType.Get:
 				if (entityId < 1)
-					throw new Exception(ErrorCodes.NoteIdNotSupplied);
+					return new AppError(ErrorCodes.NoteIdNotSupplied);
 				break;
 			case RequestType.Put:
 				if (entityId == null)
-					throw new Exception(ErrorCodes.NoteIdNotSupplied);
+					return new AppError(ErrorCodes.NoteIdNotSupplied);
 
 				if (dto is null)
-					throw new Exception(ErrorCodes.InputDataNotFound);
+					return new AppError(ErrorCodes.InputDataNotFound);
 
 				if (dto.UserId < 1)
-					throw new Exception(ErrorCodes.UserIdNotSupplied);
+					return new AppError(ErrorCodes.UserIdNotSupplied);
+				
+				if (dto.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser)
+					return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
 
 				if (string.IsNullOrWhiteSpace(dto.Title))
-					throw new Exception(ErrorCodes.NoteTitleNotFound);
+					return new AppError(ErrorCodes.NoteTitleNotFound);
 				break;
 			case RequestType.Delete:
 				if (entityId < 1)
-					throw new Exception(ErrorCodes.NoteIdNotSupplied);
+					return new AppError(ErrorCodes.NoteIdNotSupplied);
 				break;
 		}
-		return true;
+		return null;
 	}
 	
 	public override NoteDTO ToDTO(Note entity) {
@@ -75,10 +78,17 @@ public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudServ
 		return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
 	}
 
-    public async Task<IList<NoteDTO>> GetUserNotes() {
+    public async Task<Result<IList<NoteDTO>, AppError>> GetUserNotes() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
-        if (CrudSettings.UserId < 1) throw new Exception(ErrorCodes.UserIdNotSupplied);
-        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId);
-        return ToDTOs(notes);
+        if (CrudSettings.UserId < 1) return new AppError(ErrorCodes.UserIdNotSupplied);
+        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
+
+		// TODO: Check why these lines doesn't work even though toDTOs returns an IList
+		// IList<NoteDTO> result = ToDTOs(notes).ToList();
+		// or
+		// (<Result<IList<NoteDTO>, AppError>>) ToDTOs(notes);
+		// ToDTOs(notes) as Result<IList<NoteDTO>, AppError>;
+		List<NoteDTO> result = ToDTOs(notes).ToList();
+        return result;
     }
 }

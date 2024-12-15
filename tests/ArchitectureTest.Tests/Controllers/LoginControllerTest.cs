@@ -70,14 +70,14 @@ public class LoginControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task LoginController_SignIn_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task LoginController_SignIn_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
         var requestData = new SignInModel { Email = email, Password = password };
-        if (useCustomException) {
-            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+        if (useCustomErrorCode) {
+            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
-            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ThrowsAsync(new Exception("Any exception message"));
+            mockAuthService.Setup(uD => uD.SignIn(It.IsAny<SignInModel>())).ReturnsAsync(new AppError("AnyErrorCode"));
         }
         
         // Act
@@ -169,14 +169,14 @@ public class LoginControllerTest {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task LoginController_SignUp_ThrowsUnknownErrorOnUnhandledException(bool useCustomException) {
+    public async Task LoginController_SignUp_ReturnsUnknownErrorOnUnhandledException(bool useCustomErrorCode) {
         // Arrange
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
-        if (useCustomException) {
-            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(new Exception(ErrorCodes.UnknownError));
+        if (useCustomErrorCode) {
+            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ReturnsAsync(new AppError(ErrorCodes.UnknownError));
         }
         else {
-            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ThrowsAsync(new Exception("Any exception message"));
+            mockAuthService.Setup(uD => uD.SignUp(It.IsAny<SignUpModel>())).ReturnsAsync(new AppError("AnyErrorCode"));
         }
 
         // Act

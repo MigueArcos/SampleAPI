@@ -23,42 +23,51 @@ public class AuthService : IAuthService {
 		_tokensRepository = unitOfWork.Repository<UserToken>();
 	}
 
-	public async Task<JsonWebToken> SignIn(SignInModel signInModel) {
-		var user = await _usersRepository.FindSingle(u => u.Email == signInModel.Email) 
-			?? throw new Exception(ErrorCodes.UserNotFound);
-	
+	public async Task<Result<JsonWebToken, AppError>> SignIn(SignInModel signInModel) {
+		var user = await _usersRepository.FindSingle(u => u.Email == signInModel.Email).ConfigureAwait(false);
+		if (user == null)
+			return new AppError(ErrorCodes.UserNotFound);
+
 		var (Verified, NeedsUpgrade) = _passwordHasher.Check(user.Password, signInModel.Password);
-		if (!Verified) throw new Exception(ErrorCodes.WrongPassword);
-		var userJwt = await CreateUserJwt(user.Id, user.Email, user.Name);
+
+		if (!Verified)
+			return new AppError(ErrorCodes.WrongPassword);
+
+		var userJwt = await CreateUserJwt(user.Id, user.Email, user.Name).ConfigureAwait(false);
 		return userJwt;
 	}
 
-	public async Task<JsonWebToken> SignUp(SignUpModel signUpModel) {
-		var userFound = await _usersRepository.FindSingle(u => u.Email == signUpModel.Email);
+	public async Task<Result<JsonWebToken, AppError>> SignUp(SignUpModel signUpModel) {
+		var userFound = await _usersRepository.FindSingle(u => u.Email == signUpModel.Email).ConfigureAwait(false);
 		if (userFound != null)
-			throw new Exception(ErrorCodes.EmailAlreadyInUse);
+			return new AppError(ErrorCodes.EmailAlreadyInUse);
 
 		var newUser = await _usersRepository.Add(new User {
 			Name = signUpModel.UserName,
 			Email = signUpModel.Email,
 			Password = _passwordHasher.Hash(signUpModel.Password)
-		});
-		var userJwt = await CreateUserJwt(newUser.Id, newUser.Email, newUser.Name);
+		}).ConfigureAwait(false);
+
+		var userJwt = await CreateUserJwt(newUser.Id, newUser.Email, newUser.Name).ConfigureAwait(false);
 		return userJwt;
 	}
 
-	private async Task<JsonWebToken> CreateUserJwt(long userId, string email, string name) {
-		var userJwt = _jwtManager.GenerateToken(new JwtUser {
+	private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(long userId, string email, string name) {
+		var resultToken = _jwtManager.GenerateToken(new JwtUser {
 			Name = name,
 			Email = email,
 			Id = userId
 		});
+		if (resultToken.Error is not null)
+			return resultToken.Error;
+
+		var userJwt = resultToken.Value;
 		await _tokensRepository.Add(new UserToken {
-			UserId = userJwt.UserId,
-			Token = userJwt.RefreshToken,
+			UserId = userJwt!.UserId,
+			Token = userJwt!.RefreshToken,
 			TokenTypeId = (long)Data.Enums.TokenType.RefreshToken,
 			ExpiryTime = DateTime.Now.AddSeconds(_jwtManager.RefreshTokenTTLSeconds)
-		});
-		return userJwt;
+		}).ConfigureAwait(false);
+		return userJwt!;
 	}
 }

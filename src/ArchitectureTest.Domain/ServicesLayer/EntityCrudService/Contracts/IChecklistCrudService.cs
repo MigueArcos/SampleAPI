@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
 
 public interface IChecklistCrudService : ICrudService<Checklist, ChecklistDTO> {
-    Task<IList<ChecklistDTO>> GetUserChecklists();
+    Task<Result<IList<ChecklistDTO>, AppError>> GetUserChecklists();
 }

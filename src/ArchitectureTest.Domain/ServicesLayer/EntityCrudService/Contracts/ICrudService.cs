@@ -7,13 +7,21 @@ using ArchitectureTest.Domain.Models.Converters;
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 
 public interface ICrudService<TEntity, TDto> where TEntity : class where TDto : BasicDTO<long>, IEntityConverter<TEntity> {
-    EntityCrudSettings CrudSettings { get; set; }
-    Task<bool> Delete(long entityId);
     bool EntityBelongsToUser(TEntity entity);
-    Task<TDto> GetById(long entityId);
-    Task<TDto> Add(TDto dto);
-    Task<TDto> Update(long entityId, TDto dto);
-    bool RequestIsValid(RequestType requestType, long? entityId = null, TDto? dto = null);
+
+    AppError? RequestIsValid(RequestType requestType, long? entityId = null, TDto? dto = null);
+
+    EntityCrudSettings CrudSettings { get; set; }
+
+    Task<Result<TDto, AppError>> GetById(long entityId);
+
+    Task<Result<TDto, AppError>> Add(TDto dto);
+
+    Task<Result<TDto, AppError>> Update(long entityId, TDto dto);
+
+    Task<AppError?> Delete(long entityId);
+
     TDto ToDTO(TEntity entity);
+
     IList<TDto> ToDTOs(IList<TEntity> entities);
 }

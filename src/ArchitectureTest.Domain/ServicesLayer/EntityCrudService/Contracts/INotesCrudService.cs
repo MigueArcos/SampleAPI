@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
 
 public interface INotesCrudService : ICrudService<Note, NoteDTO> {
-    Task<IList<NoteDTO>> GetUserNotes();
+    Task<Result<IList<NoteDTO>, AppError>> GetUserNotes();
 }

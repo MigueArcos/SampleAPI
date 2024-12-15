@@ -13,52 +13,35 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService {
     public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
-    public override AppError? RequestIsValid(RequestType requestType, long? entityId = null, NoteDTO? dto = null) {
-        switch (requestType) {
-            case RequestType.Post:
-                if (dto is null)
-                    return new AppError(ErrorCodes.InputDataNotFound);
 
-                if (dto.UserId < 1)
-                    return new AppError(ErrorCodes.UserIdNotSupplied);
-                
-                if (dto.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser)
-                    return new AppError(ErrorCodes.CannotCreateDataForThisUserId);
+    public override Dictionary<CrudOperation, List<(Func<NoteDTO?, long?, bool>, string)>> ValidationsByOperation => new() {
+        [CrudOperation.Create] = [
+            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
+            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((dto, entityId) => 
+                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                ErrorCodes.CannotCreateDataForThisUserId
+            ),
+            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound),
+        ],
+        [CrudOperation.ReadById] = [
+            ((dto, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+        ],
+        [CrudOperation.Update] = [
+            ((dto, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
+            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
+            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((dto, entityId) => 
+                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                ErrorCodes.EntityDoesNotBelongToUser
+            ),
+            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound)
+        ],
+        [CrudOperation.Delete] = [
+            ((dto, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+        ]
+    };
 
-                if (string.IsNullOrWhiteSpace(dto.Title))
-                    return new AppError(ErrorCodes.NoteTitleNotFound);
-
-                if (string.IsNullOrEmpty(dto.Content))
-                    dto.Content = string.Empty;
-                break;
-            case RequestType.Get:
-                if (entityId < 1)
-                    return new AppError(ErrorCodes.NoteIdNotSupplied);
-                break;
-            case RequestType.Put:
-                if (entityId == null)
-                    return new AppError(ErrorCodes.NoteIdNotSupplied);
-
-                if (dto is null)
-                    return new AppError(ErrorCodes.InputDataNotFound);
-
-                if (dto.UserId < 1)
-                    return new AppError(ErrorCodes.UserIdNotSupplied);
-                
-                if (dto.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser)
-                    return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
-
-                if (string.IsNullOrWhiteSpace(dto.Title))
-                    return new AppError(ErrorCodes.NoteTitleNotFound);
-                break;
-            case RequestType.Delete:
-                if (entityId < 1)
-                    return new AppError(ErrorCodes.NoteIdNotSupplied);
-                break;
-        }
-        return null;
-    }
-    
     public override NoteDTO ToDTO(Note entity) {
         return new NoteDTO {
             Id = entity.Id,

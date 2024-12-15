@@ -7,53 +7,41 @@ using System.Linq;
 using System.Threading.Tasks;
 using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Models.Enums;
+using System;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
 public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, IChecklistCrudService {
     public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
-    public override AppError? RequestIsValid(RequestType requestType, long? entityId = null, ChecklistDTO? dto = null) {
-        switch (requestType) {
-            case RequestType.Post:
-                if (dto is null)
-                    return new AppError(ErrorCodes.InputDataNotFound);
 
-                if (dto.UserId < 1)
-                    return new AppError(ErrorCodes.UserIdNotSupplied);
-                
-                if (dto.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser)
-                    return new AppError(ErrorCodes.CannotCreateDataForThisUserId);
+    public override Dictionary<CrudOperation, List<(Func<ChecklistDTO?, long?, bool>, string)>> ValidationsByOperation => new () {
+        [CrudOperation.Create] = [
+            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
+            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((dto, entityId) => 
+                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                ErrorCodes.CannotCreateDataForThisUserId
+            ),
+            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound),
+        ],
+        [CrudOperation.ReadById] = [
+            ((dto, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+        ],
+        [CrudOperation.Update] = [
+            ((dto, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
+            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
+            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((dto, entityId) => 
+                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                ErrorCodes.EntityDoesNotBelongToUser
+            ),
+            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound)
+        ],
+        [CrudOperation.Delete] = [
+            ((dto, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+        ]
+    };
 
-                if (string.IsNullOrWhiteSpace(dto.Title))
-                    return new AppError(ErrorCodes.NoteTitleNotFound);
-                break;
-            case RequestType.Get:
-                if (entityId < 1)
-                    return new AppError(ErrorCodes.ChecklistIdNotSupplied);
-                break;
-            case RequestType.Put:
-                if (entityId == null)
-                    return new AppError(ErrorCodes.ChecklistIdNotSupplied);
-                
-                if (dto is null)
-                    return new AppError(ErrorCodes.InputDataNotFound);
-
-                if (dto.UserId < 1)
-                    return new AppError(ErrorCodes.UserIdNotSupplied);
-                
-                if (dto.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser)
-                    return new AppError(ErrorCodes.CannotCreateDataForThisUserId);
-
-                if (string.IsNullOrWhiteSpace(dto.Title))
-                    return new AppError(ErrorCodes.NoteTitleNotFound);
-                break;
-            case RequestType.Delete:
-                if (entityId < 0)
-                    return new AppError(ErrorCodes.ChecklistIdNotSupplied);
-                break;
-        }
-        return null;
-    }
     public async Task<Result<IList<ChecklistDTO>, AppError>> GetUserChecklists() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1)
@@ -116,7 +104,9 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         return selection;
     }
 
-    private async Task<bool> PostDetails(long parentChecklistId, IList<ChecklistDetailDTO> details, long? parentDetailId = null) {
+    private async Task<bool> PostDetails(
+        long parentChecklistId, IList<ChecklistDetailDTO> details, long? parentDetailId = null
+    ) {
         for(int i = 0; i < details.Count; i++){
             var d = details[i];
             d.ChecklistId = parentChecklistId;

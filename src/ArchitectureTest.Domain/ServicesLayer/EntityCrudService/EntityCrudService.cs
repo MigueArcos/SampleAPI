@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Models.Enums;
+using System;
 
 namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
 
@@ -19,12 +20,13 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     public EntityCrudSettings CrudSettings { get; set; } = new EntityCrudSettings {
         ValidateEntityBelongsToUser = false
     };
+
     public EntityCrudService(IUnitOfWork unitOfWork) {
         _repository = unitOfWork.Repository<TEntity>();
         _unitOfWork = unitOfWork;
     }
     public virtual async Task<Result<TDto, AppError>> Add(TDto dto) {
-        var requestError = RequestIsValid(RequestType.Post, dto: dto);
+        var requestError = RequestIsValid(CrudOperation.Create, dto: dto);
         if (requestError is null) {
             var entity = await _repository.Add(dto.ToEntity()).ConfigureAwait(false);
             return ToDTO(entity);
@@ -33,7 +35,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     }
 
     public virtual async Task<Result<TDto, AppError>> GetById(long entityId) {
-        if (RequestIsValid(RequestType.Get, entityId: entityId) is AppError requestError && requestError is not null)
+        if (RequestIsValid(CrudOperation.ReadById, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
         
         var entity = await _repository.GetById(entityId).ConfigureAwait(false);
@@ -47,7 +49,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     }
 
     public virtual async Task<Result<TDto, AppError>> Update(long entityId, TDto dto) {
-        if (RequestIsValid(RequestType.Put, entityId: entityId, dto: dto) is AppError requestError && requestError is not null)
+        if (RequestIsValid(CrudOperation.Update, entityId, dto) is AppError requestError && requestError is not null)
             return requestError;
         
         var entity = await _repository.GetById(entityId).ConfigureAwait(false);
@@ -68,7 +70,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     }
 
     public virtual async Task<AppError?> Delete(long entityId) {
-        if (RequestIsValid(RequestType.Delete, entityId: entityId) is AppError requestError && requestError is not null)
+        if (RequestIsValid(CrudOperation.Delete, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
 
         var entity = await _repository.GetById(entityId).ConfigureAwait(false);
@@ -86,8 +88,22 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
             return new AppError(ErrorCodes.RepoProblem);
     }
 
-    public abstract AppError? RequestIsValid(RequestType requestType, long? entityId = null, TDto? dto = null);
+    public virtual AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TDto? dto = null) {
+        bool found = ValidationsByOperation.TryGetValue(crudOperation, out var validations);
+        if (!found)
+            return new AppError(ErrorCodes.IncorrectInputData);
+        
+        foreach (var validation in validations!){
+            var (validationFailedFunc, errorCode) = validation;
+            if (validationFailedFunc(dto, entityId))
+                return new AppError(errorCode);
+        }
+
+        return null;
+    }
+
     public abstract bool EntityBelongsToUser(TEntity entity);
     public abstract TDto ToDTO(TEntity entity);
     public abstract IList<TDto> ToDTOs(IList<TEntity> entities);
+    public abstract Dictionary<CrudOperation, List<(Func<TDto?, long?, bool>, string)>> ValidationsByOperation { get; }
 }

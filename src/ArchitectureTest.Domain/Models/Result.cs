@@ -29,8 +29,9 @@ public class Result<TValue, TError>
     //error path
     public static implicit operator Result<TValue, TError>(TError error) => new Result<TValue, TError>(error);
 
-    public Result<TValue, TError> Match(Func<TValue, Result<TValue, TError>> success, Func<TError, Result<TValue, TError>> failure)
-    {
+    public Result<TValue, TError> Match(
+        Func<TValue, Result<TValue, TError>> success, Func<TError, Result<TValue, TError>> failure
+    ) {
         if (_isSuccess)
         {
             return success(Value!);

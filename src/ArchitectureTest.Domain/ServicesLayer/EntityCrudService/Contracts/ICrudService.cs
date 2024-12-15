@@ -9,7 +9,7 @@ namespace ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
 public interface ICrudService<TEntity, TDto> where TEntity : class where TDto : BasicDTO<long>, IEntityConverter<TEntity> {
     bool EntityBelongsToUser(TEntity entity);
 
-    AppError? RequestIsValid(RequestType requestType, long? entityId = null, TDto? dto = null);
+    AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TDto? dto = null);
 
     EntityCrudSettings CrudSettings { get; set; }
 

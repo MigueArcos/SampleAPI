@@ -1,7 +1,7 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
-using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

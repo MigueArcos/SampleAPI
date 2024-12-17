@@ -8,10 +8,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using System.Security.Claims;
-using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
-using ArchitectureTest.Domain.Models.Enums;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.Extensions.Logging;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Errors;
 
 namespace ArchitectureTest.Tests.Controllers;
 

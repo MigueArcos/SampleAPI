@@ -1,6 +1,6 @@
 ﻿using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Models.Converters;
-using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArchitectureTest.Web.Controllers;

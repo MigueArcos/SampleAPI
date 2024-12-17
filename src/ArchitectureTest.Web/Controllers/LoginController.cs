@@ -1,12 +1,12 @@
 ﻿using System.Text.Json;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.ServiceLayer.AuthService;
 using ArchitectureTest.Web.Configuration;
 using ArchitectureTest.Infrastructure.HttpExtensions;
 using ArchitectureTest.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using ArchitectureTest.Domain.Models.Enums;
+using ArchitectureTest.Domain.Errors;
+using ArchitectureTest.Domain.Services.Application.AuthService;
 
 namespace ArchitectureTest.Web.Controllers;
 

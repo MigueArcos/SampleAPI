@@ -2,14 +2,15 @@
 using System.Text;
 using ArchitectureTest.Data.Database.SQLServer;
 using ArchitectureTest.Data.Database.SQLServer.Entities;
-using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.ServiceLayer.AuthService;
-using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
-using ArchitectureTest.Domain.ServiceLayer.EntityCrudService.Contracts;
-using ArchitectureTest.Domain.ServiceLayer.JwtManager;
-using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
-using ArchitectureTest.Domain.ServicesLayer.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Services;
+using ArchitectureTest.Domain.Services.Application.AuthService;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Services.Infrastructure;
+using ArchitectureTest.Domain.Services.Infrastructure.JwtManager;
+using ArchitectureTest.Domain.Services.Infrastructure.PasswordHasher;
+using ArchitectureTest.Infrastructure.SqlEFCore.UnitOfWork;
 using ArchitectureTest.Web;
 using ArchitectureTest.Web.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,7 @@ TokenValidationParameters tokenValidationParameters = new()
 
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(configuration.GetConnectionString("SQLServer")));
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters));
+builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();

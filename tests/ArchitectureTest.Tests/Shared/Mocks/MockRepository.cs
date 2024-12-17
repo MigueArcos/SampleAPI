@@ -1,8 +1,8 @@
-﻿using ArchitectureTest.Domain.DataAccessLayer.Repositories.BasicRepo;
-using Moq;
+﻿using Moq;
 using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using ArchitectureTest.Domain.Services;
 
 namespace ArchitectureTest.Tests.Shared.Mocks;
 

@@ -8,12 +8,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Xunit;
 using System.Linq;
-using System;
 using ArchitectureTest.Tests.Shared;
-using ArchitectureTest.Domain.ServiceLayer.AuthService;
-using ArchitectureTest.Domain.Models.Enums;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.Extensions.Logging;
+using ArchitectureTest.Domain.Services.Application.AuthService;
+using ArchitectureTest.Domain.Errors;
 
 namespace ArchitectureTest.Tests.Controllers;
 

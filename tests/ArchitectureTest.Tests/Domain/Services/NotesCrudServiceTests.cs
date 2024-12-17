@@ -1,14 +1,14 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
+using ArchitectureTest.Domain.Services;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Tests.Shared.Mocks;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
-using ArchitectureTest.Domain.ServiceLayer.EntityCrudService;
-using ArchitectureTest.Domain.Models.Enums;
 
 namespace ArchitectureTest.Tests.Domain.Services;
 

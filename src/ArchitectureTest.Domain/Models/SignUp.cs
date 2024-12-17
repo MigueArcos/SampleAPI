@@ -1,5 +1,5 @@
-﻿using ArchitectureTest.Domain.Models.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using ArchitectureTest.Domain.Errors;
 
 namespace ArchitectureTest.Domain.Models;
 

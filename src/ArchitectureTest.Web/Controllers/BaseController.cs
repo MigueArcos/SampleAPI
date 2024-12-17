@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Domain.Models;
+﻿using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.AspNetCore.Mvc;
 

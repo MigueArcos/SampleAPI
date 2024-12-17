@@ -1,15 +1,15 @@
 ﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.DataAccessLayer.UnitOfWork;
+using ArchitectureTest.Domain.Services;
+using ArchitectureTest.Domain.Services.Application.AuthService;
+using ArchitectureTest.Domain.Services.Infrastructure;
 using ArchitectureTest.Tests.Shared.Mocks;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
-using ArchitectureTest.Domain.ServiceLayer.JwtManager;
-using ArchitectureTest.Domain.ServiceLayer.PasswordHasher;
-using ArchitectureTest.Domain.ServiceLayer.AuthService;
-using ArchitectureTest.Domain.Models.Enums;
 
 namespace ArchitectureTest.Tests.Domain.Services;
 
@@ -22,7 +22,18 @@ public class AuthServiceTests {
     private const string email = "anyEmail@anyDomain.com", password = "anyPassword", name = "anyName";
     private const string randomToken = "eyzhdhhdhd.fhfhhf.fggg", randomRefreshToken = "4nyR3fr35hT0k3n";
     private const long userId = 1;
+
+    private readonly AuthService _systemUnderTest;
+
     public AuthServiceTests() {
+        var jwtConfig = new Dictionary<string, string>{
+            {"ConfigData:Jwt:TokenTTLSeconds", "3600"},
+            {"ConfigData:Jwt:RefreshTokenTTLHours", "720"},
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(jwtConfig)
+            .Build();
         mockUsersRepo = new MockRepository<User>();
 
         mockUsersTokenRepo = new MockRepository<UserToken>();
@@ -35,6 +46,10 @@ public class AuthServiceTests {
         mockJwtManager = new Mock<IJwtManager>();
 
         mockPasswordHasher = new Mock<IPasswordHasher>();
+
+        _systemUnderTest = new AuthService(
+            mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object, configuration
+        );
     }
 
     [Fact]
@@ -52,10 +67,9 @@ public class AuthServiceTests {
         mockUsersRepo.SetupFindSingleResult(userInfo);
         mockPasswordHasher.Setup(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>())).Returns((true, true));
         var requestData = new SignInModel { Email = email, Password = password };
-        var authService = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        var result = await authService.SignIn(requestData);
+        var result = await _systemUnderTest.SignIn(requestData);
 
         // Assert
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
@@ -71,10 +85,9 @@ public class AuthServiceTests {
         // Arrange
         mockUsersRepo.SetupFindMultipleResults(new List<User>());
         var requestData = new SignInModel { Email = email, Password = password };
-        var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        var result = await usersDomain.SignIn(requestData);
+        var result = await _systemUnderTest.SignIn(requestData);
 
         // Assert
         Assert.NotNull(result);
@@ -95,10 +108,9 @@ public class AuthServiceTests {
         mockUsersRepo.SetupFindSingleResult(userInfo);
         mockPasswordHasher.Setup(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>())).Returns((false, true));
         var requestData = new SignInModel { Email = email, Password = password };
-        var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        var result = await usersDomain.SignIn(requestData);
+        var result = await _systemUnderTest.SignIn(requestData);
 
         // Assert
         Assert.NotNull(result);
@@ -127,10 +139,9 @@ public class AuthServiceTests {
         mockUsersRepo.Setup(uR => uR.Add(It.IsAny<User>())).Returns(Task.FromResult(userInfo));
         mockJwtManager.Setup(jwtManager => jwtManager.GenerateToken(It.IsAny<JwtUser>())).Returns(jwtMockResult);
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
-        var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        var result = await usersDomain.SignUp(requestData);
+        var result = await _systemUnderTest.SignUp(requestData);
 
         // Assert
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
@@ -148,10 +159,9 @@ public class AuthServiceTests {
         mockUsersRepo.SetupFindSingleResult(userInfo);
         mockUsersRepo.Setup(uR => uR.Add(It.IsAny<User>())).Returns(Task.FromResult(new User()));
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
-        var usersDomain = new AuthService(mockUnitOfWork.Object, mockJwtManager.Object, mockPasswordHasher.Object);
 
         // Act
-        var result = await usersDomain.SignUp(requestData);
+        var result = await _systemUnderTest.SignUp(requestData);
 
         // Assert
         Assert.NotNull(result);

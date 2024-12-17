@@ -1,4 +1,4 @@
-using ArchitectureTest.Domain.Models.Enums;
+using ArchitectureTest.Domain.Errors;
 
 namespace ArchitectureTest.Web.Configuration;
 

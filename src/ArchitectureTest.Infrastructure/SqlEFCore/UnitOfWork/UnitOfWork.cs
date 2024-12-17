@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.SQLServer;
+﻿using ArchitectureTest.Data.Database.SqlServer;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services;
 using Microsoft.EntityFrameworkCore.Storage;

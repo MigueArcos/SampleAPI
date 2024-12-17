@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ArchitectureTest.Data.Database.SqlServer.Entities;
+namespace ArchitectureTest.Data.Database.MySql.Entities;
 
 public partial class TokenType
 {

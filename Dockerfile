@@ -31,8 +31,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/src/ArchitectureTest.Web/out ./
 
-# Expose the port your application will run on
-EXPOSE 80
+# Expose the port your application will run on (default 8080 on .NET 8 and higher)
+# https://learn.microsoft.com/en-us/dotnet/core/compatibility/containers/8.0/aspnet-port
+EXPOSE 8080
 
 # Start the application
 ENTRYPOINT ["dotnet", "ArchitectureTest.Web.dll"]

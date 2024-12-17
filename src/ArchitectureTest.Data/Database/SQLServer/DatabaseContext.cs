@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using ArchitectureTest.Data.Database.SQLServer.Entities;
+using ArchitectureTest.Data.Database.SqlServer.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace ArchitectureTest.Data.Database.SQLServer;
+namespace ArchitectureTest.Data.Database.SqlServer;
 
 public partial class DatabaseContext : DbContext
 {
@@ -32,7 +32,7 @@ public partial class DatabaseContext : DbContext
     {
         modelBuilder.Entity<Checklist>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07943C235B");
+            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07C3E7191F");
 
             entity.ToTable("Checklist");
 
@@ -54,7 +54,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<ChecklistDetail>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC078FA978B9");
+            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07CF1BBA1A");
 
             entity.ToTable("ChecklistDetail");
 
@@ -77,7 +77,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<Note>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Note__3214EC070E57ACC1");
+            entity.HasKey(e => e.Id).HasName("PK__Note__3214EC07B6083323");
 
             entity.ToTable("Note");
 
@@ -100,7 +100,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<TokenType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TokenTyp__3214EC079E845675");
+            entity.HasKey(e => e.Id).HasName("PK__TokenTyp__3214EC07185533D0");
 
             entity.ToTable("TokenType");
 
@@ -111,7 +111,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__User__3214EC07A6DB2CC6");
+            entity.HasKey(e => e.Id).HasName("PK__User__3214EC07E7BCABDC");
 
             entity.ToTable("User");
 
@@ -134,7 +134,7 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<UserToken>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__UserToke__3214EC07EC97A79C");
+            entity.HasKey(e => e.Id).HasName("PK__UserToke__3214EC07DB59BC29");
 
             entity.ToTable("UserToken");
 

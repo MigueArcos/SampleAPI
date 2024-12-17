@@ -1,5 +1,5 @@
-﻿using ArchitectureTest.Data.Database.SQLServer;
-using ArchitectureTest.Data.Database.SQLServer.Entities;
+﻿using ArchitectureTest.Data.Database.SqlServer;
+using ArchitectureTest.Data.Database.SqlServer.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

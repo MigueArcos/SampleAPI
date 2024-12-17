@@ -15,6 +15,21 @@ services:
     networks:
       - demo
   
+  mysql:
+    image: mysql
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: self
+      MYSQL_PASSWORD: P455w0rd
+      MYSQL_DATABASE: crud
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql/:/docker-entrypoint-initdb.d/"
+    networks:
+      - demo
+  
   app:
     image: web-api:latest
     build:

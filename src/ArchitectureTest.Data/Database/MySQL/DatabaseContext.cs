@@ -1,134 +1,161 @@
 ﻿using System;
+using System.Collections.Generic;
+using ArchitectureTest.Data.Database.MySql.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
-namespace ArchitectureTest.Data.Database.MySQL.Entities
+namespace ArchitectureTest.Data.Database.MySql;
+
+public partial class DatabaseContext : DbContext
 {
-    public partial class DatabaseContext : DbContext
+    public DatabaseContext()
     {
-        public DatabaseContext()
-        {
-        }
-
-        public DatabaseContext(DbContextOptions<DatabaseContext> options)
-            : base(options)
-        {
-        }
-
-        public virtual DbSet<Checklist> Checklist { get; set; }
-        public virtual DbSet<ChecklistDetail> ChecklistDetail { get; set; }
-        public virtual DbSet<Note> Note { get; set; }
-        public virtual DbSet<User> User { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Checklist>(entity =>
-            {
-                entity.HasIndex(e => e.UserId)
-                    .HasName("UserId");
-
-                entity.Property(e => e.Id).HasColumnType("bigint(20)");
-
-                entity.Property(e => e.CreationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.ModificationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.Title).HasColumnType("varchar(100)");
-
-                entity.Property(e => e.UserId).HasColumnType("bigint(20)");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Checklist)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("checklist_ibfk_1");
-            });
-
-            modelBuilder.Entity<ChecklistDetail>(entity =>
-            {
-                entity.HasIndex(e => e.ChecklistId)
-                    .HasName("ChecklistId");
-
-                entity.Property(e => e.Id).HasColumnType("bigint(20)");
-
-                entity.Property(e => e.ChecklistId).HasColumnType("bigint(20)");
-
-                entity.Property(e => e.CreationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.ModificationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.ParentDetailId).HasColumnType("bigint(20)");
-
-                entity.Property(e => e.Status).HasColumnType("bit(1)");
-
-                entity.Property(e => e.TaskName)
-                    .IsRequired()
-                    .HasColumnType("varchar(100)");
-
-                entity.HasOne(d => d.Checklist)
-                    .WithMany(p => p.ChecklistDetail)
-                    .HasForeignKey(d => d.ChecklistId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("checklistdetail_ibfk_1");
-            });
-
-            modelBuilder.Entity<Note>(entity =>
-            {
-                entity.HasIndex(e => e.UserId)
-                    .HasName("UserId");
-
-                entity.Property(e => e.Id).HasColumnType("bigint(20)");
-
-                entity.Property(e => e.Content).HasColumnType("text");
-
-                entity.Property(e => e.CreationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.ModificationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.Title).HasColumnType("varchar(100)");
-
-                entity.Property(e => e.UserId).HasColumnType("bigint(20)");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Note)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("note_ibfk_1");
-            });
-
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.Property(e => e.Id).HasColumnType("bigint(20)");
-
-                entity.Property(e => e.CreationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.Email).HasColumnType("varchar(320)");
-
-                entity.Property(e => e.ModificationDate)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("'current_timestamp()'");
-
-                entity.Property(e => e.UserName).HasColumnType("varchar(50)");
-            });
-        }
     }
+
+    public DatabaseContext(DbContextOptions<DatabaseContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Checklist> Checklists { get; set; }
+
+    public virtual DbSet<ChecklistDetail> ChecklistDetails { get; set; }
+
+    public virtual DbSet<Note> Notes { get; set; }
+
+    public virtual DbSet<TokenType> TokenTypes { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserToken> UserTokens { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .UseCollation("utf8mb4_0900_ai_ci")
+            .HasCharSet("utf8mb4");
+
+        modelBuilder.Entity<Checklist>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("Checklist");
+
+            entity.HasIndex(e => e.UserId, "UserId");
+
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Title).HasMaxLength(100);
+
+            entity.HasOne(d => d.User).WithMany(p => p.Checklists)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("Checklist_ibfk_1");
+        });
+
+        modelBuilder.Entity<ChecklistDetail>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("ChecklistDetail");
+
+            entity.HasIndex(e => e.ChecklistId, "ChecklistId");
+
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.TaskName)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasOne(d => d.Checklist).WithMany(p => p.ChecklistDetails)
+                .HasForeignKey(d => d.ChecklistId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("ChecklistDetail_ibfk_1");
+        });
+
+        modelBuilder.Entity<Note>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("Note");
+
+            entity.HasIndex(e => e.UserId, "UserId");
+
+            entity.Property(e => e.Content).HasColumnType("text");
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Title).HasMaxLength(100);
+
+            entity.HasOne(d => d.User).WithMany(p => p.Notes)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("Note_ibfk_1");
+        });
+
+        modelBuilder.Entity<TokenType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("TokenType");
+
+            entity.Property(e => e.Name).HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("User");
+
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(320);
+            entity.Property(e => e.ModificationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Password).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<UserToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("UserToken");
+
+            entity.HasIndex(e => e.TokenTypeId, "TokenTypeId");
+
+            entity.HasIndex(e => e.UserId, "UserId");
+
+            entity.Property(e => e.ExpiryTime).HasColumnType("datetime");
+            entity.Property(e => e.Token).HasMaxLength(256);
+
+            entity.HasOne(d => d.TokenType).WithMany(p => p.UserTokens)
+                .HasForeignKey(d => d.TokenTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("UserToken_ibfk_2");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("UserToken_ibfk_1");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

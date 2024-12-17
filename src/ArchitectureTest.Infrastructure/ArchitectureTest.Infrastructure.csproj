@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ArchitectureTest.Data\ArchitectureTest.Data.csproj" />
+    <ProjectReference Include="..\ArchitectureTest.Databases\ArchitectureTest.Databases.csproj" />
   </ItemGroup>
 
   <ItemGroup>

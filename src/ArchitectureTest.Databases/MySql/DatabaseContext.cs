@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using ArchitectureTest.Data.Database.SQLServer.Entities;
+using ArchitectureTest.Databases.MySql.Entities;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
-namespace ArchitectureTest.Data.Database.SQLServer;
+namespace ArchitectureTest.Databases.MySql;
 
 public partial class DatabaseContext : DbContext
 {
@@ -30,128 +31,127 @@ public partial class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder
+            .UseCollation("utf8mb4_0900_ai_ci")
+            .HasCharSet("utf8mb4");
+
         modelBuilder.Entity<Checklist>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07943C235B");
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("Checklist");
 
+            entity.HasIndex(e => e.UserId, "UserId");
+
             entity.Property(e => e.CreationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Title)
-                .HasMaxLength(100)
-                .IsUnicode(false);
+            entity.Property(e => e.Title).HasMaxLength(100);
 
             entity.HasOne(d => d.User).WithMany(p => p.Checklists)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Checklist__UserI__23BE4960");
+                .HasConstraintName("Checklist_ibfk_1");
         });
 
         modelBuilder.Entity<ChecklistDetail>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC078FA978B9");
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("ChecklistDetail");
 
+            entity.HasIndex(e => e.ChecklistId, "ChecklistId");
+
             entity.Property(e => e.CreationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
             entity.Property(e => e.TaskName)
                 .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(false);
+                .HasMaxLength(100);
 
             entity.HasOne(d => d.Checklist).WithMany(p => p.ChecklistDetails)
                 .HasForeignKey(d => d.ChecklistId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Checklist__Check__2882FE7D");
+                .HasConstraintName("ChecklistDetail_ibfk_1");
         });
 
         modelBuilder.Entity<Note>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Note__3214EC070E57ACC1");
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("Note");
 
+            entity.HasIndex(e => e.UserId, "UserId");
+
             entity.Property(e => e.Content).HasColumnType("text");
             entity.Property(e => e.CreationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Title)
-                .HasMaxLength(100)
-                .IsUnicode(false);
+            entity.Property(e => e.Title).HasMaxLength(100);
 
             entity.HasOne(d => d.User).WithMany(p => p.Notes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Note__UserId__1EF99443");
+                .HasConstraintName("Note_ibfk_1");
         });
 
         modelBuilder.Entity<TokenType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TokenTyp__3214EC079E845675");
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("TokenType");
 
-            entity.Property(e => e.Name)
-                .HasMaxLength(20)
-                .IsUnicode(false);
+            entity.Property(e => e.Name).HasMaxLength(20);
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__User__3214EC07A6DB2CC6");
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("User");
 
             entity.Property(e => e.CreationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Email)
-                .HasMaxLength(320)
-                .IsUnicode(false);
+            entity.Property(e => e.Email).HasMaxLength(320);
             entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Name)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Password)
-                .HasMaxLength(256)
-                .IsUnicode(false);
+            entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Password).HasMaxLength(256);
         });
 
         modelBuilder.Entity<UserToken>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__UserToke__3214EC07EC97A79C");
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("UserToken");
 
+            entity.HasIndex(e => e.TokenTypeId, "TokenTypeId");
+
+            entity.HasIndex(e => e.UserId, "UserId");
+
             entity.Property(e => e.ExpiryTime).HasColumnType("datetime");
-            entity.Property(e => e.Token)
-                .HasMaxLength(256)
-                .IsUnicode(false);
+            entity.Property(e => e.Token).HasMaxLength(256);
 
             entity.HasOne(d => d.TokenType).WithMany(p => p.UserTokens)
                 .HasForeignKey(d => d.TokenTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserToken__Token__1A34DF26");
+                .HasConstraintName("UserToken_ibfk_2");
 
             entity.HasOne(d => d.User).WithMany(p => p.UserTokens)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserToken__UserI__1940BAED");
+                .HasConstraintName("UserToken_ibfk_1");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using ArchitectureTest.Data.Database.SQLServer;
-using ArchitectureTest.Data.Database.SQLServer.Entities;
+using ArchitectureTest.Databases.SqlServer;
+using ArchitectureTest.Databases.SqlServer.Entities;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.Services.Application.AuthService;
@@ -33,8 +33,12 @@ TokenValidationParameters tokenValidationParameters = new()
     ),
     ClockSkew = Debugger.IsAttached ? TimeSpan.Zero : TimeSpan.FromMinutes(10)
 };
+var connectionString = configuration.GetConnectionString("SqlServer");
+// SqlServer
+builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(configuration.GetConnectionString("SQLServer")));
+// Mysql
+// builder.Services.AddDbContext<DatabaseContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

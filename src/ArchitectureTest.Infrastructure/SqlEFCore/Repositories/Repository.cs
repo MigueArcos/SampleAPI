@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.SQLServer;
+﻿using ArchitectureTest.Databases.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

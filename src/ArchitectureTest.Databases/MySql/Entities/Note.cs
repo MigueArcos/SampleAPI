@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ArchitectureTest.Data.Database.SQLServer.Entities;
+namespace ArchitectureTest.Databases.MySql.Entities;
 
-public partial class Checklist
+public partial class Note
 {
     public long Id { get; set; }
 
@@ -11,11 +11,11 @@ public partial class Checklist
 
     public string Title { get; set; }
 
+    public string Content { get; set; }
+
     public DateTime? CreationDate { get; set; }
 
     public DateTime? ModificationDate { get; set; }
-
-    public virtual ICollection<ChecklistDetail> ChecklistDetails { get; set; } = new List<ChecklistDetail>();
 
     public virtual User User { get; set; }
 }

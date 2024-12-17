@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.28307.1000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{008B5F60-D1BD-4B66-875B-58C2FE98A119}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchitectureTest.Data", "src\ArchitectureTest.Data\ArchitectureTest.Data.csproj", "{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchitectureTest.Domain", "src\ArchitectureTest.Domain\ArchitectureTest.Domain.csproj", "{F242B190-C97C-44BE-91BF-4C0ECC41FF88}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchitectureTest.Web", "src\ArchitectureTest.Web\ArchitectureTest.Web.csproj", "{7CC5BD8A-A682-477E-B4AD-BE50C4B949D3}"
@@ -16,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchitectureTest.Tests", "tests\ArchitectureTest.Tests\ArchitectureTest.Tests.csproj", "{213CE55E-AC13-4D32-8A3D-3EAF0E4A6021}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchitectureTest.Infrastructure", "src\ArchitectureTest.Infrastructure\ArchitectureTest.Infrastructure.csproj", "{4944C10C-92F1-4409-AF3A-FDE154D470D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchitectureTest.Databases", "src\ArchitectureTest.Databases\ArchitectureTest.Databases.csproj", "{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}"
 EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
@@ -33,18 +33,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Debug|x64.Build.0 = Debug|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Debug|x86.Build.0 = Debug|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Release|x64.ActiveCfg = Release|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Release|x64.Build.0 = Release|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Release|x86.ActiveCfg = Release|Any CPU
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1}.Release|x86.Build.0 = Release|Any CPU
 		{F242B190-C97C-44BE-91BF-4C0ECC41FF88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F242B190-C97C-44BE-91BF-4C0ECC41FF88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F242B190-C97C-44BE-91BF-4C0ECC41FF88}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -93,12 +81,24 @@ Global
 		{4944C10C-92F1-4409-AF3A-FDE154D470D1}.Release|x64.Build.0 = Release|Any CPU
 		{4944C10C-92F1-4409-AF3A-FDE154D470D1}.Release|x86.ActiveCfg = Release|Any CPU
 		{4944C10C-92F1-4409-AF3A-FDE154D470D1}.Release|x86.Build.0 = Release|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Debug|x64.Build.0 = Debug|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Debug|x86.Build.0 = Debug|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Release|x64.ActiveCfg = Release|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Release|x64.Build.0 = Release|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Release|x86.ActiveCfg = Release|Any CPU
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{C56E272D-37D2-4EBB-B374-E2263FF0EFD1} = {008B5F60-D1BD-4B66-875B-58C2FE98A119}
 		{F242B190-C97C-44BE-91BF-4C0ECC41FF88} = {008B5F60-D1BD-4B66-875B-58C2FE98A119}
 		{7CC5BD8A-A682-477E-B4AD-BE50C4B949D3} = {008B5F60-D1BD-4B66-875B-58C2FE98A119}
 		{213CE55E-AC13-4D32-8A3D-3EAF0E4A6021} = {B5F1ECEA-491B-45E9-9D0B-A2E805F26E96}
 		{4944C10C-92F1-4409-AF3A-FDE154D470D1} = {008B5F60-D1BD-4B66-875B-58C2FE98A119}
+		{8589EEEF-A7FC-4137-8CEA-D7391F7F4463} = {008B5F60-D1BD-4B66-875B-58C2FE98A119}
 	EndGlobalSection
 EndGlobal

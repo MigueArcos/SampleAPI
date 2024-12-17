@@ -1,4 +1,4 @@
-﻿using ArchitectureTest.Data.Database.SQLServer.Entities;
+﻿using ArchitectureTest.Databases.SqlServer.Entities;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Net.Http.Headers;

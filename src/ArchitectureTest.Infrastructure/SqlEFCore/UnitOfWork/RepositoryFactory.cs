@@ -1,5 +1,5 @@
-﻿using ArchitectureTest.Data.Database.SQLServer;
-using ArchitectureTest.Data.Database.SQLServer.Entities;
+﻿using ArchitectureTest.Databases.SqlServer;
+using ArchitectureTest.Databases.SqlServer.Entities;
 using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Infrastructure.SqlEFCore.Repostories;
 

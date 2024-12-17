@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ArchitectureTest.Data.Database.SQLServer.Entities;
+namespace ArchitectureTest.Databases.SqlServer.Entities;
 
 public partial class TokenType
 {

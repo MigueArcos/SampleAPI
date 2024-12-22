@@ -1,36 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
-using ArchitectureTest.Databases.SqlServer;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services;
+using ArchitectureTest.Infrastructure.ExpressionUtils;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore;
 
-public static class EFRepositoryExtensions {
-    public static Task<T?> AvoidTracking<T>(this Task<T?> task, DbSet<T> dbSet) where T : class {
-        return task.ContinueWith(t => {
-            if (t.Result is not null)
-                dbSet.Entry(t.Result).State = EntityState.Detached;
-
-            return t.Result;
-        }, TaskContinuationOptions.ExecuteSynchronously);
-    }
-}
-
-public class SqlServerRepository<D, T> : IDomainRepository<D>
+public class SqlRepository<D, T> : IDomainRepository<D>
     where D : BaseEntity<long>
     where T : class
 {
-    private readonly DatabaseContext _dbContext;
-    private readonly IMapper _mapper;
+    private readonly DbContext _dbContext;
+    protected readonly IMapper _mapper;
     protected readonly DbSet<T> _dbSet;
 
-    public SqlServerRepository(DatabaseContext dbContext, IMapper mapper)
+    public SqlRepository(DbContext dbContext, IMapper mapper)
     {
         _dbContext = dbContext;
         _mapper = mapper;
@@ -41,8 +31,8 @@ public class SqlServerRepository<D, T> : IDomainRepository<D>
     {
         var dbEntity = _mapper.Map<T>(domainEntity);
         _dbSet.Add(dbEntity);
-        await _dbContext.SaveChangesAsync().ConfigureAwait(false);
-        return domainEntity;
+        var a = await _dbContext.SaveChangesAsync().ConfigureAwait(false);
+        return _mapper.Map<D>(dbEntity);
     }
 
     public async Task<bool> DeleteById(long id)
@@ -55,26 +45,27 @@ public class SqlServerRepository<D, T> : IDomainRepository<D>
         return saveResult > 0;
     }
 
-    public Task<IList<D>> Find(Func<D, bool>? whereFilters = null)
+    public virtual Task<IList<D>> Find(Expression<Func<D, bool>>? whereFilters = null)
     {
         Task<List<T>> results = (
-            whereFilters != null ? _dbSet.Where(dbEntity => whereFilters(_mapper.Map<D>(dbEntity))) : _dbSet
+            whereFilters != null ? _dbSet.Where(whereFilters.ReplaceLambdaParameter<D, T>()) : _dbSet
         ).ToListAsync();
 
         return results.ContinueWith<IList<D>>(
-            t => t.Result.Select(e => _mapper.Map<D>(e)).ToList(), 
+            t => t.Result?.Select(e => _mapper.Map<D>(e)).ToList() ?? [],
             TaskContinuationOptions.ExecuteSynchronously
         );
     }
 
-    public Task<D?> FindSingle(Func<D, bool> whereFilters)
+    public virtual Task<D?> FindSingle(Expression<Func<D, bool>> whereFilters)
     {
-        return _dbSet.FirstOrDefaultAsync(e => whereFilters(_mapper.Map<D>(e)))
+        var whereForDatabase = whereFilters.ReplaceLambdaParameter<D, T>();
+        return _dbSet.FirstOrDefaultAsync(whereForDatabase)
             .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<D?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    public Task<D?> GetById(long id)
+    public virtual Task<D?> GetById(long id)
     {
         return _dbSet.FindAsync(id).AsTask().AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<D?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);

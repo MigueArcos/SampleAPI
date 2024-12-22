@@ -1,7 +1,6 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+﻿using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,7 @@ namespace ArchitectureTest.Web.Controllers;
 
 [Route("api/[controller]")]
 [Authorize]
-public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO> {
+public class ChecklistController : EntityCrudController<ChecklistEntity> {
     public ChecklistController(
         IChecklistCrudService entityCrudService, 
         IHttpContextAccessor httpContextAccesor, 

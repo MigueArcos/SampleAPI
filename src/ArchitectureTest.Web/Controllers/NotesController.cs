@@ -1,7 +1,7 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+﻿using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Services;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +10,9 @@ namespace ArchitectureTest.Web.Controllers;
 
 [Route("api/[controller]")]
 [Authorize]
-public class NotesController : EntityCrudController<Note, NoteDTO> {
+public class NotesController : EntityCrudController<NoteEntity> {
     public NotesController(
-        ICrudService<Note, NoteDTO> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
+        ICrudService<NoteEntity> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
     ) : base(entityCrudService, httpContextAccesor, logger) {
         long userId = httpContextAccesor.GetUserIdentity().UserId;
         entityCrudService.CrudSettings = new EntityCrudSettings {
@@ -24,7 +24,8 @@ public class NotesController : EntityCrudController<Note, NoteDTO> {
     [HttpGet("list")]
     public async Task<IActionResult> GetAll() {
         var result = await (_entityCrudService as INotesCrudService)!.GetUserNotes().ConfigureAwait(false);
-
+        var time =  new DateTime(2024, 12, 10);
+        // var a = await _domainRepository.Find(n => n.UserId == 1 && n.Title.Contains("Note") && n.Id > 5);
         if (result.Error is not null)
             return HandleError(result.Error);
 

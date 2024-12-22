@@ -1,18 +1,16 @@
-﻿using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Domain.Models.Converters;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+﻿using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArchitectureTest.Web.Controllers;
 
-public abstract class EntityCrudController<TEntity, TDto> : BaseController
-    where TEntity : class
-    where TDto : BasicDTO<long>, IEntityConverter<TEntity>
+public abstract class EntityCrudController<TEntity> : BaseController
+    where TEntity : BaseEntity<long>
 {
-    protected readonly ICrudService<TEntity, TDto> _entityCrudService;
+    protected readonly ICrudService<TEntity> _entityCrudService;
     protected readonly IHttpContextAccessor _httpContextAccessor;
     public EntityCrudController(
-        ICrudService<TEntity, TDto> entityCrudService, IHttpContextAccessor httpContextAccessor, ILogger<BaseController> logger
+        ICrudService<TEntity> entityCrudService, IHttpContextAccessor httpContextAccessor, ILogger<BaseController> logger
     ) : base(logger) 
     {
         _entityCrudService = entityCrudService;
@@ -20,8 +18,8 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> Post([FromBody] TDto dto) {
-        var result = await _entityCrudService.Add(dto).ConfigureAwait(false);
+    public virtual async Task<IActionResult> Post([FromBody] TEntity inputEntity) {
+        var result = await _entityCrudService.Add(inputEntity).ConfigureAwait(false);
 
         if (result.Error is not null)
             return HandleError(result.Error);
@@ -41,8 +39,8 @@ public abstract class EntityCrudController<TEntity, TDto> : BaseController
     }
 
     [HttpPut("{id}")]
-    public virtual async Task<IActionResult> Put([FromRoute] long id, [FromBody] TDto dto) {
-        var result = await _entityCrudService.Update(id, dto).ConfigureAwait(false);
+    public virtual async Task<IActionResult> Put([FromRoute] long id, [FromBody] TEntity inputEntity) {
+        var result = await _entityCrudService.Update(id, inputEntity).ConfigureAwait(false);
 
         if (result.Error is not null)
             return HandleError(result.Error);

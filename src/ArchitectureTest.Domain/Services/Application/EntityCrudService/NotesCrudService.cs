@@ -48,15 +48,13 @@ public class NotesCrudService : EntityCrudService<Note>, INotesCrudService {
     public async Task<Result<IList<Note>, AppError>> GetUserNotes() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1) return new AppError(ErrorCodes.UserIdNotSupplied);
-        // TODO: Expression with variables don't work, check why
-        // e.g ...Where(n => n.UserId == CrudSettings.UserId && n.CreationDate > new DateTime(2024, 12, 10))
         var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
 
-        // TODO: Check why these lines doesn't work even though toentitys returns an IList
-        // IList<Noteentity> result = Toentitys(notes).ToList();
+        // TODO: Check why these lines doesn't work even though the signature of the method expects an IList
+        // IList<Note> result = notes.ToList();
         // or
-        // (<Result<IList<Noteentity>, AppError>>) Toentitys(notes);
-        // Toentitys(notes) as Result<IList<Noteentity>, AppError>;
+        // (<Result<IList<Note>, AppError>>) notes;
+        // (notes) as Result<IList<Note>, AppError>;
         List<Note> result = notes.ToList();
         return result;
     }

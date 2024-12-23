@@ -11,7 +11,7 @@ public class Checklist : BaseEntity<long> {
     public DateTime ModificationDate { get; set; }
     public IList<ChecklistDetail>? Details { get; set; }
 
-    public static IList<ChecklistDetail>? FormatChecklistDetails(
+    public static List<ChecklistDetail>? FormatChecklistDetails(
         ICollection<ChecklistDetail>? details, long? parentDetailId = null
     ){
         var selection = details?.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {

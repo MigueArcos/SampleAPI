@@ -1,24 +1,23 @@
-﻿using ArchitectureTest.Databases.SqlServer;
-using ArchitectureTest.Domain.Entities;
+﻿using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services;
-using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 
-namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
+namespace ArchitectureTest.Infrastructure.SqlEFCore.Common;
 
-public class SqlSeverUnitOfWork : IUnitOfWork, IDisposable {
-    private readonly DatabaseContext _databaseContext;
+public class BaseUnitOfWork : IUnitOfWork, IDisposable {
+    private readonly DbContext _databaseContext;
     private IDbContextTransaction? _transaction;
     private readonly IRepositoryFactory _repositoryFactory;
     private readonly Dictionary<string, object> _repos = new();
 
-    public SqlSeverUnitOfWork(DatabaseContext databaseContext, IMapper mapper)
+    public BaseUnitOfWork(DbContext dbContext, IRepositoryFactory repositoryFactory)
     {
-        _databaseContext = databaseContext;
-        _repositoryFactory = new RepositoryFactory(databaseContext, mapper);
+        _databaseContext = dbContext;
+        _repositoryFactory = repositoryFactory;
     }
 
     public IRepository<D> Repository<D>() where D : BaseEntity<long> {

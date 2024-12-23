@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Enums;
 using ArchitectureTest.Domain.Errors;

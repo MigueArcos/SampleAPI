@@ -1,70 +1,70 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Models;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System;
-using ArchitectureTest.Domain.Errors;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Enums;
+using ArchitectureTest.Domain.Errors;
+using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
-public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, IChecklistCrudService {
+public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrudService {
     public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 
-    public override Dictionary<CrudOperation, List<(Func<ChecklistDTO?, long?, bool>, string)>> ValidationsByOperation => new (){
+    public override Dictionary<CrudOperation, List<(Func<Checklist?, long?, bool>, string)>> ValidationsByOperation => new (){
         [CrudOperation.Create] = [
-            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
-            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((dto, entityId) => 
-                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((entity, entityId) => 
+                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                 ErrorCodes.CannotCreateDataForThisUserId
             ),
-            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound),
+            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
         ],
         [CrudOperation.ReadById] = [
-            ((dto, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+            ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
         ],
         [CrudOperation.Update] = [
-            ((dto, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
-            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
-            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((dto, entityId) => 
-                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+            ((entity, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
+            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((entity, entityId) => 
+                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                 ErrorCodes.EntityDoesNotBelongToUser
             ),
-            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound)
+            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
         ],
         [CrudOperation.Delete] = [
-            ((dto, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+            ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
         ]
     };
 
-    public async Task<Result<IList<ChecklistDTO>, AppError>> GetUserChecklists() {
+    public async Task<Result<IList<Checklist>, AppError>> GetUserChecklists() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1)
             return new AppError(ErrorCodes.UserIdNotSupplied);
 
         var checklists = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
-        List<ChecklistDTO> result = ToDTOs(checklists).ToList();
+        List<Checklist> result = checklists.ToList();
         return result;
     }
 
-    public override async Task<Result<ChecklistDTO, AppError>> Add(ChecklistDTO dto) {
+    public override async Task<Result<Checklist, AppError>> Add(Checklist inputEntity) {
         try {
             _unitOfWork.StartTransaction();
-            var insertResult = await base.Add(dto).ConfigureAwait(false);
+            var insertResult = await base.Add(inputEntity).ConfigureAwait(false);
 
             if (insertResult.Error is not null)
                 return insertResult.Error;
 
-            if (dto.Details != null && dto.Details.Count > 0)
-                await PostDetails(insertResult.Value!.Id, dto.Details).ConfigureAwait(false);
+            if (inputEntity.Details != null && inputEntity.Details.Count > 0)
+                await PostDetails(insertResult.Value!.Id, inputEntity.Details).ConfigureAwait(false);
 
             _unitOfWork.Commit();
-            dto.Id = insertResult.Value!.Id;
-            return dto;
+            inputEntity.Id = insertResult.Value!.Id;
+            return inputEntity;
         }
         catch {
             _unitOfWork.Rollback();
@@ -72,30 +72,15 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         }
     }
 
-    public override ChecklistDTO ToDTO(Checklist entity) {
-        return new ChecklistDTO {
-            Id = entity.Id,
-            Title = entity.Title,
-            UserId = entity.UserId,
-            CreationDate = entity.CreationDate ?? new System.DateTime(default),
-            ModificationDate = entity.ModificationDate ?? new System.DateTime(default),
-            Details = GetChecklistDetails(entity.ChecklistDetails)
-        };
-    }
-
-    public override IList<ChecklistDTO> ToDTOs(IList<Checklist> entities) {
-        return entities.Select(n => ToDTO(n)).ToList();
-    }
-
-    private IList<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null){
-        var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetailDTO {
+    private IList<ChecklistDetail> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null){
+        var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {
             Id = cD.Id,
             ChecklistId = cD.ChecklistId,
             ParentDetailId = cD.ParentDetailId,
             TaskName = cD.TaskName,
             Status = cD.Status,
-            CreationDate = cD.CreationDate ?? new System.DateTime(default),
-            ModificationDate = cD.ModificationDate ?? new System.DateTime(default)
+            CreationDate = cD.CreationDate,
+            ModificationDate = cD.ModificationDate
         }).ToList();
         selection.ForEach(i => {
             i.SubItems = GetChecklistDetails(details, i.Id);
@@ -104,13 +89,13 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
     }
 
     private async Task<bool> PostDetails(
-        long parentChecklistId, IList<ChecklistDetailDTO> details, long? parentDetailId = null
+        long parentChecklistId, IList<ChecklistDetail> details, long? parentDetailId = null
     ) {
         for(int i = 0; i < details.Count; i++){
             var d = details[i];
             d.ChecklistId = parentChecklistId;
             d.ParentDetailId = parentDetailId;
-            ChecklistDetail checklistDetailEntity = await _unitOfWork.Repository<ChecklistDetail>().Add(d.ToEntity())
+            var checklistDetailEntity = await _unitOfWork.Repository<ChecklistDetail>().Add(d)
                 .ConfigureAwait(false);
 
             if (d.SubItems != null && d.SubItems.Count > 0) {    
@@ -123,4 +108,5 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
     public override bool EntityBelongsToUser(Checklist entity) {
         return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
     }
+
 }

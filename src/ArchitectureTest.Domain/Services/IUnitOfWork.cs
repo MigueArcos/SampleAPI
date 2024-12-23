@@ -1,7 +1,9 @@
-﻿namespace ArchitectureTest.Domain.Services; 
+using ArchitectureTest.Domain.Entities;
+
+namespace ArchitectureTest.Domain.Services; 
 
 public interface IUnitOfWork {
-    IRepository<long, TEntity> Repository<TEntity>() where TEntity : class;
+    IRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity<long>;
     void StartTransaction();
     void Commit();
     void Rollback();

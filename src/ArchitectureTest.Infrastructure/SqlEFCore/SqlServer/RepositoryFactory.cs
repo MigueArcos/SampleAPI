@@ -1,10 +1,12 @@
 ﻿using System;
 using ArchitectureTest.Databases.SqlServer;
-using ArchitectureTest.Databases.SqlServer.Entities;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services;
 using AutoMapper;
+
+using DomainEntities = ArchitectureTest.Domain.Entities;
+using Database = ArchitectureTest.Databases.SqlServer.Entities;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
  
@@ -18,7 +20,7 @@ public class RepositoryFactory : IRepositoryFactory {
         _mapper = mapper;
     }
 
-    public IDomainRepository<D>? Create<D>() where D : BaseEntity<long> {
+    public IRepository<D>? Create<D>() where D : BaseEntity<long> {
         string typeName = typeof(D).Name;
 
         // If there were only one type Argument (D type) I could create the SqlRepository without this ugly switch
@@ -26,16 +28,17 @@ public class RepositoryFactory : IRepositoryFactory {
         // The only "special" repository is the ChecklistSqlServerRepository
         return typeName switch
         {
-            var domainType when domainType == typeof(ChecklistEntity).Name => 
-                new ChecklistSqlServerRepository(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(ChecklistDetailEntity).Name => 
-                new SqlRepository<ChecklistDetailEntity, ChecklistDetail>(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(NoteEntity).Name =>
-                new SqlRepository<NoteEntity, Note>(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(UserEntity).Name =>
-                new SqlRepository<UserEntity, User>(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(UserTokenEntity).Name =>
-                new SqlRepository<UserTokenEntity, UserToken>(_databaseContext, _mapper) as IDomainRepository<D>,
+            var domainType when domainType == typeof(Domain.Entities.Checklist).Name =>
+                new ChecklistSqlServerRepository(_databaseContext, _mapper) as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.ChecklistDetail).Name =>
+                new SqlRepository<DomainEntities.ChecklistDetail, Database.ChecklistDetail>(_databaseContext, _mapper)
+                    as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.Note).Name =>
+                new SqlRepository<DomainEntities.Note, Database.Note>(_databaseContext, _mapper) as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.User).Name =>
+                new SqlRepository<DomainEntities.User, Database.User>(_databaseContext, _mapper) as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.UserToken).Name =>
+                new SqlRepository<DomainEntities.UserToken, Database.UserToken>(_databaseContext, _mapper) as IRepository<D>,
             _ => throw new NotImplementedException(ErrorCodes.RepoProblem)
         };
     }

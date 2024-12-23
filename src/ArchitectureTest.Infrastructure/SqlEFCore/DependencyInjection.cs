@@ -17,8 +17,10 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("SqlServer");
 
         services.AddAutoMapper(typeof(SqlServerMappingProfile));
-        services.AddDbContext<SqlServerDatabase.DatabaseContext>(options => options.UseSqlServer(connectionString));
-        services.AddScoped<IDomainUnitOfWork, SqlSeverUnitOfWork>();
+        services.AddDbContext<SqlServerDatabase.DatabaseContext>(
+            options => options.UseSqlServer(connectionString)
+        );
+        services.AddScoped<IUnitOfWork, SqlSeverUnitOfWork>();
     }
 
     public static void AddMySqlConfiguration(this IServiceCollection services, IConfiguration configuration)
@@ -26,7 +28,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("MySql");
 
         services.AddAutoMapper(typeof(MySqlMappingProfile));
-        services.AddDbContext<MySqlDatabse.DatabaseContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-        services.AddScoped<IDomainUnitOfWork, MySqlUnitOfWork>();
+        services.AddDbContext<MySqlDatabse.DatabaseContext>(
+            options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        );
+        services.AddScoped<IUnitOfWork, MySqlUnitOfWork>();
     }
 }

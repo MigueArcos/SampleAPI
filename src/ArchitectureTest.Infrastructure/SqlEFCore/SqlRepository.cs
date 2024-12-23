@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore;
 
-public class SqlRepository<D, T> : IDomainRepository<D>
+public class SqlRepository<D, T> : IRepository<D>
     where D : BaseEntity<long>
     where T : class
 {

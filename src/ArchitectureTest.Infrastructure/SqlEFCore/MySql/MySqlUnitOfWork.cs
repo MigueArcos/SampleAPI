@@ -1,5 +1,4 @@
 ﻿using ArchitectureTest.Databases.MySql;
-using ArchitectureTest.Databases.MySql.Entities;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services;
@@ -8,9 +7,12 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 
+using DomainEntities = ArchitectureTest.Domain.Entities;
+using Database = ArchitectureTest.Databases.MySql.Entities;
+
 namespace ArchitectureTest.Infrastructure.SqlEFCore.MySql;
 
-public class MySqlUnitOfWork : IDomainUnitOfWork, IDisposable {
+public class MySqlUnitOfWork : IUnitOfWork, IDisposable {
     private readonly DatabaseContext _databaseContext;
     private IDbContextTransaction? _transaction;
     private readonly Dictionary<string, object> _repos = new();
@@ -22,17 +24,17 @@ public class MySqlUnitOfWork : IDomainUnitOfWork, IDisposable {
         _mapper = mapper;
     }
 
-    public IDomainRepository<D> Repository<D>() where D : BaseEntity<long> {
+    public IRepository<D> Repository<D>() where D : BaseEntity<long> {
         string typeName = typeof(D).Name;
         bool found = _repos.TryGetValue(typeName, out var repo);
         if (!found) {
             repo = CreateRepo<D>() ?? throw new Exception(ErrorCodes.RepoProblem);
             _repos.Add(typeName, repo);
         }
-        return repo as IDomainRepository<D> ?? throw new Exception(ErrorCodes.RepoProblem);
+        return repo as IRepository<D> ?? throw new Exception(ErrorCodes.RepoProblem);
     }
 
-    public IDomainRepository<D>? CreateRepo<D>() where D : BaseEntity<long> {
+    public IRepository<D>? CreateRepo<D>() where D : BaseEntity<long> {
         string typeName = typeof(D).Name;
 
         // If there were only one type Argument (D type) I could create the SqlRepository without this ugly switch
@@ -40,16 +42,17 @@ public class MySqlUnitOfWork : IDomainUnitOfWork, IDisposable {
         // The only "special" repository is the ChecklistSqlServerRepository
         return typeName switch
         {
-            var domainType when domainType == typeof(ChecklistEntity).Name => 
-                new ChecklistMySqlRepository(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(ChecklistDetailEntity).Name =>
-                new SqlRepository<ChecklistDetailEntity, ChecklistDetail>(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(NoteEntity).Name =>
-                new SqlRepository<NoteEntity, Note>(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(UserEntity).Name =>
-                new SqlRepository<UserEntity, User>(_databaseContext, _mapper) as IDomainRepository<D>,
-            var domainType when domainType == typeof(UserTokenEntity).Name =>
-                new SqlRepository<UserTokenEntity, UserToken>(_databaseContext, _mapper) as IDomainRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.Checklist).Name =>
+                new ChecklistMySqlRepository(_databaseContext, _mapper) as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.ChecklistDetail).Name =>
+                new SqlRepository<DomainEntities.ChecklistDetail, Database.ChecklistDetail>(_databaseContext, _mapper)
+                    as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.Note).Name =>
+                new SqlRepository<DomainEntities.Note, Database.Note>(_databaseContext, _mapper) as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.User).Name =>
+                new SqlRepository<DomainEntities.User, Database.User>(_databaseContext, _mapper) as IRepository<D>,
+            var domainType when domainType == typeof(DomainEntities.UserToken).Name =>
+                new SqlRepository<DomainEntities.UserToken, Database.UserToken>(_databaseContext, _mapper) as IRepository<D>,
             _ => throw new NotImplementedException(ErrorCodes.RepoProblem)
         };
     }

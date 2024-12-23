@@ -2,8 +2,8 @@
 using System.Text;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Services.Application.AuthService;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl.Contracts;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Services.Infrastructure;
 using ArchitectureTest.Domain.Services.Infrastructure.JwtManager;
 using ArchitectureTest.Domain.Services.Infrastructure.PasswordHasher;
@@ -36,7 +36,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ICrudService<NoteEntity>, NotesCrudService>();
+builder.Services.AddScoped<ICrudService<Note>, NotesCrudService>();
 builder.Services.AddScoped<IChecklistCrudService, ChecklistCrudService>();
 builder.Services.AddScoped<CustomJwtBearerEvents>();
 builder.Services.AddAuthentication().AddJwtBearer(options => {

@@ -11,19 +11,19 @@ using ArchitectureTest.Domain.Models.Application;
 namespace ArchitectureTest.Domain.Services.Application.AuthService;
 
 public class AuthService : IAuthService {
-    private readonly IDomainRepository<UserEntity> _usersRepository;
-    private readonly IDomainRepository<UserTokenEntity> _tokensRepository;
+    private readonly IRepository<User> _usersRepository;
+    private readonly IRepository<UserToken> _tokensRepository;
     private readonly IJwtManager _jwtManager;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IConfiguration _configuration;
 
     public AuthService(
-        IDomainUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher, IConfiguration configuration
+        IUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher, IConfiguration configuration
     ) {
         _jwtManager = jwtManager;
         _passwordHasher = passwordHasher;
-        _usersRepository = unitOfWork.Repository<UserEntity>();
-        _tokensRepository = unitOfWork.Repository<UserTokenEntity>();
+        _usersRepository = unitOfWork.Repository<User>();
+        _tokensRepository = unitOfWork.Repository<UserToken>();
         _configuration = configuration;
     }
 
@@ -46,7 +46,7 @@ public class AuthService : IAuthService {
         if (userFound != null)
             return new AppError(ErrorCodes.EmailAlreadyInUse);
 
-        var newUser = await _usersRepository.Add(new UserEntity {
+        var newUser = await _usersRepository.Add(new User {
             Name = signUpModel.UserName,
             Email = signUpModel.Email,
             Password = _passwordHasher.Hash(signUpModel.Password),
@@ -82,7 +82,7 @@ public class AuthService : IAuthService {
         await _tokensRepository.DeleteById(refreshTokenSearch.Id).ConfigureAwait(false);
 
         // Create a new token in Database
-        await _tokensRepository.Add(new UserTokenEntity {
+        await _tokensRepository.Add(new UserToken {
             UserId = newToken!.UserId,
             Token = newToken.RefreshToken,
             TokenTypeId = (long)Enums.TokenType.RefreshToken,
@@ -101,7 +101,7 @@ public class AuthService : IAuthService {
             return resultToken.Error;
 
         var userJwt = resultToken.Value;
-        await _tokensRepository.Add(new UserTokenEntity {
+        await _tokensRepository.Add(new UserToken {
             UserId = userJwt!.UserId,
             Token = userJwt!.RefreshToken,
             TokenTypeId = (long)Enums.TokenType.RefreshToken,

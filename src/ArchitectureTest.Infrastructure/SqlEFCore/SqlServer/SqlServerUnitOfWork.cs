@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
 
-public class SqlSeverUnitOfWork : IDomainUnitOfWork, IDisposable {
+public class SqlSeverUnitOfWork : IUnitOfWork, IDisposable {
     private readonly DatabaseContext _databaseContext;
     private IDbContextTransaction? _transaction;
     private readonly IRepositoryFactory _repositoryFactory;
@@ -21,14 +21,14 @@ public class SqlSeverUnitOfWork : IDomainUnitOfWork, IDisposable {
         _repositoryFactory = new RepositoryFactory(databaseContext, mapper);
     }
 
-    public IDomainRepository<D> Repository<D>() where D : BaseEntity<long> {
+    public IRepository<D> Repository<D>() where D : BaseEntity<long> {
         string typeName = typeof(D).Name;
         bool found = _repos.TryGetValue(typeName, out var repo);
         if (!found) {
             repo = _repositoryFactory.Create<D>() ?? throw new Exception(ErrorCodes.RepoProblem);
             _repos.Add(typeName, repo);
         }
-        return repo as IDomainRepository<D> ?? throw new Exception(ErrorCodes.RepoProblem);
+        return repo as IRepository<D> ?? throw new Exception(ErrorCodes.RepoProblem);
     }
 
     public void Commit() {

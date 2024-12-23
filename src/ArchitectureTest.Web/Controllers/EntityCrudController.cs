@@ -1,5 +1,5 @@
 ﻿using ArchitectureTest.Domain.Entities;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl.Contracts;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArchitectureTest.Web.Controllers;

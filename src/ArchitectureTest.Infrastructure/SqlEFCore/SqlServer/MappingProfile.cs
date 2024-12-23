@@ -1,23 +1,24 @@
-using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Entities;
 using AutoMapper;
+
+using DomainEntities = ArchitectureTest.Domain.Entities;
+using DatabaseEntities = ArchitectureTest.Databases.SqlServer.Entities;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
 
 public class SqlServerMappingProfile : Profile {
     public SqlServerMappingProfile()
     {
-        CreateMap<NoteEntity, Note>().ReverseMap();
+        CreateMap<DomainEntities.Note, DatabaseEntities.Note>().ReverseMap();
 
-        CreateMap<Checklist, ChecklistEntity>()
+        CreateMap<DomainEntities.Checklist, DatabaseEntities.Checklist>();
+        CreateMap<DatabaseEntities.Checklist, DomainEntities.Checklist>()
             .ForMember(e => e.Details, o => o.MapFrom(src => src.ChecklistDetails))
             .AfterMap((src, dest, context) => {
-                dest.Details = ChecklistEntity.FormatChecklistDetails(dest.Details);
+                dest.Details = DomainEntities.Checklist.FormatChecklistDetails(dest.Details);
             });
-        CreateMap<ChecklistEntity, Checklist>();
 
-        CreateMap<ChecklistDetailEntity, ChecklistDetail>().ReverseMap();
-        CreateMap<UserEntity, User>().ReverseMap();
-        CreateMap<UserTokenEntity, UserToken>().ReverseMap();
+        CreateMap<DomainEntities.ChecklistDetail, DatabaseEntities.ChecklistDetail>().ReverseMap();
+        CreateMap<DomainEntities.User, DatabaseEntities.User>().ReverseMap();
+        CreateMap<DomainEntities.UserToken, DatabaseEntities.UserToken>().ReverseMap();
     }
 }

@@ -50,7 +50,8 @@ public class JwtManager : IJwtManager {
         };
     }
 
-    public Result<(UserTokenIdentity Identity, ClaimsPrincipal Claims), AppError> ReadToken(string token, bool validateLifeTime) {
+    public Result<(UserTokenIdentity Identity, ClaimsPrincipal Claims), AppError> ReadToken(string token, bool validateLifeTime)
+    {
         _tokenValidationParameters.ValidateLifetime = validateLifeTime;
         var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken _);
         

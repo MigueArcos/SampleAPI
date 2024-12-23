@@ -2,7 +2,7 @@
 
 namespace ArchitectureTest.Domain.Entities; 
 
-public class NoteEntity : BaseEntity<long> {
+public class Note : BaseEntity<long> {
     public long UserId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Content { get; set; }

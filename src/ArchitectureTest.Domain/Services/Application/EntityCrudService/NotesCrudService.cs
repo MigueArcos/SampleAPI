@@ -1,76 +1,63 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Models;
+﻿using ArchitectureTest.Domain.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
 using ArchitectureTest.Domain.Errors;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Enums;
+using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
-public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService {
+public class NotesCrudService : EntityCrudService<Note>, INotesCrudService {
     public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
 
-    public override Dictionary<CrudOperation, List<(Func<NoteDTO?, long?, bool>, string)>> ValidationsByOperation => new() {
+    public override Dictionary<CrudOperation, List<(Func<Note?, long?, bool>, string)>> ValidationsByOperation => new() {
         [CrudOperation.Create] = [
-            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
-            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((dto, entityId) => 
-                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((entity, entityId) => 
+                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                 ErrorCodes.CannotCreateDataForThisUserId
             ),
-            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound),
+            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
         ],
         [CrudOperation.ReadById] = [
-            ((dto, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+            ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
         ],
         [CrudOperation.Update] = [
-            ((dto, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
-            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
-            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((dto, entityId) => 
-                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+            ((entity, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
+            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((entity, entityId) => 
+                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                 ErrorCodes.EntityDoesNotBelongToUser
             ),
-            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound)
+            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
         ],
         [CrudOperation.Delete] = [
-            ((dto, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+            ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
         ]
     };
-
-    public override NoteDTO ToDTO(Note entity) {
-        return new NoteDTO {
-            Id = entity.Id,
-            Title = entity.Title,
-            Content = entity.Content,
-            UserId = entity.UserId,
-            CreationDate = entity.CreationDate ?? new DateTime(default),
-            ModificationDate = entity.ModificationDate ?? new DateTime(default)
-        };
-    }
-
-    public override IList<NoteDTO> ToDTOs(IList<Note> entities) {
-        return entities.Select(n => ToDTO(n)).ToList();
-    }
 
     public override bool EntityBelongsToUser(Note entity) {
         return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
     }
 
-    public async Task<Result<IList<NoteDTO>, AppError>> GetUserNotes() {
+    public async Task<Result<IList<Note>, AppError>> GetUserNotes() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1) return new AppError(ErrorCodes.UserIdNotSupplied);
-        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId && n.CreationDate > new DateTime(2024, 12, 10)/* does not work && n.Content == "sdg"*/).ConfigureAwait(false);
+        // TODO: Expression with variables don't work, check why
+        // e.g ...Where(n => n.UserId == CrudSettings.UserId && n.CreationDate > new DateTime(2024, 12, 10))
+        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
 
-        // TODO: Check why these lines doesn't work even though toDTOs returns an IList
-        // IList<NoteDTO> result = ToDTOs(notes).ToList();
+        // TODO: Check why these lines doesn't work even though toentitys returns an IList
+        // IList<Noteentity> result = Toentitys(notes).ToList();
         // or
-        // (<Result<IList<NoteDTO>, AppError>>) ToDTOs(notes);
-        // ToDTOs(notes) as Result<IList<NoteDTO>, AppError>;
-        List<NoteDTO> result = ToDTOs(notes).ToList();
+        // (<Result<IList<Noteentity>, AppError>>) Toentitys(notes);
+        // Toentitys(notes) as Result<IList<Noteentity>, AppError>;
+        List<Note> result = notes.ToList();
         return result;
     }
 }

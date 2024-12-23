@@ -1,7 +1,6 @@
 ﻿using ArchitectureTest.Domain.Entities;
-using ArchitectureTest.Domain.Services;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.NewImpl.Contracts;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +9,9 @@ namespace ArchitectureTest.Web.Controllers;
 
 [Route("api/[controller]")]
 [Authorize]
-public class NotesController : EntityCrudController<NoteEntity> {
+public class NotesController : EntityCrudController<Note> {
     public NotesController(
-        ICrudService<NoteEntity> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
+        ICrudService<Note> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
     ) : base(entityCrudService, httpContextAccesor, logger) {
         long userId = httpContextAccesor.GetUserIdentity().UserId;
         entityCrudService.CrudSettings = new EntityCrudSettings {

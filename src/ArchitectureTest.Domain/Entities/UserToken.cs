@@ -2,7 +2,7 @@
 
 namespace ArchitectureTest.Domain.Entities;
 
-public class UserTokenEntity : BaseEntity<long>
+public class UserToken : BaseEntity<long>
 {
     public long UserId { get; set; }
 

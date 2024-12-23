@@ -2,7 +2,7 @@
 
 namespace ArchitectureTest.Domain.Entities;
 
-public class UserEntity : BaseEntity<long>
+public class User : BaseEntity<long>
 {
     public required string Email { get; set; }
 

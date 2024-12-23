@@ -4,17 +4,17 @@ using System.Linq;
 
 namespace ArchitectureTest.Domain.Entities;
 
-public class ChecklistEntity : BaseEntity<long> {
+public class Checklist : BaseEntity<long> {
     public long UserId { get; set; }
     public string Title { get; set; } = string.Empty;
     public DateTime CreationDate { get; set; }
     public DateTime ModificationDate { get; set; }
-    public IList<ChecklistDetailEntity>? Details { get; set; }
+    public IList<ChecklistDetail>? Details { get; set; }
 
-    public static IList<ChecklistDetailEntity>? FormatChecklistDetails(
-        ICollection<ChecklistDetailEntity>? details, long? parentDetailId = null
+    public static IList<ChecklistDetail>? FormatChecklistDetails(
+        ICollection<ChecklistDetail>? details, long? parentDetailId = null
     ){
-        var selection = details?.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetailEntity {
+        var selection = details?.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {
             Id = cD.Id,
             ChecklistId = cD.ChecklistId,
             ParentDetailId = cD.ParentDetailId,

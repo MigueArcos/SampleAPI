@@ -42,7 +42,6 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
         if (!EntityBelongsToUser(entity)) 
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
 
-        AggregateData(entity);
         return entity;    
     }
 
@@ -100,7 +99,6 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
         return null;
     }
 
-    public abstract void AggregateData(TEntity entity);
     public abstract bool EntityBelongsToUser(TEntity entity);
     public abstract Dictionary<CrudOperation, List<(Func<TEntity?, long?, bool>, string)>> ValidationsByOperation { get; }
 }

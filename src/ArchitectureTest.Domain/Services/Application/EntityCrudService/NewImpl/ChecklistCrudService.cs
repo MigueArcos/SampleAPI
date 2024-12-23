@@ -15,29 +15,29 @@ public class ChecklistCrudService : EntityCrudService<ChecklistEntity>, ICheckli
 
     public override Dictionary<CrudOperation, List<(Func<ChecklistEntity?, long?, bool>, string)>> ValidationsByOperation => new (){
         [CrudOperation.Create] = [
-            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
-            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((dto, entityId) => 
-                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((entity, entityId) => 
+                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                 ErrorCodes.CannotCreateDataForThisUserId
             ),
-            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound),
+            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
         ],
         [CrudOperation.ReadById] = [
-            ((dto, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+            ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
         ],
         [CrudOperation.Update] = [
-            ((dto, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
-            ((dto, entityId) => dto is null, ErrorCodes.InputDataNotFound),
-            ((dto, entityId) => dto!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((dto, entityId) => 
-                dto!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+            ((entity, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
+            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+            ((entity, entityId) => 
+                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                 ErrorCodes.EntityDoesNotBelongToUser
             ),
-            ((dto, entityId) => string.IsNullOrWhiteSpace(dto!.Title), ErrorCodes.NoteTitleNotFound)
+            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
         ],
         [CrudOperation.Delete] = [
-            ((dto, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+            ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
         ]
     };
 
@@ -70,11 +70,6 @@ public class ChecklistCrudService : EntityCrudService<ChecklistEntity>, ICheckli
             _unitOfWork.Rollback();
             throw;
         }
-    }
-
-    public override void AggregateData(ChecklistEntity entity)
-    {
-        
     }
 
     private IList<ChecklistDetailEntity> GetChecklistDetails(ICollection<ChecklistDetailEntity> details, long? parentDetailId = null){

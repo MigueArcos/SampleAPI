@@ -19,7 +19,7 @@ public class ChecklistSqlServerRepository : SqlRepository<ChecklistEntity, Check
         var queryable = _dbSet.Include("ChecklistDetails");
 
         Task<List<Checklist>> results = (
-            whereFilters != null ? _dbSet.Where(whereFilters.ReplaceLambdaParameter<ChecklistEntity, Checklist>()) : _dbSet
+            whereFilters != null ? queryable.Where(whereFilters.ReplaceLambdaParameter<ChecklistEntity, Checklist>()) : queryable
         ).ToListAsync();
 
         return results.ContinueWith<IList<ChecklistEntity>>(
@@ -36,7 +36,8 @@ public class ChecklistSqlServerRepository : SqlRepository<ChecklistEntity, Check
     public override Task<ChecklistEntity?> FindSingle(Expression<Func<ChecklistEntity, bool>> whereFilters)
     {
         var whereForDatabase = whereFilters.ReplaceLambdaParameter<ChecklistEntity, Checklist>();
-        return _dbSet.FirstOrDefaultAsync(whereForDatabase)
+
+        return _dbSet.Include("ChecklistDetails").FirstOrDefaultAsync(whereForDatabase)
             .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<ChecklistEntity?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }

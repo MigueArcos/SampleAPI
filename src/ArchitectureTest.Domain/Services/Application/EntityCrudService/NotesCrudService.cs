@@ -63,7 +63,7 @@ public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudServ
     public async Task<Result<IList<NoteDTO>, AppError>> GetUserNotes() {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1) return new AppError(ErrorCodes.UserIdNotSupplied);
-        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
+        var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId && n.CreationDate > new DateTime(2024, 12, 10)/* does not work && n.Content == "sdg"*/).ConfigureAwait(false);
 
         // TODO: Check why these lines doesn't work even though toDTOs returns an IList
         // IList<NoteDTO> result = ToDTOs(notes).ToList();

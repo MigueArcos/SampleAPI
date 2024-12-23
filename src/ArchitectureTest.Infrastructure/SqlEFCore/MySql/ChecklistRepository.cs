@@ -12,14 +12,16 @@ using System.Threading.Tasks;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.MySql;
 
-public class ChecklistMySqlRepository : SqlRepository<ChecklistEntity, Checklist> {
-    public ChecklistMySqlRepository(DatabaseContext dbContext, IMapper mapper) : base(dbContext, mapper) {
-    }
-    public override Task<IList<ChecklistEntity>> Find(Expression<Func<ChecklistEntity, bool>>? whereFilters = null) {
+public class ChecklistMySqlRepository : SqlRepository<ChecklistEntity, Checklist> 
+{
+    public ChecklistMySqlRepository(DatabaseContext dbContext, IMapper mapper) : base(dbContext, mapper) {}
+
+    public override Task<IList<ChecklistEntity>> Find(Expression<Func<ChecklistEntity, bool>>? whereFilters = null)
+    {
         var queryable = _dbSet.Include("ChecklistDetails");
 
         Task<List<Checklist>> results = (
-            whereFilters != null ? _dbSet.Where(whereFilters.ReplaceLambdaParameter<ChecklistEntity, Checklist>()) : _dbSet
+            whereFilters != null ? queryable.Where(whereFilters.ReplaceLambdaParameter<ChecklistEntity, Checklist>()) : queryable
         ).ToListAsync();
 
         return results.ContinueWith<IList<ChecklistEntity>>(
@@ -28,7 +30,8 @@ public class ChecklistMySqlRepository : SqlRepository<ChecklistEntity, Checklist
         );
     }
 
-    public override Task<ChecklistEntity?> GetById(long id) {
+    public override Task<ChecklistEntity?> GetById(long id)
+    {
         return _dbSet.Include("ChecklistDetails").FirstOrDefaultAsync(e => e.Id == id).AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<ChecklistEntity?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
@@ -36,7 +39,8 @@ public class ChecklistMySqlRepository : SqlRepository<ChecklistEntity, Checklist
     public override Task<ChecklistEntity?> FindSingle(Expression<Func<ChecklistEntity, bool>> whereFilters)
     {
         var whereForDatabase = whereFilters.ReplaceLambdaParameter<ChecklistEntity, Checklist>();
-        return _dbSet.FirstOrDefaultAsync(whereForDatabase)
+
+        return _dbSet.Include("ChecklistDetails").FirstOrDefaultAsync(whereForDatabase)
             .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<ChecklistEntity?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }

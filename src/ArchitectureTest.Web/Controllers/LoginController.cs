@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Web.Configuration;
 using ArchitectureTest.Infrastructure.HttpExtensions;
 using ArchitectureTest.Web.Extensions;
@@ -7,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services.Application.AuthService;
+using ArchitectureTest.Domain.Models.Application;
 
 namespace ArchitectureTest.Web.Controllers;
 

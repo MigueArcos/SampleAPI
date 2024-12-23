@@ -31,7 +31,7 @@ public class SqlRepository<D, T> : IDomainRepository<D>
     {
         var dbEntity = _mapper.Map<T>(domainEntity);
         _dbSet.Add(dbEntity);
-        var a = await _dbContext.SaveChangesAsync().ConfigureAwait(false);
+        await _dbContext.SaveChangesAsync().ConfigureAwait(false);
         return _mapper.Map<D>(dbEntity);
     }
 

@@ -1,5 +1,6 @@
 ﻿using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.Application;
 using System.Security.Claims;
 using System.Threading.Tasks;
 

@@ -5,13 +5,12 @@ using ArchitectureTest.Domain.Services.Application.AuthService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Services.Infrastructure;
-using ArchitectureTest.Domain.Services.Infrastructure.JwtManager;
-using ArchitectureTest.Domain.Services.Infrastructure.PasswordHasher;
 using ArchitectureTest.Web;
 using ArchitectureTest.Web.Authentication;
 using ArchitectureTest.Infrastructure.SqlEFCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using ArchitectureTest.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

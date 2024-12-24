@@ -227,32 +227,32 @@ public class LoginControllerTest {
     }
 
     public static IEnumerable<object[]> GetSignInModelTests() {
-        var testParams = new TestParam[] {
-            new TestParam {
+        var testParams = new ITestParam[] {
+            new TestParam<string> {
                 Name = "Email",
-                PossibleValues = new object[] { email, "emailWrong", null, string.Empty }
+                PossibleValues = [email, "emailWrong", null, string.Empty]
             },
-            new TestParam {
+            new TestParam<string> {
                 Name = "Password",
-                PossibleValues = new object[] { password, "wrong", null, string.Empty, }
+                PossibleValues = [password, "wrong", null, string.Empty,]
             }
         };
         return TestCombinationsGenerator.Combine(testParams).Skip(1);
     }
 
     public static IEnumerable<object[]> GetSignUpModelTests() {
-        var testParams = new TestParam[] {
-            new TestParam {
+        var testParams = new ITestParam[] {
+            new TestParam<string> {
                 Name = "Email",
-                PossibleValues = new object[] { email, "emailWrong", null, string.Empty }
+                PossibleValues = [email, "emailWrong", null, string.Empty]
             },
-            new TestParam {
+            new TestParam<string> {
                 Name = "Password",
-                PossibleValues = new object[] { password, "wrong", null, string.Empty, }
+                PossibleValues = [password, "wrong", null, string.Empty,]
             },
-            new TestParam {
+            new TestParam<string> {
                 Name = "Username",
-                PossibleValues = new object[] { name, "pin", null, string.Empty, }
+                PossibleValues = [name, "pin", null, string.Empty,]
             }
         };
         return TestCombinationsGenerator.Combine(testParams).Skip(1);

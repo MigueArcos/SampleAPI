@@ -1,29 +1,21 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Web.Configuration;
+﻿using ArchitectureTest.Web.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Net.Http.Headers;
 using System.Text;
 using ArchitectureTest.Web.Extensions;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
-using ArchitectureTest.Domain.Services.Infrastructure;
-using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services.Application.AuthService;
 
 namespace ArchitectureTest.Web.Authentication;
 
 public class CustomJwtBearerEvents : JwtBearerEvents {
-    private readonly IJwtManager _jwtManager;
     private readonly IAuthService _authService;
-    private readonly IRepository<long, UserToken> _tokensRepository;
     private readonly ILogger<CustomJwtBearerEvents> _logger;
 
-    public CustomJwtBearerEvents(
-        IJwtManager jwtManager, IUnitOfWork unitOfWork, ILogger<CustomJwtBearerEvents> logger, IAuthService authService
-    ) {
-        _jwtManager = jwtManager;
-        _tokensRepository = unitOfWork.Repository<UserToken>();
+    public CustomJwtBearerEvents(ILogger<CustomJwtBearerEvents> logger, IAuthService authService) 
+    {
         _logger = logger;
         _authService = authService;
     }

@@ -1,4 +1,4 @@
-﻿namespace ArchitectureTest.Domain.Models;
+﻿namespace ArchitectureTest.Domain.Models.Application;
 
 public class JsonWebToken {
     public required long UserId { get; set; }

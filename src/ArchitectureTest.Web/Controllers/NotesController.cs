@@ -1,5 +1,4 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Models;
+﻿using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
@@ -10,9 +9,9 @@ namespace ArchitectureTest.Web.Controllers;
 
 [Route("api/[controller]")]
 [Authorize]
-public class NotesController : EntityCrudController<Note, NoteDTO> {
+public class NotesController : EntityCrudController<Note> {
     public NotesController(
-        ICrudService<Note, NoteDTO> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
+        ICrudService<Note> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
     ) : base(entityCrudService, httpContextAccesor, logger) {
         long userId = httpContextAccesor.GetUserIdentity().UserId;
         entityCrudService.CrudSettings = new EntityCrudSettings {

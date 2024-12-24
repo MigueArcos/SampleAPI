@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using ArchitectureTest.Domain.Errors;
 
-namespace ArchitectureTest.Domain.Models;
+namespace ArchitectureTest.Domain.Models.Application;
 
 public class SignUpModel : SignInModel {
     [Required(ErrorMessage = ErrorCodes.InvalidUserName)]

@@ -1,17 +1,18 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
-using ArchitectureTest.Domain.Models;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services.Infrastructure;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
+using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.Application;
 
 namespace ArchitectureTest.Domain.Services.Application.AuthService;
 
 public class AuthService : IAuthService {
-    private readonly IRepository<long, User> _usersRepository;
-    private readonly IRepository<long, UserToken> _tokensRepository;
+    private readonly IRepository<User> _usersRepository;
+    private readonly IRepository<UserToken> _tokensRepository;
     private readonly IJwtManager _jwtManager;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IConfiguration _configuration;
@@ -48,7 +49,8 @@ public class AuthService : IAuthService {
         var newUser = await _usersRepository.Add(new User {
             Name = signUpModel.UserName,
             Email = signUpModel.Email,
-            Password = _passwordHasher.Hash(signUpModel.Password)
+            Password = _passwordHasher.Hash(signUpModel.Password),
+            CreationDate = DateTime.Now
         }).ConfigureAwait(false);
 
         var userJwt = await CreateUserJwt(newUser.Id, newUser.Email, newUser.Name).ConfigureAwait(false);
@@ -70,7 +72,7 @@ public class AuthService : IAuthService {
         
         var jwtResult = resultJwtRead.Value;
 
-        var newTokenResult = _jwtManager.GenerateToken(jwtResult.JwtUser);
+        var newTokenResult = _jwtManager.GenerateToken(jwtResult.Identity);
 
         if (newTokenResult.Error != null)
             return newTokenResult.Error;
@@ -89,11 +91,11 @@ public class AuthService : IAuthService {
         return (newToken, jwtResult.Claims);
     }
 
-    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(long userId, string email, string name) {
-        var resultToken = _jwtManager.GenerateToken(new JwtUser {
+    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(long userId, string email, string? name) {
+        var resultToken = _jwtManager.GenerateToken(new UserTokenIdentity {
             Name = name,
             Email = email,
-            Id = userId
+            UserId = userId
         });
         if (resultToken.Error is not null)
             return resultToken.Error;

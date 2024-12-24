@@ -1,19 +1,18 @@
-﻿using ArchitectureTest.Domain.Models.Converters;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using ArchitectureTest.Domain.Models;
 using System;
 using ArchitectureTest.Domain.Errors;
-using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Enums;
+using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
-public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, TDto> 
-    where TEntity : class
-    where TDto : BasicDTO<long>, IEntityConverter<TEntity> 
+public abstract class EntityCrudService<TEntity> : ICrudService<TEntity> 
+    where TEntity : BaseEntity<long>
 {
-    protected readonly IRepository<long, TEntity> _repository;
+    protected readonly IRepository<TEntity> _repository;
     protected readonly IUnitOfWork _unitOfWork;
     public EntityCrudSettings CrudSettings { get; set; } = new EntityCrudSettings {
         ValidateEntityBelongsToUser = false
@@ -23,16 +22,16 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
         _repository = unitOfWork.Repository<TEntity>();
         _unitOfWork = unitOfWork;
     }
-    public virtual async Task<Result<TDto, AppError>> Add(TDto dto) {
-        var requestError = RequestIsValid(CrudOperation.Create, dto: dto);
+    public virtual async Task<Result<TEntity, AppError>> Add(TEntity inputEntity) {
+        var requestError = RequestIsValid(CrudOperation.Create, entity: inputEntity);
         if (requestError is null) {
-            var entity = await _repository.Add(dto.ToEntity()).ConfigureAwait(false);
-            return ToDTO(entity);
+            var entity = await _repository.Add(inputEntity).ConfigureAwait(false);
+            return entity;
         }
         return requestError;
     }
 
-    public virtual async Task<Result<TDto, AppError>> GetById(long entityId) {
+    public virtual async Task<Result<TEntity, AppError>> GetById(long entityId) {
         if (RequestIsValid(CrudOperation.ReadById, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
         
@@ -43,11 +42,11 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
         if (!EntityBelongsToUser(entity)) 
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
 
-        return ToDTO(entity);    
+        return entity;    
     }
 
-    public virtual async Task<Result<TDto, AppError>> Update(long entityId, TDto dto) {
-        if (RequestIsValid(CrudOperation.Update, entityId, dto) is AppError requestError && requestError is not null)
+    public virtual async Task<Result<TEntity, AppError>> Update(long entityId, TEntity inputEntity) {
+        if (RequestIsValid(CrudOperation.Update, entityId, inputEntity) is AppError requestError && requestError is not null)
             return requestError;
         
         var entity = await _repository.GetById(entityId).ConfigureAwait(false);
@@ -58,11 +57,11 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
         if (!EntityBelongsToUser(entity))
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
 
-        dto.Id = entityId;
-        var result = await _repository.Update(dto.ToEntity()).ConfigureAwait(false);
+        inputEntity.Id = entityId;
+        var result = await _repository.Update(inputEntity).ConfigureAwait(false);
 
         if (result)
-            return dto;
+            return inputEntity;
         else
             return new AppError(ErrorCodes.RepoProblem);
     }
@@ -86,14 +85,14 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
             return new AppError(ErrorCodes.RepoProblem);
     }
 
-    public virtual AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TDto? dto = null) {
+    public virtual AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TEntity? entity = null) {
         bool found = ValidationsByOperation.TryGetValue(crudOperation, out var validations);
         if (!found)
             return new AppError(ErrorCodes.IncorrectInputData);
         
         foreach (var validation in validations!){
             var (validationFailedFunc, errorCode) = validation;
-            if (validationFailedFunc(dto, entityId))
+            if (validationFailedFunc(entity, entityId))
                 return new AppError(errorCode);
         }
 
@@ -101,7 +100,5 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     }
 
     public abstract bool EntityBelongsToUser(TEntity entity);
-    public abstract TDto ToDTO(TEntity entity);
-    public abstract IList<TDto> ToDTOs(IList<TEntity> entities);
-    public abstract Dictionary<CrudOperation, List<(Func<TDto?, long?, bool>, string)>> ValidationsByOperation { get; }
+    public abstract Dictionary<CrudOperation, List<(Func<TEntity?, long?, bool>, string)>> ValidationsByOperation { get; }
 }

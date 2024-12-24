@@ -1,6 +1,5 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
+﻿using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
-using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Tests.Shared.Mocks;
@@ -120,7 +119,7 @@ public class NotesCrudServiceTests {
         Assert.Null(result.Error);
         Assert.NotNull(result.Value);
         mockNotesRepo.VerifyFindCalls(Times.Once());
-        Assert.IsType<List<NoteDTO>>(result.Value);
+        Assert.IsType<List<Note>>(result.Value);
     }
 
     [Fact]
@@ -144,7 +143,7 @@ public class NotesCrudServiceTests {
     [Fact]
     public async Task NotesCrudService_Add_ReturnsNote() {
         // Arrange
-        var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
+        var inputData = new Note { Title = title, Content = content, UserId = userId };
         var resultNote = new Note {
             Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2
         };
@@ -164,7 +163,7 @@ public class NotesCrudServiceTests {
     [Fact]
     public async Task NotesCrudService_Add_ReturnsUserIdNotSuppliedError() {
         // Arrange
-        var inputData = new NoteDTO { Title = title, Content = content, UserId = 0, Id = noteId };
+        var inputData = new Note { Title = title, Content = content, UserId = 0, Id = noteId };
 
         // Act
         var result = await notesCrudService.Add(inputData);
@@ -184,7 +183,7 @@ public class NotesCrudServiceTests {
     [InlineData("   ")]
     public async Task NotesCrudService_Add_ReturnsNoteTitleNotFoundError(string noteTitle) {
         // Arrange
-        var inputData = new NoteDTO { Title = noteTitle, Content = content, UserId = userId };
+        var inputData = new Note { Title = noteTitle, Content = content, UserId = userId };
 
         // Act
         var result = await notesCrudService.Add(inputData);
@@ -204,11 +203,11 @@ public class NotesCrudServiceTests {
     public async Task NotesCrudService_Update_ReturnsModifiedNote(bool performOwnershipValidation) {
         // Arrange
         long noteUserId = performOwnershipValidation ? userId : 100;
-        var inputData = new NoteDTO {
+        var inputData = new Note {
             Title = title, Content = content, UserId = noteUserId, Id = noteId, CreationDate = date1, ModificationDate = date2
         };
-        var resultNote = inputData.ToEntity();
-        mockNotesRepo.SetupGetByIdResult(resultNote);
+        // var resultNote = inputData.ToEntity();
+        mockNotesRepo.SetupGetByIdResult(inputData);
         mockNotesRepo.SetupUpdateEntityResult(true);
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation) {
@@ -229,7 +228,7 @@ public class NotesCrudServiceTests {
     [Fact]
     public async Task NotesCrudService_Update_ReturnsUserIdNotSuppliedError() {
         // Arrange
-        var inputData = new NoteDTO { Title = title, Content = content, UserId = 0, Id = noteId };
+        var inputData = new Note { Title = title, Content = content, UserId = 0, Id = noteId };
 
         // Act
         var result = await notesCrudService.Update(noteId, inputData);
@@ -250,7 +249,7 @@ public class NotesCrudServiceTests {
     [InlineData("   ")]
     public async Task NotesCrudService_Update_ReturnsNoteTitleNotFoundError(string noteTitle) {
         // Arrange
-        var inputData = new NoteDTO { Title = noteTitle, Content = content, UserId = userId, Id = noteId };
+        var inputData = new Note { Title = noteTitle, Content = content, UserId = userId, Id = noteId };
 
         // Act
         var result = await notesCrudService.Update(noteId, inputData);
@@ -270,7 +269,7 @@ public class NotesCrudServiceTests {
     [InlineData(false)]
     public async Task NotesCrudService_Update_ReturnsEntityNotFoundError(bool performOwnershipValidation) {
         // Arrange
-        var inputData = new NoteDTO { Title = title, Content = content, UserId = userId, Id = noteId };
+        var inputData = new Note { Title = title, Content = content, UserId = userId, Id = noteId };
         mockNotesRepo.SetupGetByIdResult(null);
         mockNotesRepo.SetupUpdateEntityResult(false);
         notesCrudService.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
@@ -293,7 +292,7 @@ public class NotesCrudServiceTests {
     [Fact]
     public async Task NotesCrudService_Update_ReturnsEntityDoesNotBelongToUserError() {
         // Arrange
-        var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
+        var inputData = new Note { Title = title, Content = content, UserId = userId };
         var resultNote = new Note {
             Title = title, Content = content, UserId = 25, Id = noteId, CreationDate = date1, ModificationDate = date2
         };
@@ -318,7 +317,7 @@ public class NotesCrudServiceTests {
     [Fact]
     public async Task NotesCrudService_Update_ReturnsRepoProblemError() {
         // Arrange
-        var inputData = new NoteDTO { Title = title, Content = content, UserId = userId };
+        var inputData = new Note { Title = title, Content = content, UserId = userId };
         var resultNote = new Note {
             Title = title, Content = content, UserId = userId, Id = noteId, CreationDate = date1, ModificationDate = date2
         };

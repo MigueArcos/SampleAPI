@@ -1,5 +1,6 @@
 ﻿using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.Application;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -20,16 +21,16 @@ public class JwtManager : IJwtManager {
         _configuration = configuration;
     }
 
-    public Result<JsonWebToken, AppError> GenerateToken(JwtUser user) {
-        if (user.Id <= 0 || string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Name))
+    public Result<JsonWebToken, AppError> GenerateToken(UserTokenIdentity identity) {
+        if (identity.UserId <= 0 || string.IsNullOrEmpty(identity.Email) || string.IsNullOrEmpty(identity.Name))
             return new AppError(ErrorCodes.CannotGenerateJwtToken);
 
         int tokenTtlSeconds = _configuration.GetValue<int>("ConfigData:Jwt:TokenTTLSeconds");
         var tokenDescriptor = new SecurityTokenDescriptor {
             Subject = new ClaimsIdentity(new Claim[] {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.Name)
+                new Claim(ClaimTypes.NameIdentifier, identity.UserId.ToString()),
+                new Claim(ClaimTypes.Email, identity.Email),
+                new Claim(ClaimTypes.Name, identity.Name)
             }),
             Expires = DateTime.UtcNow.AddSeconds(tokenTtlSeconds),
             Issuer = _tokenValidationParameters.ValidIssuer,
@@ -42,14 +43,15 @@ public class JwtManager : IJwtManager {
         var refreshToken = GenerateRefreshToken();
         return new JsonWebToken {
             Token = _tokenHandler.WriteToken(token),
-            Email = user.Email,
+            Email = identity.Email,
             RefreshToken = refreshToken,
-            UserId = user.Id,
+            UserId = identity.UserId,
             ExpiresIn = tokenTtlSeconds
         };
     }
 
-    public Result<(JwtUser JwtUser, ClaimsPrincipal Claims), AppError> ReadToken(string token, bool validateLifeTime) {
+    public Result<(UserTokenIdentity Identity, ClaimsPrincipal Claims), AppError> ReadToken(string token, bool validateLifeTime)
+    {
         _tokenValidationParameters.ValidateLifetime = validateLifeTime;
         var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken _);
         
@@ -60,9 +62,9 @@ public class JwtManager : IJwtManager {
         if (userIdClaim is null || emailClaim is null || nameClaim is null)
             return new AppError(ErrorCodes.IncompleteJwtTokenData);
     
-        var user = new JwtUser {
+        var user = new UserTokenIdentity {
             Email = emailClaim.Value,
-            Id = long.Parse(userIdClaim.Value),
+            UserId = long.Parse(userIdClaim.Value),
             Name = nameClaim.Value
         };
         return (user, claims);

@@ -1,31 +1,33 @@
-﻿using ArchitectureTest.Databases.SqlServer;
+﻿using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 
-namespace ArchitectureTest.Infrastructure.SqlEFCore.UnitOfWork;
+namespace ArchitectureTest.Infrastructure.SqlEFCore.Common;
 
-public class UnitOfWork : IUnitOfWork, IDisposable {
-    private readonly DatabaseContext _databaseContext;
+public class BaseUnitOfWork : IUnitOfWork, IDisposable {
+    private readonly DbContext _databaseContext;
     private IDbContextTransaction? _transaction;
     private readonly IRepositoryFactory _repositoryFactory;
     private readonly Dictionary<string, object> _repos = new();
 
-    public UnitOfWork(DatabaseContext databaseContext) {
-        _databaseContext = databaseContext;
-        _repositoryFactory = new RepositoryFactory(databaseContext);
+    public BaseUnitOfWork(DbContext dbContext, IRepositoryFactory repositoryFactory)
+    {
+        _databaseContext = dbContext;
+        _repositoryFactory = repositoryFactory;
     }
 
-    public IRepository<long, TEntity> Repository<TEntity>() where TEntity : class {
-        string typeName = typeof(TEntity).Name;
+    public IRepository<D> Repository<D>() where D : BaseEntity<long> {
+        string typeName = typeof(D).Name;
         bool found = _repos.TryGetValue(typeName, out var repo);
         if (!found) {
-            repo = _repositoryFactory.Create<TEntity>() ?? throw new Exception(ErrorCodes.RepoProblem);
+            repo = _repositoryFactory.Create<D>() ?? throw new Exception(ErrorCodes.RepoProblem);
             _repos.Add(typeName, repo);
         }
-        return repo as IRepository<long, TEntity> ?? throw new Exception(ErrorCodes.RepoProblem);
+        return repo as IRepository<D> ?? throw new Exception(ErrorCodes.RepoProblem);
     }
 
     public void Commit() {

@@ -23,8 +23,7 @@ public class NotesController : EntityCrudController<Note> {
     [HttpGet("list")]
     public async Task<IActionResult> GetAll() {
         var result = await (_entityCrudService as INotesCrudService)!.GetUserNotes().ConfigureAwait(false);
-        var time =  new DateTime(2024, 12, 10);
-        // var a = await _domainRepository.Find(n => n.UserId == 1 && n.Title.Contains("Note") && n.Id > 5);
+
         if (result.Error is not null)
             return HandleError(result.Error);
 

@@ -3,10 +3,11 @@ using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using ArchitectureTest.Domain.Services;
+using ArchitectureTest.Domain.Entities;
 
 namespace ArchitectureTest.Tests.Shared.Mocks;
 
-public class MockRepository<TEntity> : Mock<IRepository<long, TEntity>> where TEntity : class {
+public class MockRepository<TEntity> : Mock<IRepository<TEntity>> where TEntity : BaseEntity<long> {
     public void SetupGetByIdResult(TEntity result) {
         Setup(repo => repo.GetById(It.IsAny<long>())).ReturnsAsync(result);
     }

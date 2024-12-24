@@ -19,15 +19,15 @@ public abstract class BaseRepositoryFactory : IRepositoryFactory {
     }
 
     public virtual IRepository<D>? Create<D>() where D : BaseEntity<long> {
-        Type entityType = typeof(D);
-        return BuildGenericRepo<D>(entityType);
+        return BuildGenericRepo<D>();
     }
 
-    private IRepository<D>? BuildGenericRepo<D>(Type domainType) where D : BaseEntity<long> {
+    private IRepository<D>? BuildGenericRepo<D>() where D : BaseEntity<long> {
+        Type domainType = typeof(D);
         var dbAssemblyName = "ArchitectureTest.Databases";
         var genericRepoType = typeof(SqlRepository<,>);
         Type[] typeArgs = [
-            typeof(D),
+            domainType,
             Type.GetType($"{dbAssemblyName}.{_entitiesNamespace}.{domainType.Name}, {dbAssemblyName}")!
         ];
         var genericRepoTypeWithArgs = genericRepoType.MakeGenericType(typeArgs);

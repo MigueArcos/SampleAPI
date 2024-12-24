@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore;
 namespace ArchitectureTest.Infrastructure.SqlEFCore;
 
 public class SqlRepository<D, T> : IRepository<D>
-    where D : BaseEntity<long>
-    where T : class
+    where D : BaseEntity<long> // Domain Entity
+    where T : class            // Database Table Entity
 {
     private readonly DbContext _dbContext;
     protected readonly IMapper _mapper;

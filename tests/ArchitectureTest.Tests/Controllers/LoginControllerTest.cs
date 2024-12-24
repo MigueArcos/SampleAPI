@@ -1,5 +1,4 @@
-﻿using ArchitectureTest.Domain.Models;
-using ArchitectureTest.Web.Controllers;
+﻿using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -13,6 +12,7 @@ using ArchitectureTest.Web.Configuration;
 using Microsoft.Extensions.Logging;
 using ArchitectureTest.Domain.Services.Application.AuthService;
 using ArchitectureTest.Domain.Errors;
+using ArchitectureTest.Domain.Models.Application;
 
 namespace ArchitectureTest.Tests.Controllers;
 

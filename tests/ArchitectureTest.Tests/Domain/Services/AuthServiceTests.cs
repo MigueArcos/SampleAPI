@@ -1,6 +1,6 @@
-﻿using ArchitectureTest.Databases.SqlServer.Entities;
+﻿using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
-using ArchitectureTest.Domain.Models;
+using ArchitectureTest.Domain.Models.Application;
 using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.Services.Application.AuthService;
 using ArchitectureTest.Domain.Services.Infrastructure;
@@ -55,7 +55,7 @@ public class AuthServiceTests {
     [Fact]
     public async Task AuthService_SignIn_ReturnJwt() {
         // Arrange
-        var userInfo = new User { Id = userId, Email = email };
+        var userInfo = new User { Id = userId, Email = email, Password = password };
         var jwtMockResult = new JsonWebToken {
             UserId = userId,
             Email = email,
@@ -63,7 +63,7 @@ public class AuthServiceTests {
             Token = randomToken,
             RefreshToken = randomRefreshToken
         };
-        mockJwtManager.Setup(jwtManager => jwtManager.GenerateToken(It.IsAny<JwtUser>())).Returns(jwtMockResult);
+        mockJwtManager.Setup(jwtManager => jwtManager.GenerateToken(It.IsAny<UserTokenIdentity>())).Returns(jwtMockResult);
         mockUsersRepo.SetupFindSingleResult(userInfo);
         mockPasswordHasher.Setup(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>())).Returns((true, true));
         var requestData = new SignInModel { Email = email, Password = password };
@@ -74,7 +74,7 @@ public class AuthServiceTests {
         // Assert
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
-        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Once());
+        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<UserTokenIdentity>()), Times.Once());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Once());
         Assert.Equal(userId, result.Value.UserId);
         Assert.Equal(jwtMockResult.Token, result.Value.Token);
@@ -95,7 +95,7 @@ public class AuthServiceTests {
         Assert.NotNull(result.Error);
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
-        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
+        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<UserTokenIdentity>()), Times.Never());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
         Assert.Equal(ErrorCodes.UserNotFound, result.Error.Code);
@@ -104,7 +104,7 @@ public class AuthServiceTests {
     [Fact]
     public async Task AuthService_SignIn_ReturnsWrongPasswordError() {
         // Arrange
-        var userInfo = new User { Id = userId, Email = email };
+        var userInfo = new User { Id = userId, Email = email, Password = password };
         mockUsersRepo.SetupFindSingleResult(userInfo);
         mockPasswordHasher.Setup(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>())).Returns((false, true));
         var requestData = new SignInModel { Email = email, Password = password };
@@ -118,7 +118,7 @@ public class AuthServiceTests {
         Assert.NotNull(result.Error);
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockPasswordHasher.Verify(pH => pH.Check(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
-        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
+        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<UserTokenIdentity>()), Times.Never());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
         Assert.Equal(ErrorCodes.WrongPassword, result.Error.Code);
@@ -127,7 +127,7 @@ public class AuthServiceTests {
     [Fact]
     public async Task AuthService_SignUp_ReturnJwt() {
         // Arrange
-        var userInfo = new User { Id = userId, Email = email };
+        var userInfo = new User { Id = userId, Email = email, Password = password };
         var jwtMockResult = new JsonWebToken {
             UserId = userId,
             Email = email,
@@ -137,7 +137,7 @@ public class AuthServiceTests {
         };
         mockUsersRepo.SetupFindSingleResult(null);
         mockUsersRepo.Setup(uR => uR.Add(It.IsAny<User>())).Returns(Task.FromResult(userInfo));
-        mockJwtManager.Setup(jwtManager => jwtManager.GenerateToken(It.IsAny<JwtUser>())).Returns(jwtMockResult);
+        mockJwtManager.Setup(jwtManager => jwtManager.GenerateToken(It.IsAny<UserTokenIdentity>())).Returns(jwtMockResult);
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
 
         // Act
@@ -146,7 +146,7 @@ public class AuthServiceTests {
         // Assert
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockUsersRepo.VerifyAddEntityCalls(Times.Once());
-        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Once());
+        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<UserTokenIdentity>()), Times.Once());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Once());
         Assert.Equal(userId, result.Value.UserId);
         Assert.Equal(jwtMockResult.Token, result.Value.Token);
@@ -155,9 +155,9 @@ public class AuthServiceTests {
     [Fact]
     public async Task AuthService_SignUp_ReturnsEmailInUseError() {
         // Arrange
-        var userInfo = new User { Id = userId, Email = email };
+        var userInfo = new User { Id = userId, Email = email, Password = password };
         mockUsersRepo.SetupFindSingleResult(userInfo);
-        mockUsersRepo.Setup(uR => uR.Add(It.IsAny<User>())).Returns(Task.FromResult(new User()));
+        mockUsersRepo.Setup(uR => uR.Add(It.IsAny<User>()));
         var requestData = new SignUpModel { Email = email, Password = password, UserName = name };
 
         // Act
@@ -169,7 +169,7 @@ public class AuthServiceTests {
         Assert.NotNull(result.Error);
         mockUsersRepo.VerifyFindSingleCalls(Times.Once());
         mockUsersRepo.VerifyAddEntityCalls(Times.Never());
-        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<JwtUser>()), Times.Never());
+        mockJwtManager.Verify(jM => jM.GenerateToken(It.IsAny<UserTokenIdentity>()), Times.Never());
         mockUsersTokenRepo.VerifyAddEntityCalls(Times.Never());
         //The thrown exception can be used for even more detailed assertions.
         Assert.Equal(ErrorCodes.EmailAlreadyInUse, result.Error.Code);

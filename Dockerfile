@@ -21,10 +21,15 @@ RUN PROJS=$(find . -name \*.csproj -printf '%f\n') && for item in $PROJS; do \
 RUN dotnet restore
 
 COPY ./src ./src
+COPY ./.git ./.git
 
 # Publish the application
 WORKDIR /app/src/ArchitectureTest.Web
-RUN dotnet publish -c Release -o out
+
+RUN BRANCH=$(git branch --show-current) && HASH=$(git rev-parse --short HEAD) && \
+    dotnet build /p:InformationalVersion="$BRANCH-$HASH" -c Release
+
+RUN dotnet publish -c Release -o out --no-build
 
 # Build the runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime

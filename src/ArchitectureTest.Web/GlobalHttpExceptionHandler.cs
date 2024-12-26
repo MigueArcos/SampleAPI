@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using ArchitectureTest.Web.Configuration;
+using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace ArchitectureTest.Web;
@@ -16,8 +17,14 @@ public class GlobalHttpExceptionHandler : IExceptionHandler
 
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext, Exception exception, CancellationToken cancellationToken
-    ) {
-        var errorInfo = HttpResponses.TryGetErrorInfo(exception.Message, message => _logger.LogError(message));
+    ){   
+        var (userId, email, name) = httpContext.GetUserIdentity();
+        if (userId == 0)
+            _logger.LogError(exception, "An exception occurred");
+        else
+            _logger.LogError(exception, "An exception occurred: UserId = {UserId}, Email = {Email}", userId, email);
+
+        var errorInfo = HttpResponses.TryGetErrorInfo(exception.Message, _ => {});
 
         var json = JsonSerializer.Serialize(errorInfo);
         byte[] bytes = Encoding.UTF8.GetBytes(json);

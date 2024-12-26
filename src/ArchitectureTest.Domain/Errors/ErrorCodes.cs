@@ -1,7 +1,7 @@
 namespace ArchitectureTest.Domain.Errors;
 
 public struct ErrorCodes {
-    public const string UnknownError = "unknown";
+    public const string UnknownError = "unknown-error";
     public const string InvalidEmail = "auth-invalid-email";
     public const string InvalidPassword = "auth-invalid-password";
     public const string UserNameNotFound = "auth-username-not-found";

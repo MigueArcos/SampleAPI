@@ -11,6 +11,7 @@ using ArchitectureTest.Web;
 using ArchitectureTest.Web.Authentication;
 using ArchitectureTest.Infrastructure.SqlEFCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Host.UseSerilog((context, logger) => {
+    logger.ReadFrom.Configuration(context.Configuration);
+});
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -69,3 +74,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Check this reponse on why the browser is not being auto launch after Serilog is configured, with console logging this
+// is harder to implement because we are using the JSON formatter, so, the log "Now Listening on..." appears as JSON and this
+// difference in this string value prevents auto launch (This is not a big problem)
+// https://www.reddit.com/r/dotnet/comments/u3kuii/comment/kgatklf/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button

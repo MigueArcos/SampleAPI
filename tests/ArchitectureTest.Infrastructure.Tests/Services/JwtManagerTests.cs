@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Diagnostics;
 using ArchitectureTest.Domain.Models.Application;
-using ArchitectureTest.Tests.Shared;
+using ArchitectureTest.TestUtils;
 using System.Linq;
 using ArchitectureTest.Domain.Errors;
 namespace ArchitectureTest.Infrastructure.Tests.Services;
@@ -50,7 +50,7 @@ public class JwtManagerTests {
     {
         // Arrange
         var tokenIdentity = new UserTokenIdentity {
-            UserId = 1, Email = "system@undertest.com", Name = "Test User"
+            UserId = StubData.UserId, Email = StubData.Email, Name = StubData.UserName
         };
 
         // Act
@@ -87,7 +87,7 @@ public class JwtManagerTests {
     {
         // Arrange
         var tokenIdentity = new UserTokenIdentity {
-            UserId = 1, Email = "system@undertest.com", Name = "Test User"
+            UserId = StubData.UserId, Email = StubData.Email, Name = StubData.UserName
         };
         var token = _systemUnderTest.GenerateToken(tokenIdentity).Value!.Token;
 

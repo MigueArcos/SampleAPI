@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace ArchitectureTest.Tests.Shared;
+namespace ArchitectureTest.TestUtils;
 
 public class TestCombinationsGenerator {
     public static IEnumerable<object[]> Combine(ITestParam[] testParams) {

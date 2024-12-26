@@ -2,6 +2,7 @@ using Xunit;
 using FluentAssertions;
 using System;
 using ArchitectureTest.Infrastructure.Services;
+using ArchitectureTest.TestUtils;
 
 namespace ArchitectureTest.Infrastructure.Tests.Services;
 
@@ -15,7 +16,7 @@ public class PasswordHasherTests {
     public void Hash_WithValidPassword_ShouldReturnCorrectHash()
     {
         // Arrange
-        var password = "P455w0rd";
+        var password = StubData.Password;
 
         // Act
         var result = _systemUnderTest.Hash(password);
@@ -37,7 +38,7 @@ public class PasswordHasherTests {
     public void Check_WithInvalidHash_ShouldThrowException(string hash)
     {
         // Arrange
-        var password = "P455w0rd";
+        var password = StubData.Password;
 
         // Act
         Action act = () => _systemUnderTest.Check(hash, password);
@@ -53,7 +54,7 @@ public class PasswordHasherTests {
     public void Check_WithValidHash_ShouldReturnCorrectResult(bool replaceIterations)
     {
         // Arrange
-        var password = "P455w0rd";
+        var password = StubData.Password;
         var hash = _systemUnderTest.Hash(password);
         if (replaceIterations)
             hash = hash.Replace("10000.", "20000.");

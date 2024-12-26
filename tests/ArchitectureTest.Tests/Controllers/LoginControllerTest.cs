@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Xunit;
 using System.Linq;
-using ArchitectureTest.Tests.Shared;
+using ArchitectureTest.TestUtils;
 using ArchitectureTest.Web.Configuration;
 using Microsoft.Extensions.Logging;
 using ArchitectureTest.Domain.Services.Application.AuthService;

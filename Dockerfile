@@ -4,8 +4,14 @@ WORKDIR /app
 
 COPY ArchitectureTest.sln ./
 
+# First we must copy only the csproj files to leverage Docker cache, in case there are no modification to these csproj files,
+# then Docker will cache these steps and the 'dotnet restore' command (the one that takes more time) will also be cached
 COPY ./src/*/*.csproj ./
 COPY ./tests/*/*.csproj ./
+
+## First, we must remove the TestUtils project
+RUN dotnet sln remove ./tests/ArchitectureTest.TestUtils/ArchitectureTest.TestUtils.csproj
+RUN rm ./ArchitectureTest.TestUtils.csproj
 
 RUN TESTPROJS=$(find . -name \*.Tests.csproj -printf '%f\n') && for item in $TESTPROJS; do \
     dotnet sln remove ./tests/"${item%.*}"/$item; \
@@ -20,6 +26,8 @@ RUN PROJS=$(find . -name \*.csproj -printf '%f\n') && for item in $PROJS; do \
 # RUN echo "MaxProtocol = TLSv1.2" >> /etc/ssl/openssl.cnf && dotnet restore
 RUN dotnet restore
 
+# After restore, we copy the rest of the code, in case there are modifications to the source code but no modifications in the 
+# packages, only a 'dotnet publish' will be executed (this does not take a long time)
 COPY ./src ./src
 COPY ./.git ./.git
 

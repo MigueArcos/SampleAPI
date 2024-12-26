@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ArchitectureTest.Domain\ArchitectureTest.Domain.csproj" />
+    <ProjectReference Include="..\..\src\ArchitectureTest.Web\ArchitectureTest.Web.csproj" />
     <ProjectReference Include="..\ArchitectureTest.TestUtils\ArchitectureTest.TestUtils.csproj" />
   </ItemGroup>
 

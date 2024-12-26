@@ -13,6 +13,7 @@ namespace ArchitectureTest.Infrastructure.Tests.SqlEFCore.MySql;
 
 public class MySqlRepositoryFactoryTests {
     private readonly MySqlRepositoryFactory _systemUnderTest;
+
     public MySqlRepositoryFactoryTests(){
         var contextOptions = new DbContextOptionsBuilder<DatabaseContext>()
             .UseInMemoryDatabase(databaseName: "crud")

@@ -33,7 +33,7 @@ public class TestCombinationsGenerator {
 
 public interface ITestParam {
     public string? Name { get; set; }
-    public object[]? PossibleValues { get; set; }
+    public object[]? PossibleValues { get; }
 }
 
 public class TestParam<T> : ITestParam {
@@ -41,6 +41,6 @@ public class TestParam<T> : ITestParam {
     public T[]? PossibleValues { get; set; }
     object[]? ITestParam.PossibleValues {
         get => PossibleValues?.Cast<object>().ToArray();
-        set => PossibleValues = value as T[];
+        // set => PossibleValues = value as T[];
     }
 }

@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY ArchitectureTest.sln ./
 
-# First we must copy only the csproj files to leverage Docker cache, in case there are no modification to these csproj files,
+# First, we must copy only the csproj files to leverage Docker cache, in case there are no modification to these csproj files,
 # then Docker will cache these steps and the 'dotnet restore' command (the one that takes more time) will also be cached
 COPY ./src/*/*.csproj ./
 COPY ./tests/*/*.csproj ./

@@ -120,9 +120,9 @@ public class JwtManagerTests {
     {
         public TokenIdentityBadInputData()
         {
-            long validUserId = 1;
-            string validEmail = "system@undertest.com";
-            string validName = "Test User";
+            long validUserId = StubData.UserId;
+            string validEmail = StubData.Email;
+            string validName = StubData.UserName;
 
             var testParams = new ITestParam[] {
                 new TestParam<long> {

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using ArchitectureTest.Infrastructure.SqlEFCore;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -14,6 +13,7 @@ namespace ArchitectureTest.Infrastructure.Tests.SqlEFCore.SqlServer;
 
 public class SqlServerRepositoryFactoryTests {
     private readonly SqlServerRepositoryFactory _systemUnderTest;
+
     public SqlServerRepositoryFactoryTests(){
         var contextOptions = new DbContextOptionsBuilder<DatabaseContext>()
             .UseInMemoryDatabase(databaseName: "crud")

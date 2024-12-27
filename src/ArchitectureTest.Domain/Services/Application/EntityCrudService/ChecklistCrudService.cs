@@ -10,38 +10,43 @@ using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
-public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrudService {
-    public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
+public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrudService
+{
+    private readonly Dictionary<CrudOperation, List<(Func<Checklist?, long?, bool>, string)>> _validations;
+    public override Dictionary<CrudOperation, List<(Func<Checklist?, long?, bool>, string)>> ValidationsByOperation => _validations;
 
-    public override Dictionary<CrudOperation, List<(Func<Checklist?, long?, bool>, string)>> ValidationsByOperation => new (){
-        [CrudOperation.Create] = [
-            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((entity, entityId) => 
-                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
-                ErrorCodes.CannotCreateDataForThisUserId
-            ),
-            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
-        ],
-        [CrudOperation.ReadById] = [
-            ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
-        ],
-        [CrudOperation.Update] = [
-            ((entity, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
-            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((entity, entityId) => 
-                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
-                ErrorCodes.EntityDoesNotBelongToUser
-            ),
-            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
-        ],
-        [CrudOperation.Delete] = [
-            ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
-        ]
-    };
+    public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) {
+        _validations = new (){
+            [CrudOperation.Create] = [
+                ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => 
+                    entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                    ErrorCodes.CannotCreateDataForThisUserId
+                ),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
+            ],
+            [CrudOperation.ReadById] = [
+                ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+            ],
+            [CrudOperation.Update] = [
+                ((entity, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
+                ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => 
+                    entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                    ErrorCodes.EntityDoesNotBelongToUser
+                ),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
+            ],
+            [CrudOperation.Delete] = [
+                ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+            ]
+        };
+    }
 
-    public async Task<Result<IList<Checklist>, AppError>> GetUserChecklists() {
+    public async Task<Result<IList<Checklist>, AppError>> GetUserChecklists()
+    {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1)
             return new AppError(ErrorCodes.UserIdNotSupplied);
@@ -51,10 +56,11 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
         return result;
     }
 
-    public override async Task<Result<Checklist, AppError>> Add(Checklist inputEntity) {
+    public override async Task<Result<Checklist, AppError>> Create(Checklist inputEntity)
+    {
         try {
             _unitOfWork.StartTransaction();
-            var insertResult = await base.Add(inputEntity).ConfigureAwait(false);
+            var insertResult = await base.Create(inputEntity).ConfigureAwait(false);
 
             if (insertResult.Error is not null)
                 return insertResult.Error;
@@ -72,7 +78,8 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
         }
     }
 
-    private IList<ChecklistDetail> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null){
+    private IList<ChecklistDetail> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null)
+    {
         var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {
             Id = cD.Id,
             ChecklistId = cD.ChecklistId,
@@ -95,7 +102,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
             var d = details[i];
             d.ChecklistId = parentChecklistId;
             d.ParentDetailId = parentDetailId;
-            var checklistDetailEntity = await _unitOfWork.Repository<ChecklistDetail>().Add(d)
+            var checklistDetailEntity = await _unitOfWork.Repository<ChecklistDetail>().Create(d)
                 .ConfigureAwait(false);
 
             if (d.SubItems != null && d.SubItems.Count > 0) {    

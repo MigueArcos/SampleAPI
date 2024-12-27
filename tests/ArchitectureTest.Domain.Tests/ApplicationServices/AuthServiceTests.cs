@@ -76,7 +76,7 @@ public class AuthServiceTests {
         _mockUsersRepo.FindSingle(Arg.Any<Expression<Func<User, bool>>>()).Returns(userInfo);
         _mockPasswordHasher.Check(userInfo.Password, inputData.Password).Returns((true, true));
         _mockJwtManager.GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a))).Returns(jwtToken);
-        _mockUsersTokenRepo.Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);
+        _mockUsersTokenRepo.Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);
         
         // Act
         var result = await _systemUnderTest.SignIn(inputData);
@@ -85,7 +85,7 @@ public class AuthServiceTests {
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.Received(1).Check(userInfo.Password, inputData.Password);
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.Received(1).Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
+        await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
 
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
@@ -120,7 +120,7 @@ public class AuthServiceTests {
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.Received(1).Check(userInfo.Password, inputData.Password);
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
 
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
@@ -149,7 +149,7 @@ public class AuthServiceTests {
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.Received(1).Check(userInfo.Password, inputData.Password);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
 
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
@@ -174,7 +174,7 @@ public class AuthServiceTests {
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.DidNotReceiveWithAnyArgs().Check(default!, default!);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
 
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
@@ -206,9 +206,9 @@ public class AuthServiceTests {
 
         _mockUsersRepo.FindSingle(Arg.Any<Expression<Func<User, bool>>>()).Returns((User) default!);
         _mockPasswordHasher.Hash(inputData.Password).Returns(StubData.HashedPassword);
-        _mockUsersRepo.Add(Arg.Is<User>(a => repoAddUserInputValidator(a))).Returns(userInfo);
+        _mockUsersRepo.Create(Arg.Is<User>(a => repoAddUserInputValidator(a))).Returns(userInfo);
         _mockJwtManager.GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a))).Returns(jwtToken);
-        _mockUsersTokenRepo.Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);
+        _mockUsersTokenRepo.Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);
          
         // Act
         var result = await _systemUnderTest.SignUp(inputData);
@@ -216,9 +216,9 @@ public class AuthServiceTests {
         // Assert
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.Received(1).Hash(inputData.Password);
-        await _mockUsersRepo.Received(1).Add(Arg.Is<User>(a => repoAddUserInputValidator(a)));
+        await _mockUsersRepo.Received(1).Create(Arg.Is<User>(a => repoAddUserInputValidator(a)));
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.Received(1).Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
+        await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
 
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
@@ -249,7 +249,7 @@ public class AuthServiceTests {
 
         _mockUsersRepo.FindSingle(Arg.Any<Expression<Func<User, bool>>>()).Returns((User) default!);
         _mockPasswordHasher.Hash(inputData.Password).Returns(StubData.HashedPassword);
-        _mockUsersRepo.Add(Arg.Any<User>()).Returns(userInfo);
+        _mockUsersRepo.Create(Arg.Any<User>()).Returns(userInfo);
         _mockJwtManager.GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)))
             .Returns(new AppError(ErrorCodes.CannotGenerateJwtToken));
          
@@ -259,9 +259,9 @@ public class AuthServiceTests {
         // Assert
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.Received(1).Hash(inputData.Password);
-        await _mockUsersRepo.Received(1).Add(Arg.Is<User>(a => repoAddUserInputValidator(a)));
+        await _mockUsersRepo.Received(1).Create(Arg.Is<User>(a => repoAddUserInputValidator(a)));
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
 
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
@@ -290,9 +290,9 @@ public class AuthServiceTests {
         // Assert
         await _mockUsersRepo.Received(1).FindSingle(Arg.Any<Expression<Func<User, bool>>>());
         _mockPasswordHasher.DidNotReceiveWithAnyArgs().Hash(default!);
-        await _mockUsersRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersRepo.DidNotReceiveWithAnyArgs().Create(default!);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
 
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
@@ -318,7 +318,7 @@ public class AuthServiceTests {
         _mockJwtManager.ReadToken(StubData.JwtToken, false).Returns((tokenIdentity, null!));
         _mockUsersTokenRepo.DeleteById(userToken.Id).Returns(true);
         _mockJwtManager.GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a))).Returns(jwtToken);
-        _mockUsersTokenRepo.Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);        
+        _mockUsersTokenRepo.Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);        
 
         // Act
         var result = await _systemUnderTest.ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken);
@@ -329,7 +329,7 @@ public class AuthServiceTests {
         _mockUnitOfWork.Received(1).StartTransaction();
         await _mockUsersTokenRepo.Received(1).DeleteById(userToken.Id);
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.Received(1).Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
+        await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
         _mockUnitOfWork.Received(1).Commit();
         _mockUnitOfWork.DidNotReceive().Rollback();
         _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
@@ -365,7 +365,7 @@ public class AuthServiceTests {
         _mockUnitOfWork.Received(1).StartTransaction();
         await _mockUsersTokenRepo.Received(1).DeleteById(userToken.Id);
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
         _mockUnitOfWork.DidNotReceive().Commit();
         _mockUnitOfWork.Received(1).Rollback();
         _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
@@ -396,7 +396,7 @@ public class AuthServiceTests {
         _mockJwtManager.ReadToken(StubData.JwtToken, false).Returns((tokenIdentity, null!));
         _mockUsersTokenRepo.DeleteById(userToken.Id).Returns(true);
         _mockJwtManager.GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a))).Returns(jwtToken);
-        _mockUsersTokenRepo.Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);
+        _mockUsersTokenRepo.Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a))).Returns(userToken);
         _mockUnitOfWork.When(m => m.Commit()).Throw(thrownException);
 
         // Act
@@ -408,7 +408,7 @@ public class AuthServiceTests {
         _mockUnitOfWork.Received(1).StartTransaction();
         await _mockUsersTokenRepo.Received(1).DeleteById(userToken.Id);
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
-        await _mockUsersTokenRepo.Received(1).Add(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
+        await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
         _mockUnitOfWork.Received(1).Commit();
         _mockLogger.Received(1).LogError(thrownException.Message);
         _mockUnitOfWork.Received(1).Rollback();
@@ -438,7 +438,7 @@ public class AuthServiceTests {
         _mockUnitOfWork.DidNotReceive().StartTransaction();
         await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().DeleteById(default);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
         _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
         _mockUnitOfWork.DidNotReceive().Commit();
 
@@ -463,7 +463,7 @@ public class AuthServiceTests {
         _mockUnitOfWork.DidNotReceive().StartTransaction();
         await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().DeleteById(default);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
-        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Add(default!);
+        await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
         _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
         _mockUnitOfWork.DidNotReceive().Commit();
 

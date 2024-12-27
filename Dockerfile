@@ -35,7 +35,7 @@ COPY ./.git ./.git
 WORKDIR /app/src/ArchitectureTest.Web
 
 RUN BRANCH=$(git branch --show-current) && HASH=$(git rev-parse --short HEAD) && \
-    dotnet build /p:InformationalVersion="$BRANCH-$HASH" -c Release
+    dotnet build /p:InformationalVersion="$BRANCH@$HASH" -c Release
 
 RUN dotnet publish -c Release -o out --no-build
 

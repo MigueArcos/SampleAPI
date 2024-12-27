@@ -21,7 +21,7 @@ public class NotesController : EntityCrudController<Note> {
     }
 
     [HttpGet("list")]
-    public async Task<IActionResult> GetAll() {
+    public async Task<IActionResult> GetUserNotes() {
         var result = await (_entityCrudService as INotesCrudService)!.GetUserNotes().ConfigureAwait(false);
 
         if (result.Error is not null)

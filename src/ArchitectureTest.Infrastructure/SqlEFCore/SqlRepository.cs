@@ -27,7 +27,7 @@ public class SqlRepository<D, T> : IRepository<D>
         _dbSet = dbContext.Set<T>();
     }
 
-    public async Task<D> Add(D domainEntity)
+    public async Task<D> Create(D domainEntity)
     {
         var dbEntity = _mapper.Map<T>(domainEntity);
         _dbSet.Add(dbEntity);

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -11,6 +12,11 @@ public static class StubData {
     public const string JwtToken = "eyzhdhhdhd.fhfhhf.fggg";
     public const string RefreshToken = "4nyR3fr35hT0k3n";
     public const long UserId = 1;
+    public const long NoteId = 10;
+    public const string NoteTitle = "My Fancy Title";
+    public const string NoteContent = "My beautiful content";
+    public static DateTime Today { get => DateTime.Now.Date; }
+    public static DateTime NextWeek { get => DateTime.Now.AddDays(7).Date; }
 
     public static bool JsonCompare<T>(T first, T second, string[]? propertiesToIgnore = null) {
         string firstJson = JsonSerializer.Serialize(first);

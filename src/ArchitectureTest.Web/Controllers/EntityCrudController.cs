@@ -18,8 +18,9 @@ public abstract class EntityCrudController<TEntity> : BaseController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> Post([FromBody] TEntity inputEntity) {
-        var result = await _entityCrudService.Add(inputEntity).ConfigureAwait(false);
+    public virtual async Task<IActionResult> Create([FromBody] TEntity inputEntity)
+    {
+        var result = await _entityCrudService.Create(inputEntity).ConfigureAwait(false);
 
         if (result.Error is not null)
             return HandleError(result.Error);
@@ -29,7 +30,8 @@ public abstract class EntityCrudController<TEntity> : BaseController
     }
 
     [HttpGet("{id}")]
-    public virtual async Task<IActionResult> GetById([FromRoute] long id) {
+    public virtual async Task<IActionResult> GetById([FromRoute] long id)
+    {
         var result = await _entityCrudService.GetById(id).ConfigureAwait(false);
 
         if (result.Error is not null)
@@ -39,7 +41,8 @@ public abstract class EntityCrudController<TEntity> : BaseController
     }
 
     [HttpPut("{id}")]
-    public virtual async Task<IActionResult> Put([FromRoute] long id, [FromBody] TEntity inputEntity) {
+    public virtual async Task<IActionResult> Update([FromRoute] long id, [FromBody] TEntity inputEntity)
+    {
         var result = await _entityCrudService.Update(id, inputEntity).ConfigureAwait(false);
 
         if (result.Error is not null)
@@ -49,8 +52,9 @@ public abstract class EntityCrudController<TEntity> : BaseController
     }
 
     [HttpDelete("{id}")]
-    public virtual async Task<IActionResult> Delete([FromRoute] long id) {
-        var result = await _entityCrudService.Delete(id).ConfigureAwait(false);
+    public virtual async Task<IActionResult> DeleteById([FromRoute] long id)
+    {
+        var result = await _entityCrudService.DeleteById(id).ConfigureAwait(false);
 
         if (result is not null)
             return HandleError(result);

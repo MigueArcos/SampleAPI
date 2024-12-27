@@ -16,9 +16,9 @@ public interface ICrudService<TEntity> where TEntity : BaseEntity<long>
 
     Task<Result<TEntity, AppError>> GetById(long entityId);
 
-    Task<Result<TEntity, AppError>> Add(TEntity entity);
+    Task<Result<TEntity, AppError>> Create(TEntity entity);
 
     Task<Result<TEntity, AppError>> Update(long entityId, TEntity entity);
 
-    Task<AppError?> Delete(long entityId);
+    Task<AppError?> DeleteById(long entityId);
 }

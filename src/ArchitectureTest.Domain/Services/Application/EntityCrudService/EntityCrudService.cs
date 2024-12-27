@@ -18,20 +18,23 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
         ValidateEntityBelongsToUser = false
     };
 
-    public EntityCrudService(IUnitOfWork unitOfWork) {
+    public EntityCrudService(IUnitOfWork unitOfWork){
         _repository = unitOfWork.Repository<TEntity>();
         _unitOfWork = unitOfWork;
     }
-    public virtual async Task<Result<TEntity, AppError>> Add(TEntity inputEntity) {
+
+    public virtual async Task<Result<TEntity, AppError>> Create(TEntity inputEntity)
+    {
         var requestError = RequestIsValid(CrudOperation.Create, entity: inputEntity);
         if (requestError is null) {
-            var entity = await _repository.Add(inputEntity).ConfigureAwait(false);
+            var entity = await _repository.Create(inputEntity).ConfigureAwait(false);
             return entity;
         }
         return requestError;
     }
 
-    public virtual async Task<Result<TEntity, AppError>> GetById(long entityId) {
+    public virtual async Task<Result<TEntity, AppError>> GetById(long entityId)
+    {
         if (RequestIsValid(CrudOperation.ReadById, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
         
@@ -45,7 +48,8 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
         return entity;    
     }
 
-    public virtual async Task<Result<TEntity, AppError>> Update(long entityId, TEntity inputEntity) {
+    public virtual async Task<Result<TEntity, AppError>> Update(long entityId, TEntity inputEntity)
+    {
         if (RequestIsValid(CrudOperation.Update, entityId, inputEntity) is AppError requestError && requestError is not null)
             return requestError;
         
@@ -66,7 +70,8 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
             return new AppError(ErrorCodes.RepoProblem);
     }
 
-    public virtual async Task<AppError?> Delete(long entityId) {
+    public virtual async Task<AppError?> DeleteById(long entityId)
+    {
         if (RequestIsValid(CrudOperation.Delete, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
 
@@ -85,7 +90,8 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
             return new AppError(ErrorCodes.RepoProblem);
     }
 
-    public virtual AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TEntity? entity = null) {
+    public virtual AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TEntity? entity = null)
+    {
         bool found = ValidationsByOperation.TryGetValue(crudOperation, out var validations);
         if (!found)
             return new AppError(ErrorCodes.IncorrectInputData);

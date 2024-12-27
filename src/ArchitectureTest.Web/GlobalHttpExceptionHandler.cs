@@ -24,7 +24,7 @@ public class GlobalHttpExceptionHandler : IExceptionHandler
         else
             _logger.LogError(exception, "An exception occurred: UserId = {UserId}, Email = {Email}", userId, email);
 
-        var errorInfo = HttpResponses.TryGetErrorInfo(exception.Message, _ => {});
+        var errorInfo = HttpResponses.TryGetErrorInfo(exception.Message);
 
         var json = JsonSerializer.Serialize(errorInfo);
         byte[] bytes = Encoding.UTF8.GetBytes(json);

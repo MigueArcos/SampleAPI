@@ -10,42 +10,47 @@ using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
-public class NotesCrudService : EntityCrudService<Note>, INotesCrudService {
-    public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) { }
-
-    public override Dictionary<CrudOperation, List<(Func<Note?, long?, bool>, string)>> ValidationsByOperation => new() {
-        [CrudOperation.Create] = [
-            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((entity, entityId) => 
-                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
-                ErrorCodes.CannotCreateDataForThisUserId
-            ),
-            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
-        ],
-        [CrudOperation.ReadById] = [
-            ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
-        ],
-        [CrudOperation.Update] = [
-            ((entity, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
-            ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-            ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
-            ((entity, entityId) => 
-                entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
-                ErrorCodes.EntityDoesNotBelongToUser
-            ),
-            ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
-        ],
-        [CrudOperation.Delete] = [
-            ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
-        ]
-    };
+public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
+{
+    private readonly Dictionary<CrudOperation, List<(Func<Note?, long?, bool>, string)>> _validations;
+    public override Dictionary<CrudOperation, List<(Func<Note?, long?, bool>, string)>> ValidationsByOperation => _validations;
+    public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork)
+    {
+        _validations = new() {
+            [CrudOperation.Create] = [
+                ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => 
+                    entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                    ErrorCodes.CannotCreateDataForThisUserId
+                ),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
+            ],
+            [CrudOperation.ReadById] = [
+                ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+            ],
+            [CrudOperation.Update] = [
+                ((entity, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
+                ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
+                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => 
+                    entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                    ErrorCodes.EntityDoesNotBelongToUser
+                ),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
+            ],
+            [CrudOperation.Delete] = [
+                ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+            ]
+        };
+    }
 
     public override bool EntityBelongsToUser(Note entity) {
         return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
     }
 
-    public async Task<Result<IList<Note>, AppError>> GetUserNotes() {
+    public async Task<Result<IList<Note>, AppError>> GetUserNotes()
+    {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (CrudSettings.UserId < 1) return new AppError(ErrorCodes.UserIdNotSupplied);
         var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);

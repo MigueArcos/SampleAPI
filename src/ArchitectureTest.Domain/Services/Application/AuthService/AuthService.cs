@@ -53,7 +53,7 @@ public class AuthService : IAuthService
         if (userFound != null)
             return new AppError(ErrorCodes.EmailAlreadyInUse);
 
-        var newUser = await _usersRepository.Add(new User {
+        var newUser = await _usersRepository.Create(new User {
             Name = signUpModel.UserName,
             Email = signUpModel.Email,
             Password = _passwordHasher.Hash(signUpModel.Password),
@@ -97,7 +97,7 @@ public class AuthService : IAuthService
             var newToken = newTokenResult.Value;
 
             // Create a new token in Database
-            await _tokensRepository.Add(new UserToken {
+            await _tokensRepository.Create(new UserToken {
                 UserId = newToken!.UserId,
                 Token = newToken.RefreshToken,
                 TokenTypeId = (long)Enums.TokenType.RefreshToken,
@@ -124,7 +124,7 @@ public class AuthService : IAuthService
             return resultToken.Error;
 
         var userJwt = resultToken.Value;
-        await _tokensRepository.Add(new UserToken {
+        await _tokensRepository.Create(new UserToken {
             UserId = userJwt!.UserId,
             Token = userJwt!.RefreshToken,
             TokenTypeId = (long)Enums.TokenType.RefreshToken,

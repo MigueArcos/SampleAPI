@@ -9,7 +9,7 @@ namespace ArchitectureTest.Domain.Services;
 public interface IRepository<TEntity> 
     where TEntity : BaseEntity<long>
 {
-    Task<TEntity> Add(TEntity entity);
+    Task<TEntity> Create(TEntity entity);
     Task<bool> Update(TEntity entity);
     Task<bool> DeleteById(long id);
     Task<IList<TEntity>> Find(Expression<Func<TEntity, bool>>? whereFilters = null);

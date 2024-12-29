@@ -77,41 +77,25 @@ public class AuthService : IAuthService
         if (resultJwtRead.Error != null) 
             return resultJwtRead.Error;
         
-        try
-        {
-            _unitOfWork.StartTransaction();
-            // Delete previous token from database
-            await _tokensRepository.DeleteById(refreshTokenSearch.Id).ConfigureAwait(false);
+        var jwtResult = resultJwtRead.Value;
 
-            var jwtResult = resultJwtRead.Value;
+        var transactionFunc = () => TransactionallyRefreshTokens(refreshTokenSearch.Id, jwtResult.Identity);
+        var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger);
 
-            var newTokenResult = _jwtManager.GenerateToken(jwtResult.Identity);
+        if (transactionResult.Error != null) 
+            return transactionResult.Error;
 
-            if (newTokenResult.Error != null)
-            {
-                _unitOfWork.Rollback();
-                return newTokenResult.Error;
-            }
-                
+        return (transactionResult.Value!, jwtResult.Claims);
+    }
 
-            var newToken = newTokenResult.Value;
+    private async Task<Result<JsonWebToken, AppError>> TransactionallyRefreshTokens(
+        long oldRefreshTokenId, UserTokenIdentity tokenIdentity
+    ){
+        // Delete previous token from database
+        await _tokensRepository.DeleteById(oldRefreshTokenId).ConfigureAwait(false);
 
-            // Create a new token in Database
-            await _tokensRepository.Create(new UserToken {
-                UserId = newToken!.UserId,
-                Token = newToken.RefreshToken,
-                TokenTypeId = (long)Enums.TokenType.RefreshToken,
-                ExpiryTime = DateTime.Now.AddHours(_configuration.GetValue<int>("ConfigData:Jwt:RefreshTokenTTLHours"))
-            }).ConfigureAwait(false);
-            _unitOfWork.Commit();
-            return (newToken, jwtResult.Claims);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e.Message);
-            _unitOfWork.Rollback();
-            return new AppError(ErrorCodes.RepoProblem);
-        }
+        // Create a new token in Database
+        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email!, tokenIdentity.Name);
     }
 
     private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(long userId, string email, string? name) {

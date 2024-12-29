@@ -34,8 +34,8 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
         {
             _logger.LogError(JsonSerializer.Serialize(new {
                 AuthFailure = context.AuthenticateFailure.Message,
-                Error = context.Error,
-                ErrorDescription = context.ErrorDescription
+                context.Error,
+                context.ErrorDescription
             }));
         }
         return base.Challenge(context);

@@ -329,6 +329,8 @@ public class AuthServiceTests {
         _mockUnitOfWork.Received(1).StartTransaction();
         await _mockUsersTokenRepo.Received(1).DeleteById(userToken.Id);
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
+        // TODO: While debugging this func is called twice (one of the calls with a null argument),
+        // though it pass the test, very weird!
         await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
         _mockUnitOfWork.Received(1).Commit();
         _mockUnitOfWork.DidNotReceive().Rollback();
@@ -410,7 +412,7 @@ public class AuthServiceTests {
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
         await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)));
         _mockUnitOfWork.Received(1).Commit();
-        _mockLogger.Received(1).LogError(thrownException.Message);
+        _mockLogger.Received(1).LogError(thrownException, "An exception occurred during DB transaction");
         _mockUnitOfWork.Received(1).Rollback();
 
 
@@ -439,7 +441,7 @@ public class AuthServiceTests {
         await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().DeleteById(default);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
         await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
-        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError((Exception) default!, default!);
         _mockUnitOfWork.DidNotReceive().Commit();
 
         result.Should().NotBeNull();
@@ -464,7 +466,7 @@ public class AuthServiceTests {
         await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().DeleteById(default);
         _mockJwtManager.DidNotReceiveWithAnyArgs().GenerateToken(default!);
         await _mockUsersTokenRepo.DidNotReceiveWithAnyArgs().Create(default!);
-        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError((Exception) default!, default);
         _mockUnitOfWork.DidNotReceive().Commit();
 
         result.Should().NotBeNull();

@@ -5,13 +5,13 @@ namespace ArchitectureTest.Databases.MySql.Entities;
 
 public partial class Checklist
 {
-    public long Id { get; set; }
+    public string Id { get; set; }
 
-    public long UserId { get; set; }
+    public string UserId { get; set; }
 
     public string Title { get; set; }
 
-    public DateTime? CreationDate { get; set; }
+    public DateTime CreationDate { get; set; }
 
     public DateTime? ModificationDate { get; set; }
 

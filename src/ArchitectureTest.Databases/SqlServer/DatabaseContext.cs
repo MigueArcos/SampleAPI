@@ -32,38 +32,51 @@ public partial class DatabaseContext : DbContext
     {
         modelBuilder.Entity<Checklist>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07C3E7191F");
+            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07530AD9AB");
 
             entity.ToTable("Checklist");
 
+            entity.Property(e => e.Id)
+                .HasMaxLength(32)
+                .IsUnicode(false);
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
             entity.Property(e => e.Title)
                 .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(32)
                 .IsUnicode(false);
 
             entity.HasOne(d => d.User).WithMany(p => p.Checklists)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Checklist__UserI__23BE4960");
+                .HasConstraintName("FK__Checklist__UserI__22CA2527");
         });
 
         modelBuilder.Entity<ChecklistDetail>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC07CF1BBA1A");
+            entity.HasKey(e => e.Id).HasName("PK__Checklis__3214EC0717D1CFC9");
 
             entity.ToTable("ChecklistDetail");
 
+            entity.Property(e => e.Id)
+                .HasMaxLength(32)
+                .IsUnicode(false);
+            entity.Property(e => e.ChecklistId)
+                .IsRequired()
+                .HasMaxLength(32)
+                .IsUnicode(false);
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
+            entity.Property(e => e.ParentDetailId)
+                .HasMaxLength(32)
+                .IsUnicode(false);
             entity.Property(e => e.TaskName)
                 .IsRequired()
                 .HasMaxLength(100)
@@ -72,24 +85,29 @@ public partial class DatabaseContext : DbContext
             entity.HasOne(d => d.Checklist).WithMany(p => p.ChecklistDetails)
                 .HasForeignKey(d => d.ChecklistId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Checklist__Check__2882FE7D");
+                .HasConstraintName("FK__Checklist__Check__269AB60B");
         });
 
         modelBuilder.Entity<Note>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Note__3214EC07B6083323");
+            entity.HasKey(e => e.Id).HasName("PK__Note__3214EC074A5BDE92");
 
             entity.ToTable("Note");
 
+            entity.Property(e => e.Id)
+                .HasMaxLength(32)
+                .IsUnicode(false);
             entity.Property(e => e.Content).HasColumnType("text");
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
             entity.Property(e => e.Title)
                 .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(32)
                 .IsUnicode(false);
 
             entity.HasOne(d => d.User).WithMany(p => p.Notes)
@@ -100,10 +118,16 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<TokenType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TokenTyp__3214EC07185533D0");
+            entity.HasKey(e => e.Id).HasName("PK__TokenTyp__3214EC073A37A0A1");
 
             entity.ToTable("TokenType");
 
+            entity.Property(e => e.Id)
+                .HasMaxLength(32)
+                .IsUnicode(false);
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.Name)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -111,19 +135,20 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__User__3214EC07E7BCABDC");
+            entity.HasKey(e => e.Id).HasName("PK__User__3214EC07F9F4F9B1");
 
             entity.ToTable("User");
 
+            entity.Property(e => e.Id)
+                .HasMaxLength(32)
+                .IsUnicode(false);
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email)
                 .HasMaxLength(320)
                 .IsUnicode(false);
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -134,24 +159,38 @@ public partial class DatabaseContext : DbContext
 
         modelBuilder.Entity<UserToken>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__UserToke__3214EC07DB59BC29");
+            entity.HasKey(e => e.Id).HasName("PK__UserToke__3214EC07089B8D81");
 
             entity.ToTable("UserToken");
 
+            entity.Property(e => e.Id)
+                .HasMaxLength(32)
+                .IsUnicode(false);
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.ExpiryTime).HasColumnType("datetime");
             entity.Property(e => e.Token)
                 .HasMaxLength(256)
+                .IsUnicode(false);
+            entity.Property(e => e.TokenTypeId)
+                .IsRequired()
+                .HasMaxLength(32)
+                .IsUnicode(false);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(32)
                 .IsUnicode(false);
 
             entity.HasOne(d => d.TokenType).WithMany(p => p.UserTokens)
                 .HasForeignKey(d => d.TokenTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserToken__Token__1A34DF26");
+                .HasConstraintName("FK__UserToken__Token__1B29035F");
 
             entity.HasOne(d => d.User).WithMany(p => p.UserTokens)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserToken__UserI__1940BAED");
+                .HasConstraintName("FK__UserToken__UserI__1A34DF26");
         });
 
         OnModelCreatingPartial(modelBuilder);

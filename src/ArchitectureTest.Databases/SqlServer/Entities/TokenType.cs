@@ -5,9 +5,11 @@ namespace ArchitectureTest.Databases.SqlServer.Entities;
 
 public partial class TokenType
 {
-    public long Id { get; set; }
+    public string Id { get; set; }
 
     public string Name { get; set; }
+
+    public DateTime CreationDate { get; set; }
 
     public virtual ICollection<UserToken> UserTokens { get; set; } = new List<UserToken>();
 }

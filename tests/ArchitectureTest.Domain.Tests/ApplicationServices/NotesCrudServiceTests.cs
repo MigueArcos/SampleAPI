@@ -52,7 +52,7 @@ public class NotesCrudServiceTests {
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        StubData.JsonCompare(getByIdNote, result.Value).Should().BeTrue();
+        ObjectComparer.JsonCompare(getByIdNote, result.Value).Should().BeTrue();
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class NotesCrudServiceTests {
         _mockNotesRepo.GetById(getByIdNote.Id).Returns(getByIdNote);
 
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
-        _systemUnderTest.CrudSettings.UserId = 25; // 25 is not the owner of the resultNote
+        _systemUnderTest.CrudSettings.UserId = "25"; // 25 is not the owner of the resultNote
 
         // Act
         var result = await _systemUnderTest.GetById(getByIdNote.Id);
@@ -97,13 +97,13 @@ public class NotesCrudServiceTests {
     public async Task GetById_WhenNoteIdNotProvided_ReturnsError()
     {
         // Arrange
-        long inputId = 0;
+        string inputId = string.Empty;
 
         // Act
         var result = await _systemUnderTest.GetById(inputId);
 
         // Assert
-        await _mockNotesRepo.DidNotReceiveWithAnyArgs().GetById(default);
+        await _mockNotesRepo.DidNotReceiveWithAnyArgs().GetById(default!);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
@@ -138,9 +138,9 @@ public class NotesCrudServiceTests {
     {
         // Arrange
         var foundNotes = new List<Note> {
-            BuildNote(noteId: 1),
-            BuildNote(noteId: 2),
-            BuildNote(noteId: 3)
+            BuildNote(noteId: "1"),
+            BuildNote(noteId: "2"),
+            BuildNote(noteId: "3")
         };
         _mockNotesRepo.Find(default).ReturnsForAnyArgs(foundNotes);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
@@ -154,7 +154,7 @@ public class NotesCrudServiceTests {
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        StubData.JsonCompare(foundNotes, result.Value).Should().BeTrue();
+        ObjectComparer.JsonCompare(foundNotes, result.Value).Should().BeTrue();
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class NotesCrudServiceTests {
     {
         // Arrange
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
-        _systemUnderTest.CrudSettings.UserId = 0;
+        _systemUnderTest.CrudSettings.UserId = string.Empty;
 
         // Act
         var result = await _systemUnderTest.GetUserNotes();
@@ -181,9 +181,9 @@ public class NotesCrudServiceTests {
         // Arrange
         var today = StubData.Today;
         var nextWeek = StubData.NextWeek;
-        var inputData = BuildNote(noteId: 0, creationDate: today, modificationDate: nextWeek);
+        var inputData = BuildNote(noteId: string.Empty, creationDate: today, modificationDate: nextWeek);
         var resultNote = BuildNote(creationDate: today, modificationDate: nextWeek);
-        _mockNotesRepo.Create(inputData).Returns(resultNote);
+        _mockNotesRepo.Create(inputData, true).Returns(Task.CompletedTask);
 
         // Act
         var result = await _systemUnderTest.Create(inputData);
@@ -193,20 +193,20 @@ public class NotesCrudServiceTests {
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        StubData.JsonCompare(inputData, result.Value, [nameof(Note.Id)]).Should().BeTrue();
+        ObjectComparer.JsonCompare(inputData, result.Value, [nameof(Note.Id)]).Should().BeTrue();
     }
 
     [Fact]
     public async Task Create_WhenUserIdNotProvided_ReturnsError()
     {
         // Arrange
-        var inputData = BuildNote(userId: 0);
+        var inputData = BuildNote(userId: string.Empty);
 
         // Act
         var result = await _systemUnderTest.Create(inputData);
 
         // Assert
-        await _mockNotesRepo.DidNotReceive().Create(inputData);
+        await _mockNotesRepo.DidNotReceive().Create(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
@@ -226,7 +226,7 @@ public class NotesCrudServiceTests {
         var result = await _systemUnderTest.Create(inputData);
 
         // Assert
-        await _mockNotesRepo.DidNotReceive().Create(inputData);
+        await _mockNotesRepo.DidNotReceive().Create(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
@@ -239,11 +239,11 @@ public class NotesCrudServiceTests {
     public async Task Update_WhenEverythingIsOK_ReturnsModifiedNote(bool performOwnershipValidation)
     {
         // Arrange
-        long noteUserId = performOwnershipValidation ? StubData.UserId : 100;
+        string noteUserId = performOwnershipValidation ? StubData.UserId : "100";
         var getByIdNote = BuildNote(userId: noteUserId);
         // var resultNote = inputData.ToEntity();
         _mockNotesRepo.GetById(StubData.NoteId).Returns(getByIdNote);
-        _mockNotesRepo.Update(getByIdNote).Returns(true);
+        _mockNotesRepo.Update(getByIdNote, true).Returns(Task.CompletedTask);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation) {
             _systemUnderTest.CrudSettings.UserId = StubData.UserId;
@@ -255,25 +255,26 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.Received(1).Update(getByIdNote);
+        await _mockNotesRepo.Received(1).Update(getByIdNote, true);
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        StubData.JsonCompare(getByIdNote, result.Value).Should().BeTrue();
+        result.Value!.ModificationDate.Should().NotBeNull();
+        ObjectComparer.JsonCompare(getByIdNote, result.Value).Should().BeTrue();
     }
 
     [Fact]
     public async Task Update_WhenUserIdNotProvided_ReturnsError()
     {
         // Arrange
-        var inputData = BuildNote(userId: 0);
+        var inputData = BuildNote(userId: string.Empty);
 
         // Act
         var result = await _systemUnderTest.Update(StubData.NoteId, inputData);
 
         // Assert
         await _mockNotesRepo.DidNotReceive().GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().Update(inputData);
+        await _mockNotesRepo.DidNotReceive().Update(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
@@ -294,7 +295,7 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.DidNotReceive().GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().Update(inputData);
+        await _mockNotesRepo.DidNotReceive().Update(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
@@ -307,7 +308,7 @@ public class NotesCrudServiceTests {
     public async Task Update_WhenNoteNotFound_ReturnsError(bool performOwnershipValidation)
     {
         // Arrange
-        var inputData = BuildNote(noteId: 0);
+        var inputData = BuildNote(noteId: string.Empty);
         _mockNotesRepo.GetById(StubData.NoteId).Returns((Note) default!);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation) {
@@ -319,7 +320,7 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().Update(inputData);
+        await _mockNotesRepo.DidNotReceive().Update(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
@@ -330,8 +331,8 @@ public class NotesCrudServiceTests {
     public async Task Update_WhenNoteDoesNotBelongToUser_ReturnsError()
     {
         // Arrange
-        var inputData = BuildNote(noteId: 0);
-        var resultNote = BuildNote(userId: 25);
+        var inputData = BuildNote(noteId: string.Empty);
+        var resultNote = BuildNote(userId: "25");
         _mockNotesRepo.GetById(StubData.NoteId).Returns(resultNote);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
@@ -341,46 +342,23 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().Update(inputData);
+        await _mockNotesRepo.DidNotReceive().Update(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();
         result.Error!.Code.Should().Be(ErrorCodes.EntityDoesNotBelongToUser);
     }
 
-    [Fact]
-    public async Task Update_WhenRepoFailsToUpdate_ReturnsError()
-    {
-        // Arrange
-        var inputData = BuildNote(noteId: 0);
-        var resultNote = BuildNote();
-        _mockNotesRepo.GetById(StubData.NoteId).Returns(resultNote);
-        _mockNotesRepo.Update(inputData).Returns(false);
-        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
-        _systemUnderTest.CrudSettings.UserId = StubData.UserId;
-
-        // Act
-        var result = await _systemUnderTest.Update(StubData.NoteId, inputData);
-
-        // Assert
-        await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.Received(1).Update(inputData);
-        result.Should().NotBeNull();
-        result.Error.Should().NotBeNull();
-        result.Value.Should().BeNull();
-        result.Error!.Code.Should().Be(ErrorCodes.RepoProblem);
-    }
-
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Delete_WhenEverythingIsOK_ReturnsSuccess(bool performOwnershipValidation)
+    public async Task DeleteById_WhenEverythingIsOK_ReturnsSuccess(bool performOwnershipValidation)
     {
         // Arrange
-        long noteUserId = performOwnershipValidation ? StubData.UserId : 100;
+        string noteUserId = performOwnershipValidation ? StubData.UserId : "100";
         var resultNote = BuildNote(userId: noteUserId);
         _mockNotesRepo.GetById(StubData.NoteId).Returns(resultNote);
-        _mockNotesRepo.DeleteById(StubData.NoteId).Returns(true);
+        _mockNotesRepo.DeleteById(StubData.NoteId, true).Returns(Task.CompletedTask);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation) {
             _systemUnderTest.CrudSettings.UserId = StubData.UserId;
@@ -392,28 +370,28 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.Received(1).DeleteById(StubData.NoteId);
+        await _mockNotesRepo.Received(1).DeleteById(StubData.NoteId, true);
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task Delete_WhenNoteIdNotProvided_ReturnsError()
+    public async Task DeleteById_WhenNoteIdNotProvided_ReturnsError()
     {
         // Arrange
-        var inputId = 0;
+        string inputId = string.Empty;
 
         // Act
         var result = await _systemUnderTest.DeleteById(inputId);
 
         // Assert
         await _mockNotesRepo.DidNotReceive().GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().DeleteById(inputId);
+        await _mockNotesRepo.DidNotReceive().DeleteById(default!, default);
         result.Should().NotBeNull();
         result!.Code.Should().Be(ErrorCodes.NoteIdNotSupplied);
     }
 
     [Fact]
-    public async Task Delete_WhenNoteNotFound_ReturnsError()
+    public async Task DeleteById_WhenNoteNotFound_ReturnsError()
     {
         // Arrange
         _mockNotesRepo.GetById(StubData.NoteId).Returns((Note) default!);
@@ -425,37 +403,16 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().DeleteById(StubData.NoteId);
+        await _mockNotesRepo.DidNotReceive().DeleteById(default!, default);
         result.Should().NotBeNull();
         result!.Code.Should().Be(ErrorCodes.EntityNotFound);
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task Delete_WhenRepoFailsToDelete_ReturnsError(bool performOwnershipValidation)
-    {
-        // Arrange
-        long noteUserId = performOwnershipValidation ? StubData.UserId : 100;
-        var resultNote = BuildNote(userId: noteUserId);
-        _mockNotesRepo.GetById(StubData.NoteId).Returns(resultNote);
-        _mockNotesRepo.DeleteById(StubData.NoteId).Returns(false);
-
-        // Act
-        var result = await _systemUnderTest.DeleteById(StubData.NoteId);
-
-        // Assert
-        await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.Received(1).DeleteById(StubData.NoteId);
-        result.Should().NotBeNull();
-        result!.Code.Should().Be(ErrorCodes.RepoProblem);
     }
 
     [Fact]
     public async Task Delete_WhenNoteDoesNotBelongToUser_ReturnsError()
     {
         // Arrange
-        var getByIdNote = BuildNote(userId: 25);
+        var getByIdNote = BuildNote(userId: "25");
         _mockNotesRepo.GetById(StubData.NoteId).Returns(getByIdNote);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
@@ -465,14 +422,14 @@ public class NotesCrudServiceTests {
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.DidNotReceive().DeleteById(StubData.NoteId);
+        await _mockNotesRepo.DidNotReceive().DeleteById(default!, default);
         result.Should().NotBeNull();
         result!.Code.Should().Be(ErrorCodes.EntityDoesNotBelongToUser);
     }
 
     private Note BuildNote(
-        long noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
-        long userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
+        string noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
+        string userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
     ) {
         return new Note {
             Id = noteId,

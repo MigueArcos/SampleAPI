@@ -1,21 +1,22 @@
 ﻿using System.Security.Claims;
+using ArchitectureTest.Domain.Models.Application;
 
 namespace ArchitectureTest.Web.HttpExtensions;
 
 public static class ClaimsIdentityExtensions {
-    public static (long UserId, string Email, string Name) GetUserIdentity(this IHttpContextAccessor httpContextAccessor) {
+    public static UserTokenIdentity? GetUserIdentity(this IHttpContextAccessor httpContextAccessor) {
         return GetUserIdentity(httpContextAccessor.HttpContext);
     }
 
-    public static (long UserId, string Email, string Name) GetUserIdentity(this HttpContext? httpContext)
+    public static UserTokenIdentity? GetUserIdentity(this HttpContext? httpContext)
     {
         if (httpContext?.User != null) {
             var claims = httpContext.User;
-            long userId = long.Parse(claims.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            string email = claims.FindFirst(ClaimTypes.Email)?.Value ?? "user@default.io";
-            string name = claims.FindFirst(ClaimTypes.Name)?.Value ?? "Default";
-            return (userId, email, name);
+            string userId = claims.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+            string email = claims.FindFirst(ClaimTypes.Email)?.Value!;
+            string name = claims.FindFirst(ClaimTypes.Name)?.Value!;
+            return new UserTokenIdentity { UserId = userId, Email = email, Name = name };
         }
-        return (0, string.Empty, string.Empty);
+        return null;
     }
 }

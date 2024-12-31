@@ -13,7 +13,7 @@ public class NotesController : EntityCrudController<Note> {
     public NotesController(
         ICrudService<Note> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
     ) : base(entityCrudService, httpContextAccesor, logger) {
-        long userId = httpContextAccesor.GetUserIdentity().UserId;
+        string? userId = httpContextAccesor.GetUserIdentity()?.UserId;
         entityCrudService.CrudSettings = new EntityCrudSettings {
             ValidateEntityBelongsToUser = true,
             UserId = userId

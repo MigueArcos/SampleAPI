@@ -23,7 +23,7 @@ public class JwtManager : IJwtManager {
     }
 
     public Result<JsonWebToken, AppError> GenerateToken(UserTokenIdentity identity) {
-        if (identity.UserId <= 0 || string.IsNullOrWhiteSpace(identity.Email) || string.IsNullOrWhiteSpace(identity.Name))
+        if (string.IsNullOrWhiteSpace(identity.UserId) || string.IsNullOrWhiteSpace(identity.Email) || string.IsNullOrWhiteSpace(identity.Name))
             return new AppError(ErrorCodes.CannotGenerateJwtToken);
 
         int tokenTtlSeconds = _configuration.GetValue<int>("ConfigData:Jwt:TokenTTLSeconds");
@@ -59,17 +59,17 @@ public class JwtManager : IJwtManager {
         _tokenValidationParameters.ValidateLifetime = validateLifeTime;
         var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken _);
         
-        var emailClaim = claims.FindFirst(ClaimTypes.Email);
-        var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
-        var nameClaim = claims.FindFirst(ClaimTypes.Name);
+        var emailClaim = claims.FindFirst(ClaimTypes.Email)!;
+        var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier)!;
+        var nameClaim = claims.FindFirst(ClaimTypes.Name)!;
 
         if (claimIsEmpty(userIdClaim) || claimIsEmpty(emailClaim) || claimIsEmpty(nameClaim))
             return new AppError(ErrorCodes.IncompleteJwtTokenData);
     
         var user = new UserTokenIdentity {
-            Email = emailClaim!.Value,
-            UserId = long.Parse(userIdClaim!.Value),
-            Name = nameClaim!.Value
+            Email = emailClaim.Value,
+            UserId = userIdClaim.Value,
+            Name = nameClaim.Value
         };
         return (user, claims);
     }

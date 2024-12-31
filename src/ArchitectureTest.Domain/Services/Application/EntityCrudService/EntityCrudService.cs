@@ -10,7 +10,7 @@ using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 public abstract class EntityCrudService<TEntity> : ICrudService<TEntity> 
-    where TEntity : BaseEntity<long>
+    where TEntity : BaseEntity<string>
 {
     protected readonly IRepository<TEntity> _repository;
     protected readonly IUnitOfWork _unitOfWork;
@@ -27,13 +27,16 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
     {
         var requestError = RequestIsValid(CrudOperation.Create, entity: inputEntity);
         if (requestError is null) {
-            var entity = await _repository.Create(inputEntity).ConfigureAwait(false);
-            return entity;
+            inputEntity.Id = Guid.CreateVersion7().ToString("N");
+            inputEntity.CreationDate = DateTime.Now;
+            inputEntity.ModificationDate = null;
+            await _repository.Create(inputEntity).ConfigureAwait(false);
+            return inputEntity;
         }
         return requestError;
     }
 
-    public virtual async Task<Result<TEntity, AppError>> GetById(long entityId)
+    public virtual async Task<Result<TEntity, AppError>> GetById(string entityId)
     {
         if (RequestIsValid(CrudOperation.ReadById, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
@@ -48,7 +51,7 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
         return entity;    
     }
 
-    public virtual async Task<Result<TEntity, AppError>> Update(long entityId, TEntity inputEntity)
+    public virtual async Task<Result<TEntity, AppError>> Update(string entityId, TEntity inputEntity)
     {
         if (RequestIsValid(CrudOperation.Update, entityId, inputEntity) is AppError requestError && requestError is not null)
             return requestError;
@@ -57,20 +60,19 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
 
         if (entity == null)
             return new AppError(ErrorCodes.EntityNotFound);
-            
+
         if (!EntityBelongsToUser(entity))
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
 
         inputEntity.Id = entityId;
-        var result = await _repository.Update(inputEntity).ConfigureAwait(false);
-
-        if (result)
-            return inputEntity;
-        else
-            return new AppError(ErrorCodes.RepoProblem);
+        inputEntity.CreationDate = entity.CreationDate;
+        inputEntity.ModificationDate = DateTime.Now;
+        await _repository.Update(inputEntity).ConfigureAwait(false);
+        
+        return inputEntity;
     }
 
-    public virtual async Task<AppError?> DeleteById(long entityId)
+    public virtual async Task<AppError?> DeleteById(string entityId)
     {
         if (RequestIsValid(CrudOperation.Delete, entityId: entityId) is AppError requestError && requestError is not null)
             return requestError;
@@ -82,15 +84,12 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
         if (!EntityBelongsToUser(entity))
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
         
-        var result = await _repository.DeleteById(entityId).ConfigureAwait(false);
+        await _repository.DeleteById(entityId).ConfigureAwait(false);
 
-        if (result)
-            return null;
-        else
-            return new AppError(ErrorCodes.RepoProblem);
+        return null;
     }
 
-    public virtual AppError? RequestIsValid(CrudOperation crudOperation, long? entityId = null, TEntity? entity = null)
+    public virtual AppError? RequestIsValid(CrudOperation crudOperation, string? entityId = null, TEntity? entity = null)
     {
         bool found = ValidationsByOperation.TryGetValue(crudOperation, out var validations);
         if (!found)
@@ -106,5 +105,5 @@ public abstract class EntityCrudService<TEntity> : ICrudService<TEntity>
     }
 
     public abstract bool EntityBelongsToUser(TEntity entity);
-    public abstract Dictionary<CrudOperation, List<(Func<TEntity?, long?, bool>, string)>> ValidationsByOperation { get; }
+    public abstract Dictionary<CrudOperation, List<(Func<TEntity?, string?, bool>, string)>> ValidationsByOperation { get; }
 }

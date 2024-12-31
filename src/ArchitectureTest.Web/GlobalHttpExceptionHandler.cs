@@ -18,11 +18,11 @@ public class GlobalHttpExceptionHandler : IExceptionHandler
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext, Exception exception, CancellationToken cancellationToken
     ){   
-        var (userId, email, name) = httpContext.GetUserIdentity();
-        if (userId == 0)
+        var identity = httpContext.GetUserIdentity();
+        if (string.IsNullOrWhiteSpace(identity?.UserId))
             _logger.LogError(exception, "An exception occurred");
         else
-            _logger.LogError(exception, "An exception occurred: UserId = {UserId}, Email = {Email}", userId, email);
+            _logger.LogError(exception, "An exception occurred: UserId = {UserId}, Email = {Email}", identity.UserId, identity.Email);
 
         var errorInfo = HttpResponses.TryGetErrorInfo(exception.Message);
 

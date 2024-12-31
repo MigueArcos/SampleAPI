@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.Common;
 
@@ -20,7 +21,7 @@ public class BaseUnitOfWork : IUnitOfWork, IDisposable {
         _repositoryFactory = repositoryFactory;
     }
 
-    public IRepository<D> Repository<D>() where D : BaseEntity<long> {
+    public IRepository<D> Repository<D>() where D : BaseEntity<string> {
         string typeName = typeof(D).Name;
         bool found = _repos.TryGetValue(typeName, out var repo);
         if (!found) {
@@ -30,23 +31,23 @@ public class BaseUnitOfWork : IUnitOfWork, IDisposable {
         return repo as IRepository<D> ?? throw new Exception(ErrorCodes.RepoProblem);
     }
 
-    public void Commit() {
+    public async Task Commit() {
         try {
-            _databaseContext.SaveChanges();
-            _transaction!.Commit();
+            await SaveChanges().ConfigureAwait(false);
+            await _transaction!.CommitAsync().ConfigureAwait(false);
         }
         finally {
             _transaction!.Dispose();
         }
     }
 
-    public void Rollback() {
-        _transaction!.Rollback();
+    public async Task Rollback() {
+        await _transaction!.RollbackAsync().ConfigureAwait(false);
         _transaction!.Dispose();
     }
 
-    public void StartTransaction() {
-        _transaction = _databaseContext.Database.BeginTransaction();
+    public async Task StartTransaction() {
+        _transaction = await _databaseContext.Database.BeginTransactionAsync().ConfigureAwait(false);
     }
 
 
@@ -64,5 +65,10 @@ public class BaseUnitOfWork : IUnitOfWork, IDisposable {
     public void Dispose() {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    public Task<int> SaveChanges()
+    {
+        return _databaseContext.SaveChangesAsync();
     }
 }

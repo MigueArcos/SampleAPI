@@ -53,12 +53,14 @@ public class AuthService : IAuthService
         if (userFound != null)
             return new AppError(ErrorCodes.EmailAlreadyInUse);
 
-        var newUser = await _usersRepository.Create(new User {
+        var newUser = new User {
+            Id = Guid.CreateVersion7().ToString("N"),
             Name = signUpModel.UserName,
             Email = signUpModel.Email,
             Password = _passwordHasher.Hash(signUpModel.Password),
             CreationDate = DateTime.Now
-        }).ConfigureAwait(false);
+        };
+        await _usersRepository.Create(newUser).ConfigureAwait(false);
 
         var userJwt = await CreateUserJwt(newUser.Id, newUser.Email, newUser.Name).ConfigureAwait(false);
         return userJwt;
@@ -89,16 +91,16 @@ public class AuthService : IAuthService
     }
 
     private async Task<Result<JsonWebToken, AppError>> TransactionallyRefreshTokens(
-        long oldRefreshTokenId, UserTokenIdentity tokenIdentity
+        string oldRefreshTokenId, UserTokenIdentity tokenIdentity
     ){
         // Delete previous token from database
-        await _tokensRepository.DeleteById(oldRefreshTokenId).ConfigureAwait(false);
+        await _tokensRepository.DeleteById(oldRefreshTokenId, false).ConfigureAwait(false);
 
         // Create a new token in Database
-        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email!, tokenIdentity.Name);
+        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, false);
     }
 
-    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(long userId, string email, string? name) {
+    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(string userId, string email, string? name, bool autoSave = true) {
         var resultToken = _jwtManager.GenerateToken(new UserTokenIdentity {
             Name = name,
             Email = email,
@@ -107,13 +109,14 @@ public class AuthService : IAuthService
         if (resultToken.Error is not null)
             return resultToken.Error;
 
-        var userJwt = resultToken.Value;
+        var userJwt = resultToken.Value!;
         await _tokensRepository.Create(new UserToken {
-            UserId = userJwt!.UserId,
-            Token = userJwt!.RefreshToken,
-            TokenTypeId = (long)Enums.TokenType.RefreshToken,
+            Id = Guid.CreateVersion7().ToString("N"),
+            UserId = userJwt.UserId,
+            Token = userJwt.RefreshToken,
+            TokenTypeId = $"{(int) Enums.TokenType.RefreshToken}",
             ExpiryTime = DateTime.Now.AddHours(_configuration.GetValue<int>("ConfigData:Jwt:RefreshTokenTTLHours"))
-        }).ConfigureAwait(false);
-        return userJwt!;
+        }, autoSave).ConfigureAwait(false);
+        return userJwt;
     }
 }

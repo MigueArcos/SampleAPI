@@ -79,10 +79,10 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
     }
 
     private async Task WriteErrorToHttpResponse(HttpResponse httpResponseContext, string errorCode) {
-        var errorInfo = HttpResponses.TryGetErrorInfo(errorCode, message => _logger.LogError(message));
+        var errorInfo = HttpResponses.TryGetErrorInfo(errorCode, message => _logger.LogError(message))!;
         var json = JsonSerializer.Serialize(errorInfo);
         byte[] bytes = Encoding.UTF8.GetBytes(json);
-        httpResponseContext.StatusCode = errorInfo!.HttpStatusCode;
+        httpResponseContext.StatusCode = errorInfo.HttpStatusCode;
         httpResponseContext.Headers.Append("Content-Type", "application/json");
         await httpResponseContext.Body.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
     }

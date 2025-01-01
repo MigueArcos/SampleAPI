@@ -13,8 +13,6 @@ using ArchitectureTest.Domain.Services.Application.AuthService;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models.Application;
 using NSubstitute;
-using ArchitectureTest.Domain.Entities;
-using System;
 using FluentAssertions;
 
 namespace ArchitectureTest.Web.Tests.Controllers;
@@ -50,7 +48,7 @@ public class LoginControllerTest {
         result.Should().NotBeNull();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
         result!.Value.Should().BeOfType<JsonWebToken>();
-        StubData.JsonCompare(jwtMockResult, result.Value as JsonWebToken).Should().BeTrue();
+        ObjectComparer.JsonCompare(jwtMockResult, result.Value as JsonWebToken).Should().BeTrue();
     }
 
     [Fact]
@@ -176,7 +174,7 @@ public class LoginControllerTest {
         result.Should().NotBeNull();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
         result!.Value.Should().BeOfType<JsonWebToken>();
-        StubData.JsonCompare(jwtMockResult, result.Value as JsonWebToken).Should().BeTrue();
+        ObjectComparer.JsonCompare(jwtMockResult, result.Value as JsonWebToken).Should().BeTrue();
     }
 
     [Fact]
@@ -337,7 +335,7 @@ public class LoginControllerTest {
     }
 
     private JsonWebToken BuildJwt(
-        long userId = StubData.UserId, string email = StubData.Email,
+        string userId = StubData.UserId, string email = StubData.Email,
         string token = StubData.JwtToken, string refreshToken = StubData.RefreshToken
     ) {
         return new JsonWebToken {
@@ -346,41 +344,6 @@ public class LoginControllerTest {
             ExpiresIn = 3600,
             Token = token,
             RefreshToken = refreshToken
-        };
-    }
-
-    private UserTokenIdentity BuildUserTokenIdentity(
-        long userId = StubData.UserId, string email = StubData.Email, string name = StubData.UserName
-    ) {
-        return new UserTokenIdentity {
-            UserId = userId,
-            Email = email,
-            Name = name
-        };
-    }
-
-    private UserToken BuildUserToken(long userId = StubData.UserId, string token = StubData.RefreshToken)
-    {
-        return new UserToken {
-            Id = 1,
-            UserId = userId,
-            TokenTypeId = (long) Domain.Enums.TokenType.RefreshToken,
-            Token = token,
-            ExpiryTime = DateTime.Now.AddYears(1)
-        };
-    }
-
-    private User BuildUser(
-        long userId = StubData.UserId, string email = StubData.Email,
-        string name = StubData.UserName, string password = StubData.HashedPassword
-    ) {
-        return new User {
-            Id = userId,
-            Email = email,
-            Password = password,
-            Name = name,
-            CreationDate = DateTime.Now,
-            ModificationDate = null
         };
     }
 }

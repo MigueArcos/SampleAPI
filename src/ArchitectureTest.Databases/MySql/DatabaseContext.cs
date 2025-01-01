@@ -43,13 +43,15 @@ public partial class DatabaseContext : DbContext
 
             entity.HasIndex(e => e.UserId, "UserId");
 
+            entity.Property(e => e.Id).HasMaxLength(32);
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
             entity.Property(e => e.Title).HasMaxLength(100);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(32);
 
             entity.HasOne(d => d.User).WithMany(p => p.Checklists)
                 .HasForeignKey(d => d.UserId)
@@ -65,12 +67,15 @@ public partial class DatabaseContext : DbContext
 
             entity.HasIndex(e => e.ChecklistId, "ChecklistId");
 
+            entity.Property(e => e.Id).HasMaxLength(32);
+            entity.Property(e => e.ChecklistId)
+                .IsRequired()
+                .HasMaxLength(32);
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
+            entity.Property(e => e.ParentDetailId).HasMaxLength(32);
             entity.Property(e => e.TaskName)
                 .IsRequired()
                 .HasMaxLength(100);
@@ -89,14 +94,16 @@ public partial class DatabaseContext : DbContext
 
             entity.HasIndex(e => e.UserId, "UserId");
 
+            entity.Property(e => e.Id).HasMaxLength(32);
             entity.Property(e => e.Content).HasColumnType("text");
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
             entity.Property(e => e.Title).HasMaxLength(100);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(32);
 
             entity.HasOne(d => d.User).WithMany(p => p.Notes)
                 .HasForeignKey(d => d.UserId)
@@ -110,6 +117,10 @@ public partial class DatabaseContext : DbContext
 
             entity.ToTable("TokenType");
 
+            entity.Property(e => e.Id).HasMaxLength(32);
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
             entity.Property(e => e.Name).HasMaxLength(20);
         });
 
@@ -119,13 +130,12 @@ public partial class DatabaseContext : DbContext
 
             entity.ToTable("User");
 
+            entity.Property(e => e.Id).HasMaxLength(32);
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(320);
-            entity.Property(e => e.ModificationDate)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ModificationDate).HasColumnType("datetime");
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Password).HasMaxLength(256);
         });
@@ -140,8 +150,18 @@ public partial class DatabaseContext : DbContext
 
             entity.HasIndex(e => e.UserId, "UserId");
 
+            entity.Property(e => e.Id).HasMaxLength(32);
+            entity.Property(e => e.CreationDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
             entity.Property(e => e.ExpiryTime).HasColumnType("datetime");
             entity.Property(e => e.Token).HasMaxLength(256);
+            entity.Property(e => e.TokenTypeId)
+                .IsRequired()
+                .HasMaxLength(32);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(32);
 
             entity.HasOne(d => d.TokenType).WithMany(p => p.UserTokens)
                 .HasForeignKey(d => d.TokenTypeId)

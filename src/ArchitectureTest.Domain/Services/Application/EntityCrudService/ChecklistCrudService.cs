@@ -12,14 +12,14 @@ namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrudService
 {
-    private readonly Dictionary<CrudOperation, List<(Func<Checklist?, long?, bool>, string)>> _validations;
-    public override Dictionary<CrudOperation, List<(Func<Checklist?, long?, bool>, string)>> ValidationsByOperation => _validations;
+    private readonly Dictionary<CrudOperation, List<(Func<Checklist?, string?, bool>, string)>> _validations;
+    public override Dictionary<CrudOperation, List<(Func<Checklist?, string?, bool>, string)>> ValidationsByOperation => _validations;
 
     public ChecklistCrudService(IUnitOfWork unitOfWork) : base(unitOfWork) {
         _validations = new (){
             [CrudOperation.Create] = [
                 ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.UserId), ErrorCodes.UserIdNotSupplied),
                 ((entity, entityId) => 
                     entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.CannotCreateDataForThisUserId
@@ -27,12 +27,12 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
                 ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
             ],
             [CrudOperation.ReadById] = [
-                ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.ChecklistIdNotSupplied)
             ],
             [CrudOperation.Update] = [
                 ((entity, entityId) => entityId == null, ErrorCodes.ChecklistIdNotSupplied),
                 ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.UserId), ErrorCodes.UserIdNotSupplied),
                 ((entity, entityId) => 
                     entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.EntityDoesNotBelongToUser
@@ -40,7 +40,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
                 ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
             ],
             [CrudOperation.Delete] = [
-                ((entity, entityId) => entityId < 1, ErrorCodes.ChecklistIdNotSupplied)
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.ChecklistIdNotSupplied)
             ]
         };
     }
@@ -48,7 +48,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
     public async Task<Result<IList<Checklist>, AppError>> GetUserChecklists()
     {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
-        if (CrudSettings.UserId < 1)
+        if (string.IsNullOrWhiteSpace(CrudSettings.UserId))
             return new AppError(ErrorCodes.UserIdNotSupplied);
 
         var checklists = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
@@ -59,7 +59,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
     public override async Task<Result<Checklist, AppError>> Create(Checklist inputEntity)
     {
         try {
-            _unitOfWork.StartTransaction();
+            await _unitOfWork.StartTransaction();
             var insertResult = await base.Create(inputEntity).ConfigureAwait(false);
 
             if (insertResult.Error is not null)
@@ -68,17 +68,17 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
             if (inputEntity.Details != null && inputEntity.Details.Count > 0)
                 await PostDetails(insertResult.Value!.Id, inputEntity.Details).ConfigureAwait(false);
 
-            _unitOfWork.Commit();
+            await _unitOfWork.Commit();
             inputEntity.Id = insertResult.Value!.Id;
             return inputEntity;
         }
         catch {
-            _unitOfWork.Rollback();
+            await _unitOfWork.Rollback();
             throw;
         }
     }
 
-    private IList<ChecklistDetail> GetChecklistDetails(ICollection<ChecklistDetail> details, long? parentDetailId = null)
+    private IList<ChecklistDetail> GetChecklistDetails(ICollection<ChecklistDetail> details, string? parentDetailId = null)
     {
         var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {
             Id = cD.Id,
@@ -95,18 +95,20 @@ public class ChecklistCrudService : EntityCrudService<Checklist>, IChecklistCrud
         return selection;
     }
 
+    // TODO: Optimize this method now that we have the logic generation in app rather than in DB
     private async Task<bool> PostDetails(
-        long parentChecklistId, IList<ChecklistDetail> details, long? parentDetailId = null
+        string parentChecklistId, IList<ChecklistDetail> details, string? parentDetailId = null
     ) {
         for(int i = 0; i < details.Count; i++){
             var d = details[i];
             d.ChecklistId = parentChecklistId;
             d.ParentDetailId = parentDetailId;
-            var checklistDetailEntity = await _unitOfWork.Repository<ChecklistDetail>().Create(d)
+            d.Id = Guid.CreateVersion7().ToString("N");
+            await _unitOfWork.Repository<ChecklistDetail>().Create(d)
                 .ConfigureAwait(false);
 
             if (d.SubItems != null && d.SubItems.Count > 0) {    
-                await PostDetails(parentChecklistId, d.SubItems, checklistDetailEntity.Id).ConfigureAwait(false);
+                await PostDetails(parentChecklistId, d.SubItems, d.Id).ConfigureAwait(false);
             }
         }
         return true;

@@ -34,7 +34,7 @@ public class JwtManagerTests {
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer")!,
+            ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer"),
             ValidAudience = configuration.GetValue<string>("ConfigData:Jwt:Audience"),
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!)
@@ -66,11 +66,11 @@ public class JwtManagerTests {
 
     [Theory]
     [ClassData(typeof(TokenIdentityBadInputData))]
-    public void GenerateToken_WithInvalidTokenIdentity_ShouldReturnInputDataError(long userId, string? email, string? name)
+    public void GenerateToken_WithInvalidTokenIdentity_ShouldReturnInputDataError(string userId, string? email, string? name)
     {
         // Arrange
         var tokenIdentity = new UserTokenIdentity {
-            UserId = userId, Email = email, Name = name
+            UserId = userId, Email = email!, Name = name
         };
 
         // Act
@@ -116,18 +116,18 @@ public class JwtManagerTests {
         result.Error!.Code.Should().Be(ErrorCodes.IncompleteJwtTokenData);
     }
 
-    internal class TokenIdentityBadInputData : TheoryData<long, string?, string?>
+    internal class TokenIdentityBadInputData : TheoryData<string?, string?, string?>
     {
         public TokenIdentityBadInputData()
         {
-            long validUserId = StubData.UserId;
+            string validUserId = StubData.UserId;
             string validEmail = StubData.Email;
             string validName = StubData.UserName;
 
             var testParams = new ITestParam[] {
-                new TestParam<long> {
+                new TestParam<string?> {
                     Name = "UserId",
-                    PossibleValues = [validUserId, 0]
+                    PossibleValues = [validUserId, null, string.Empty, " "]
                 },
                 new TestParam<string?> {
                     Name = "Email",
@@ -142,7 +142,7 @@ public class JwtManagerTests {
             // skip the first and only valid combination
             var combinations = TestCombinationsGenerator.Combine(testParams).Skip(1);
             foreach (var combination in combinations) {
-                Add((long) combination[0], combination[1] as string, combination[2] as string);
+                Add(combination[0] as string, combination[1] as string, combination[2] as string);
             }
         }
     }

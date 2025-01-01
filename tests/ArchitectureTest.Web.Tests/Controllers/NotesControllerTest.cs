@@ -66,7 +66,7 @@ public class NotesControllerTest
         result!.Value.Should().NotBeNull();
         result!.Value.Should().BeOfType<Note>();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        StubData.JsonCompare(foundNote, result.Value as Note).Should().BeTrue();
+        ObjectComparer.JsonCompare(foundNote, result.Value as Note).Should().BeTrue();
     }
 
     [Theory]
@@ -103,8 +103,8 @@ public class NotesControllerTest
     {
         // Arrange
         var foundNotes = new List<Note> {
-            BuildNote(noteId: 1),
-            BuildNote(noteId: 2)
+            BuildNote(noteId: "1"),
+            BuildNote(noteId: "2")
         };
         _mockNotesCrudService.GetUserNotes().Returns(foundNotes);
 
@@ -117,7 +117,7 @@ public class NotesControllerTest
         result!.Value.Should().NotBeNull();
         result!.Value.Should().BeOfType<List<Note>>();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        StubData.JsonCompare(foundNotes, result.Value as List<Note>).Should().BeTrue();
+        ObjectComparer.JsonCompare(foundNotes, result.Value as List<Note>).Should().BeTrue();
     }
 
     [Theory]
@@ -153,7 +153,7 @@ public class NotesControllerTest
     public async Task Create_WhenEverythingIsOK_ReturnsNote()
     {
         // Arrange
-        var inputData = BuildNote(noteId: 0);
+        var inputData = BuildNote(noteId: string.Empty);
         var createdNote = BuildNote();
 
         _mockNotesCrudService.Create(inputData).Returns(createdNote);
@@ -169,7 +169,7 @@ public class NotesControllerTest
         result!.Value.Should().NotBeNull();
         result!.Value.Should().BeOfType<Note>();
         result!.StatusCode.Should().Be(StatusCodes.Status201Created);
-        StubData.JsonCompare(createdNote, result.Value as Note).Should().BeTrue();
+        ObjectComparer.JsonCompare(createdNote, result.Value as Note).Should().BeTrue();
     }
 
     [Theory]
@@ -181,7 +181,7 @@ public class NotesControllerTest
     public async Task Create_WhenRepositoryFails_ReturnsError(string errorCode, int loggerCalls)
     {
         // Arrange
-        var inputData = BuildNote(noteId: 0);
+        var inputData = BuildNote(noteId: string.Empty);
         _mockNotesCrudService.Create(inputData).Returns(new AppError(errorCode));
         
         // Act
@@ -221,7 +221,7 @@ public class NotesControllerTest
         result!.Value.Should().NotBeNull();
         result!.Value.Should().BeOfType<Note>();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        StubData.JsonCompare(modifiedNote, result.Value as Note).Should().BeTrue();
+        ObjectComparer.JsonCompare(modifiedNote, result.Value as Note).Should().BeTrue();
     }
 
     [Theory]
@@ -301,8 +301,8 @@ public class NotesControllerTest
     }
 
     private Note BuildNote(
-        long noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
-        long userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
+        string noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
+        string userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
     ) {
         return new Note {
             Id = noteId,

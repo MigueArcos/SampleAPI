@@ -16,7 +16,7 @@ public class ChecklistController : EntityCrudController<Checklist> {
         ILogger<ChecklistController> logger
     ) : base(entityCrudService, httpContextAccesor, logger)
     {
-        long userId = httpContextAccesor.GetUserIdentity().UserId;
+        string? userId = httpContextAccesor.GetUserIdentity()?.UserId;
         entityCrudService.CrudSettings = new EntityCrudSettings {
             ValidateEntityBelongsToUser = true,
             UserId = userId

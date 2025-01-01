@@ -12,9 +12,9 @@ using DomainEntities = ArchitectureTest.Domain.Entities;
 namespace ArchitectureTest.Infrastructure.SqlEFCore.Common;
 
 public class BaseChecklistRepository<DbType> : SqlRepository<DomainEntities.Checklist, DbType> where DbType : class {
-    private readonly Func<long, Expression<Func<DbType, bool>>> _findByIdPredicate;
+    private readonly Func<string, Expression<Func<DbType, bool>>> _findByIdPredicate;
     public BaseChecklistRepository(
-        DbContext dbContext, IMapper mapper, Func<long, Expression<Func<DbType, bool>>> findByIdPredicate
+        DbContext dbContext, IMapper mapper, Func<string, Expression<Func<DbType, bool>>> findByIdPredicate
     ) : base(dbContext, mapper) {
         _findByIdPredicate = findByIdPredicate;
     }
@@ -37,7 +37,7 @@ public class BaseChecklistRepository<DbType> : SqlRepository<DomainEntities.Chec
             );
     }
 
-    public override Task<DomainEntities.Checklist?> GetById(long id)
+    public override Task<DomainEntities.Checklist?> GetById(string id)
     {
         return _dbSet
             .Include("ChecklistDetails")

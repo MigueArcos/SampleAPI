@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace ArchitectureTest.Domain.Entities;
 
-public class Checklist : BaseEntity<long> {
-    public long UserId { get; set; }
+public class Checklist : BaseEntity<string> {
+    public required string UserId { get; set; }
     public string Title { get; set; } = string.Empty;
-    public DateTime CreationDate { get; set; }
-    public DateTime ModificationDate { get; set; }
     public IList<ChecklistDetail>? Details { get; set; }
 
     public static List<ChecklistDetail>? FormatChecklistDetails(
-        ICollection<ChecklistDetail>? details, long? parentDetailId = null
+        ICollection<ChecklistDetail>? details, string? parentDetailId = null
     ){
         var selection = details?.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {
             Id = cD.Id,

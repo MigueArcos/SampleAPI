@@ -12,14 +12,14 @@ namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
 {
-    private readonly Dictionary<CrudOperation, List<(Func<Note?, long?, bool>, string)>> _validations;
-    public override Dictionary<CrudOperation, List<(Func<Note?, long?, bool>, string)>> ValidationsByOperation => _validations;
+    private readonly Dictionary<CrudOperation, List<(Func<Note?, string?, bool>, string)>> _validations;
+    public override Dictionary<CrudOperation, List<(Func<Note?, string?, bool>, string)>> ValidationsByOperation => _validations;
     public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork)
     {
         _validations = new() {
             [CrudOperation.Create] = [
                 ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.UserId), ErrorCodes.UserIdNotSupplied),
                 ((entity, entityId) => 
                     entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.CannotCreateDataForThisUserId
@@ -27,12 +27,12 @@ public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
                 ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
             ],
             [CrudOperation.ReadById] = [
-                ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.NoteIdNotSupplied)
             ],
             [CrudOperation.Update] = [
                 ((entity, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
                 ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-                ((entity, entityId) => entity!.UserId < 1, ErrorCodes.UserIdNotSupplied),
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.UserId), ErrorCodes.UserIdNotSupplied),
                 ((entity, entityId) => 
                     entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.EntityDoesNotBelongToUser
@@ -40,7 +40,7 @@ public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
                 ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
             ],
             [CrudOperation.Delete] = [
-                ((entity, entityId) => entityId < 1, ErrorCodes.NoteIdNotSupplied)
+                ((entity, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.NoteIdNotSupplied)
             ]
         };
     }
@@ -52,7 +52,9 @@ public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
     public async Task<Result<IList<Note>, AppError>> GetUserNotes()
     {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
-        if (CrudSettings.UserId < 1) return new AppError(ErrorCodes.UserIdNotSupplied);
+        if (string.IsNullOrWhiteSpace(CrudSettings.UserId))
+            return new AppError(ErrorCodes.UserIdNotSupplied);
+
         var notes = await _repository.Find(n => n.UserId == CrudSettings.UserId).ConfigureAwait(false);
 
         // TODO: Check why these lines doesn't work even though the signature of the method expects an IList

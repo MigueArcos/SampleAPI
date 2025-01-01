@@ -22,7 +22,7 @@ TokenValidationParameters tokenValidationParameters = new()
     ValidateAudience = true,
     ValidateLifetime = true,
     ValidateIssuerSigningKey = true,
-    ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer")!,
+    ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer"),
     ValidAudience = configuration.GetValue<string>("ConfigData:Jwt:Audience"),
     IssuerSigningKey = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!)
@@ -30,7 +30,7 @@ TokenValidationParameters tokenValidationParameters = new()
     ClockSkew = Debugger.IsAttached ? TimeSpan.Zero : TimeSpan.FromMinutes(10)
 };
 
-builder.Services.AddMySqlConfiguration(configuration);
+builder.Services.AddSqlServerConfiguration(configuration);
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));

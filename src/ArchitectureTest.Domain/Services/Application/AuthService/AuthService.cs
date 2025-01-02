@@ -7,24 +7,31 @@ using Microsoft.Extensions.Configuration;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Models.Application;
+using Microsoft.Extensions.Logging;
 
 namespace ArchitectureTest.Domain.Services.Application.AuthService;
 
-public class AuthService : IAuthService {
+public class AuthService : IAuthService
+{
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IRepository<User> _usersRepository;
     private readonly IRepository<UserToken> _tokensRepository;
     private readonly IJwtManager _jwtManager;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        IUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher, IConfiguration configuration
+        IUnitOfWork unitOfWork, IJwtManager jwtManager, IPasswordHasher passwordHasher,
+        IConfiguration configuration, ILogger<AuthService> logger
     ) {
         _jwtManager = jwtManager;
         _passwordHasher = passwordHasher;
+        _unitOfWork = unitOfWork;
         _usersRepository = unitOfWork.Repository<User>();
         _tokensRepository = unitOfWork.Repository<UserToken>();
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<Result<JsonWebToken, AppError>> SignIn(SignInModel signInModel) {
@@ -46,12 +53,14 @@ public class AuthService : IAuthService {
         if (userFound != null)
             return new AppError(ErrorCodes.EmailAlreadyInUse);
 
-        var newUser = await _usersRepository.Add(new User {
+        var newUser = new User {
+            Id = Guid.CreateVersion7().ToString("N"),
             Name = signUpModel.UserName,
             Email = signUpModel.Email,
             Password = _passwordHasher.Hash(signUpModel.Password),
             CreationDate = DateTime.Now
-        }).ConfigureAwait(false);
+        };
+        await _usersRepository.Create(newUser).ConfigureAwait(false);
 
         var userJwt = await CreateUserJwt(newUser.Id, newUser.Email, newUser.Name).ConfigureAwait(false);
         return userJwt;
@@ -72,26 +81,28 @@ public class AuthService : IAuthService {
         
         var jwtResult = resultJwtRead.Value;
 
-        var newTokenResult = _jwtManager.GenerateToken(jwtResult.Identity);
+        var transactionFunc = () => TransactionallyRefreshTokens(refreshTokenSearch.Id, jwtResult.Identity);
+        var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger);
 
-        if (newTokenResult.Error != null)
-            return newTokenResult.Error;
+        if (transactionResult.Error != null) 
+            return transactionResult.Error;
 
-        var newToken = newTokenResult.Value;
-        // Delete previous token from database
-        await _tokensRepository.DeleteById(refreshTokenSearch.Id).ConfigureAwait(false);
-
-        // Create a new token in Database
-        await _tokensRepository.Add(new UserToken {
-            UserId = newToken!.UserId,
-            Token = newToken.RefreshToken,
-            TokenTypeId = (long)Enums.TokenType.RefreshToken,
-            ExpiryTime = DateTime.Now.AddHours(_configuration.GetValue<int>("ConfigData:Jwt:RefreshTokenTTLHours"))
-        }).ConfigureAwait(false);
-        return (newToken, jwtResult.Claims);
+        return (transactionResult.Value!, jwtResult.Claims);
     }
 
-    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(long userId, string email, string? name) {
+    private async Task<Result<JsonWebToken, AppError>> TransactionallyRefreshTokens(
+        string oldRefreshTokenId, UserTokenIdentity tokenIdentity
+    ){
+        // Delete previous token from database
+        await _tokensRepository.DeleteById(oldRefreshTokenId, false).ConfigureAwait(false);
+
+        // Create a new token in Database
+        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, false);
+    }
+
+    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(
+        string userId, string email, string? name, bool autoSave = true
+    ) {
         var resultToken = _jwtManager.GenerateToken(new UserTokenIdentity {
             Name = name,
             Email = email,
@@ -100,13 +111,14 @@ public class AuthService : IAuthService {
         if (resultToken.Error is not null)
             return resultToken.Error;
 
-        var userJwt = resultToken.Value;
-        await _tokensRepository.Add(new UserToken {
-            UserId = userJwt!.UserId,
-            Token = userJwt!.RefreshToken,
-            TokenTypeId = (long)Enums.TokenType.RefreshToken,
+        var userJwt = resultToken.Value!;
+        await _tokensRepository.Create(new UserToken {
+            Id = Guid.CreateVersion7().ToString("N"),
+            UserId = userJwt.UserId,
+            Token = userJwt.RefreshToken,
+            TokenTypeId = $"{(int) Enums.TokenType.RefreshToken}",
             ExpiryTime = DateTime.Now.AddHours(_configuration.GetValue<int>("ConfigData:Jwt:RefreshTokenTTLHours"))
-        }).ConfigureAwait(false);
-        return userJwt!;
+        }, autoSave).ConfigureAwait(false);
+        return userJwt;
     }
 }

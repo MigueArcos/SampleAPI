@@ -5,7 +5,9 @@ namespace ArchitectureTest.Databases.MySql.Entities;
 
 public partial class TokenType
 {
-    public long Id { get; set; }
+    public string Id { get; set; }
+
+    public DateTime CreationDate { get; set; }
 
     public string Name { get; set; }
 

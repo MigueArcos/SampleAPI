@@ -1,6 +1,7 @@
 ﻿using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Models.Application;
+using ArchitectureTest.Domain.Services.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -8,7 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
-namespace ArchitectureTest.Domain.Services.Infrastructure.JwtManager;
+namespace ArchitectureTest.Infrastructure.Services;
 
 public class JwtManager : IJwtManager {
     private readonly JwtSecurityTokenHandler _tokenHandler;
@@ -22,7 +23,8 @@ public class JwtManager : IJwtManager {
     }
 
     public Result<JsonWebToken, AppError> GenerateToken(UserTokenIdentity identity) {
-        if (identity.UserId <= 0 || string.IsNullOrEmpty(identity.Email) || string.IsNullOrEmpty(identity.Name))
+        var nullOrWhite = string.IsNullOrWhiteSpace;
+        if (nullOrWhite(identity.UserId) || nullOrWhite(identity.Email) || nullOrWhite(identity.Name))
             return new AppError(ErrorCodes.CannotGenerateJwtToken);
 
         int tokenTtlSeconds = _configuration.GetValue<int>("ConfigData:Jwt:TokenTTLSeconds");
@@ -30,7 +32,7 @@ public class JwtManager : IJwtManager {
             Subject = new ClaimsIdentity(new Claim[] {
                 new Claim(ClaimTypes.NameIdentifier, identity.UserId.ToString()),
                 new Claim(ClaimTypes.Email, identity.Email),
-                new Claim(ClaimTypes.Name, identity.Name)
+                new Claim(ClaimTypes.Name, identity.Name!)
             }),
             Expires = DateTime.UtcNow.AddSeconds(tokenTtlSeconds),
             Issuer = _tokenValidationParameters.ValidIssuer,
@@ -52,19 +54,22 @@ public class JwtManager : IJwtManager {
 
     public Result<(UserTokenIdentity Identity, ClaimsPrincipal Claims), AppError> ReadToken(string token, bool validateLifeTime)
     {
+        static bool claimIsEmpty(Claim? claim) {
+            return claim == null || string.IsNullOrWhiteSpace(claim.Value);
+        }
         _tokenValidationParameters.ValidateLifetime = validateLifeTime;
         var claims = _tokenHandler.ValidateToken(token, _tokenValidationParameters, out SecurityToken _);
         
-        var emailClaim = claims.FindFirst(ClaimTypes.Email);
-        var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
-        var nameClaim = claims.FindFirst(ClaimTypes.Name);
+        var emailClaim = claims.FindFirst(ClaimTypes.Email)!;
+        var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier)!;
+        var nameClaim = claims.FindFirst(ClaimTypes.Name)!;
 
-        if (userIdClaim is null || emailClaim is null || nameClaim is null)
+        if (claimIsEmpty(userIdClaim) || claimIsEmpty(emailClaim) || claimIsEmpty(nameClaim))
             return new AppError(ErrorCodes.IncompleteJwtTokenData);
     
         var user = new UserTokenIdentity {
             Email = emailClaim.Value,
-            UserId = long.Parse(userIdClaim.Value),
+            UserId = userIdClaim.Value,
             Name = nameClaim.Value
         };
         return (user, claims);

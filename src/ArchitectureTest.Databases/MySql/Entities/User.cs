@@ -5,7 +5,7 @@ namespace ArchitectureTest.Databases.MySql.Entities;
 
 public partial class User
 {
-    public long Id { get; set; }
+    public string Id { get; set; }
 
     public string Email { get; set; }
 
@@ -13,7 +13,7 @@ public partial class User
 
     public string Password { get; set; }
 
-    public DateTime? CreationDate { get; set; }
+    public DateTime CreationDate { get; set; }
 
     public DateTime? ModificationDate { get; set; }
 

@@ -5,13 +5,13 @@ using ArchitectureTest.Domain.Services.Application.AuthService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Services.Infrastructure;
-using ArchitectureTest.Domain.Services.Infrastructure.JwtManager;
-using ArchitectureTest.Domain.Services.Infrastructure.PasswordHasher;
 using ArchitectureTest.Web;
 using ArchitectureTest.Web.Authentication;
 using ArchitectureTest.Infrastructure.SqlEFCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using ArchitectureTest.Infrastructure.Services;
+using ArchitectureTest.Domain.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +23,7 @@ TokenValidationParameters tokenValidationParameters = new()
     ValidateAudience = true,
     ValidateLifetime = true,
     ValidateIssuerSigningKey = true,
-    ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer")!,
+    ValidIssuer = configuration.GetValue<string>("ConfigData:Jwt:Issuer"),
     ValidAudience = configuration.GetValue<string>("ConfigData:Jwt:Audience"),
     IssuerSigningKey = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(configuration.GetValue<string>("ConfigData:Jwt:Secret")!)
@@ -31,13 +31,13 @@ TokenValidationParameters tokenValidationParameters = new()
     ClockSkew = Debugger.IsAttached ? TimeSpan.Zero : TimeSpan.FromMinutes(10)
 };
 
-builder.Services.AddMySqlConfiguration(configuration);
+builder.Services.AddSqlServerConfiguration(configuration);
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ICrudService<Note>, NotesCrudService>();
+builder.Services.AddScoped<ICrudService<Note, NoteDTO>, NotesCrudService>();
 builder.Services.AddScoped<IChecklistCrudService, ChecklistCrudService>();
 builder.Services.AddScoped<CustomJwtBearerEvents>();
 builder.Services.AddAuthentication().AddJwtBearer(options => {
@@ -75,7 +75,7 @@ app.MapControllers();
 
 app.Run();
 
-// Check this reponse on why the browser is not being auto launch after Serilog is configured, with console logging this
+// Check this response on why the browser is not being auto launched after Serilog is configured, with console logging this
 // is harder to implement because we are using the JSON formatter, so, the log "Now Listening on..." appears as JSON and this
 // difference in this string value prevents auto launch (This is not a big problem)
 // https://www.reddit.com/r/dotnet/comments/u3kuii/comment/kgatklf/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button

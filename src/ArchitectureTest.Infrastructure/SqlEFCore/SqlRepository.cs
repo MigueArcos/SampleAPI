@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore;
 namespace ArchitectureTest.Infrastructure.SqlEFCore;
 
 public class SqlRepository<D, T> : IRepository<D>
-    where D : BaseEntity<long> // Domain Entity
-    where T : class            // Database Table Entity
+    where D : BaseEntity<string> // Domain Entity
+    where T : class             // Database Table Entity
 {
     private readonly DbContext _dbContext;
     protected readonly IMapper _mapper;
@@ -27,22 +27,24 @@ public class SqlRepository<D, T> : IRepository<D>
         _dbSet = dbContext.Set<T>();
     }
 
-    public async Task<D> Add(D domainEntity)
+    public async Task Create(D domainEntity, bool autoSave = true)
     {
         var dbEntity = _mapper.Map<T>(domainEntity);
-        _dbSet.Add(dbEntity);
-        await _dbContext.SaveChangesAsync().ConfigureAwait(false);
-        return _mapper.Map<D>(dbEntity);
+        await _dbSet.AddAsync(dbEntity).ConfigureAwait(false);
+
+        if (autoSave)
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    public async Task<bool> DeleteById(long id)
+    public async Task DeleteById(string id, bool autoSave)
     {
         T? dbEntity = await _dbSet.FindAsync(id).ConfigureAwait(false)
             ?? throw new Exception(ErrorCodes.EntityNotFound);
         
         _dbSet.Remove(dbEntity);
-        long saveResult = await _dbContext.SaveChangesAsync().ConfigureAwait(false);
-        return saveResult > 0;
+
+        if (autoSave)
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
     public virtual Task<IList<D>> Find(Expression<Func<D, bool>>? whereFilters = null)
@@ -65,16 +67,17 @@ public class SqlRepository<D, T> : IRepository<D>
             .ContinueWith(t => _mapper.Map<D?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    public virtual Task<D?> GetById(long id)
+    public virtual Task<D?> GetById(string id)
     {
         return _dbSet.FindAsync(id).AsTask().AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<D?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    public async Task<bool> Update(D entity)
+    public async Task Update(D entity, bool autoSave = true)
     {
         _dbSet.Update(_mapper.Map<T>(entity));
-        long saveResult = await _dbContext.SaveChangesAsync().ConfigureAwait(false);
-        return saveResult > 0;
+
+        if (autoSave)
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
     }
 }

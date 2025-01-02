@@ -2,11 +2,11 @@
 
 namespace ArchitectureTest.Domain.Entities;
 
-public class UserToken : BaseEntity<long>
+public class UserToken : BaseEntity<string>
 {
-    public long UserId { get; set; }
+    public required string UserId { get; set; }
 
-    public long TokenTypeId { get; set; }
+    public required string TokenTypeId { get; set; }
 
     public required string Token { get; set; }
 

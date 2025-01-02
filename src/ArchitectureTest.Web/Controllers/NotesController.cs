@@ -1,4 +1,5 @@
 ﻿using ArchitectureTest.Domain.Entities;
+using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
@@ -9,19 +10,20 @@ namespace ArchitectureTest.Web.Controllers;
 
 [Route("api/[controller]")]
 [Authorize]
-public class NotesController : EntityCrudController<Note> {
+public class NotesController : EntityCrudController<Note, NoteDTO> {
     public NotesController(
-        ICrudService<Note> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
+        ICrudService<Note, NoteDTO> entityCrudService, IHttpContextAccessor httpContextAccesor, ILogger<NotesController> logger
     ) : base(entityCrudService, httpContextAccesor, logger) {
-        long userId = httpContextAccesor.GetUserIdentity().UserId;
+        string? userId = httpContextAccesor.GetUserIdentity()?.UserId;
         entityCrudService.CrudSettings = new EntityCrudSettings {
             ValidateEntityBelongsToUser = true,
             UserId = userId
         };
     }
 
-    [HttpGet("list")]
-    public async Task<IActionResult> GetAll() {
+    [HttpGet]
+    public override async Task<IActionResult> GetAll()
+    {
         var result = await (_entityCrudService as INotesCrudService)!.GetUserNotes().ConfigureAwait(false);
 
         if (result.Error is not null)

@@ -1,12 +1,11 @@
-using AutoMapper;
-
 using DomainEntities = ArchitectureTest.Domain.Entities;
 using DatabaseEntities = ArchitectureTest.Databases.MySql.Entities;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.MySql;
 
-public class MySqlMappingProfile : Profile {
-    public MySqlMappingProfile()
+public class MySqlMappingProfile : ApplicationModelsMappingProfile {
+    public MySqlMappingProfile() : base()
     {
         CreateMap<DomainEntities.Note, DatabaseEntities.Note>().ReverseMap();
 

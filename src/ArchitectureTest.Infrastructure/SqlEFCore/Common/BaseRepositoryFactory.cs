@@ -18,11 +18,11 @@ public abstract class BaseRepositoryFactory : IRepositoryFactory {
         _entitiesNamespace = entitiesNamespace;
     }
 
-    public virtual IRepository<D>? Create<D>() where D : BaseEntity<long> {
+    public virtual IRepository<D>? Create<D>() where D : BaseEntity<string> {
         return BuildGenericRepo<D>();
     }
 
-    private IRepository<D>? BuildGenericRepo<D>() where D : BaseEntity<long> {
+    private IRepository<D>? BuildGenericRepo<D>() where D : BaseEntity<string> {
         Type domainType = typeof(D);
         var dbAssemblyName = "ArchitectureTest.Databases";
         var genericRepoType = typeof(SqlRepository<,>);

@@ -164,13 +164,13 @@ public static class HttpResponses
         }
     };
 
-    public static HttpErrorInfo TryGetErrorInfo(string errorMessage, Action<string> onUnknownErrorFound){
+    public static HttpErrorInfo TryGetErrorInfo(string errorMessage, Action<string>? onUnknownErrorFound = null){
         var isAManagedError = CommonErrors.TryGetValue(errorMessage, out var errorInfo);
         if (!isAManagedError) {
             // We should never expose real exceptions, so we will catch all unknown exceptions 
             // (DatabaseErrors, Null Errors, Index errors, etc...) and rethrow an UnknownError after log
             errorInfo = CommonErrors[ErrorCodes.UnknownError];
-            onUnknownErrorFound(errorMessage);
+            onUnknownErrorFound?.Invoke(errorMessage);
         }
         return errorInfo!;
     }

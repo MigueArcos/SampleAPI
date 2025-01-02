@@ -6,19 +6,21 @@ using ArchitectureTest.Domain.Models;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
-public interface ICrudService<TEntity> where TEntity : BaseEntity<string> 
+public interface ICrudService<TEntity, TDto>
+    where TEntity : BaseEntity<string>
+    where TDto : class
 {
     bool EntityBelongsToUser(TEntity entity);
 
-    AppError? RequestIsValid(CrudOperation crudOperation, string? entityId = null, TEntity? entity = null);
+    AppError? RequestIsValid(CrudOperation crudOperation, string? entityId = null, TDto? dto = null);
 
     EntityCrudSettings CrudSettings { get; set; }
 
-    Task<Result<TEntity, AppError>> GetById(string entityId);
+    Task<Result<TDto, AppError>> GetById(string entityId);
 
-    Task<Result<TEntity, AppError>> Create(TEntity entity);
+    Task<Result<(TDto Entity, string Id), AppError>> Create(TDto entity);
 
-    Task<Result<TEntity, AppError>> Update(string entityId, TEntity entity);
+    Task<Result<TDto, AppError>> Update(string entityId, TDto entity);
 
     Task<AppError?> DeleteById(string entityId);
 }

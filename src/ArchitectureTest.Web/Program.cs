@@ -11,6 +11,7 @@ using ArchitectureTest.Infrastructure.SqlEFCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using ArchitectureTest.Infrastructure.Services;
+using ArchitectureTest.Domain.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +37,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ICrudService<Note>, NotesCrudService>();
+builder.Services.AddScoped<ICrudService<Note, NoteDTO>, NotesCrudService>();
 builder.Services.AddScoped<IChecklistCrudService, ChecklistCrudService>();
 builder.Services.AddScoped<CustomJwtBearerEvents>();
 builder.Services.AddAuthentication().AddJwtBearer(options => {

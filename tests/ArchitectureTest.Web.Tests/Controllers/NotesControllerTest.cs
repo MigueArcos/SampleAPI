@@ -10,10 +10,10 @@ using ArchitectureTest.Web.Configuration;
 using Microsoft.Extensions.Logging;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Errors;
-using ArchitectureTest.Domain.Entities;
 using NSubstitute;
 using ArchitectureTest.TestUtils;
 using FluentAssertions;
+using ArchitectureTest.Domain.Models;
 
 namespace ArchitectureTest.Web.Tests.Controllers;
 
@@ -64,9 +64,9 @@ public class NotesControllerTest
         await _mockNotesCrudService.Received(1).GetById(StubData.NoteId);
         result.Should().NotBeNull();
         result!.Value.Should().NotBeNull();
-        result!.Value.Should().BeOfType<Note>();
+        result!.Value.Should().BeOfType<NoteDTO>();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        ObjectComparer.JsonCompare(foundNote, result.Value as Note).Should().BeTrue();
+        ObjectComparer.JsonCompare(foundNote, result.Value as NoteDTO).Should().BeTrue();
     }
 
     [Theory]
@@ -102,22 +102,22 @@ public class NotesControllerTest
     public async Task GetUserNotes_WhenEverythingIsOK_ReturnsListOfNotes()
     {
         // Arrange
-        var foundNotes = new List<Note> {
+        var foundNotes = new List<NoteDTO> {
             BuildNote(noteId: "1"),
             BuildNote(noteId: "2")
         };
         _mockNotesCrudService.GetUserNotes().Returns(foundNotes);
 
         // Act
-        var result = await _systemUnderTest.GetUserNotes() as ObjectResult;
+        var result = await _systemUnderTest.GetAll() as ObjectResult;
 
         // Assert
         await _mockNotesCrudService.Received(1).GetUserNotes();
         result.Should().NotBeNull();
         result!.Value.Should().NotBeNull();
-        result!.Value.Should().BeOfType<List<Note>>();
+        result!.Value.Should().BeOfType<List<NoteDTO>>();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        ObjectComparer.JsonCompare(foundNotes, result.Value as List<Note>).Should().BeTrue();
+        ObjectComparer.JsonCompare(foundNotes, result.Value as List<NoteDTO>).Should().BeTrue();
     }
 
     [Theory]
@@ -132,7 +132,7 @@ public class NotesControllerTest
         _mockNotesCrudService.GetUserNotes().Returns(new AppError(errorCode));
 
         // Act
-        var result = await _systemUnderTest.GetUserNotes() as ObjectResult;
+        var result = await _systemUnderTest.GetAll() as ObjectResult;
 
         // Assert
         await _mockNotesCrudService.Received(1).GetUserNotes();
@@ -156,7 +156,7 @@ public class NotesControllerTest
         var inputData = BuildNote(noteId: string.Empty);
         var createdNote = BuildNote();
 
-        _mockNotesCrudService.Create(inputData).Returns(createdNote);
+        _mockNotesCrudService.Create(inputData).Returns((createdNote, createdNote.Id!));
         string path = "/api/notes";
         _mockHttpContextAccessor.HttpContext!.Request.Path = new PathString(path);
 
@@ -167,9 +167,9 @@ public class NotesControllerTest
         await _mockNotesCrudService.Received(1).Create(inputData);
         result.Should().NotBeNull();
         result!.Value.Should().NotBeNull();
-        result!.Value.Should().BeOfType<Note>();
+        result!.Value.Should().BeOfType<NoteDTO>();
         result!.StatusCode.Should().Be(StatusCodes.Status201Created);
-        ObjectComparer.JsonCompare(createdNote, result.Value as Note).Should().BeTrue();
+        ObjectComparer.JsonCompare(createdNote, result.Value as NoteDTO).Should().BeTrue();
     }
 
     [Theory]
@@ -210,18 +210,18 @@ public class NotesControllerTest
         var modifiedNote = BuildNote(title: "title2", content: "content2");
         // domain.Update will always be called validating if entity belongs to user because that is a 
         // behavior of the domain and cannot be changed by user
-        _mockNotesCrudService.Update(inputData.Id, inputData).Returns(modifiedNote);
+        _mockNotesCrudService.Update(inputData.Id!, inputData).Returns(modifiedNote);
 
         // Act
-        var result = await _systemUnderTest.Update(inputData.Id, inputData) as ObjectResult;
+        var result = await _systemUnderTest.Update(inputData.Id!, inputData) as ObjectResult;
 
         // Assert
-        await _mockNotesCrudService.Received(1).Update(inputData.Id, inputData);
+        await _mockNotesCrudService.Received(1).Update(inputData.Id!, inputData);
         result.Should().NotBeNull();
         result!.Value.Should().NotBeNull();
-        result!.Value.Should().BeOfType<Note>();
+        result!.Value.Should().BeOfType<NoteDTO>();
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        ObjectComparer.JsonCompare(modifiedNote, result.Value as Note).Should().BeTrue();
+        ObjectComparer.JsonCompare(modifiedNote, result.Value as NoteDTO).Should().BeTrue();
     }
 
     [Theory]
@@ -234,13 +234,13 @@ public class NotesControllerTest
     {
         // Arrange
         var inputData = BuildNote();
-        _mockNotesCrudService.Update(inputData.Id, inputData).Returns(new AppError(errorCode));
+        _mockNotesCrudService.Update(inputData.Id!, inputData).Returns(new AppError(errorCode));
 
         // Act
-        var result = await _systemUnderTest.Update(inputData.Id, inputData) as ObjectResult;
+        var result = await _systemUnderTest.Update(inputData.Id!, inputData) as ObjectResult;
 
         // Assert
-        await _mockNotesCrudService.Received(1).Update(inputData.Id, inputData);
+        await _mockNotesCrudService.Received(1).Update(inputData.Id!, inputData);
         result.Should().NotBeNull();
         result!.Value.Should().NotBeNull();
         result!.Value.Should().BeOfType<HttpErrorInfo>();
@@ -300,11 +300,11 @@ public class NotesControllerTest
             _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
     }
 
-    private Note BuildNote(
+    private NoteDTO BuildNote(
         string noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
         string userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
     ) {
-        return new Note {
+        return new NoteDTO {
             Id = noteId,
             Title = title,
             Content = content,

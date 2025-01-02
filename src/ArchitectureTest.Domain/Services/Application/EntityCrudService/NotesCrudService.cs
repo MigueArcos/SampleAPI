@@ -1,46 +1,48 @@
 ﻿using ArchitectureTest.Domain.Models;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Enums;
 using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
+using AutoMapper;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
-public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
+public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService
 {
-    private readonly Dictionary<CrudOperation, List<(Func<Note?, string?, bool>, string)>> _validations;
-    public override Dictionary<CrudOperation, List<(Func<Note?, string?, bool>, string)>> ValidationsByOperation => _validations;
-    public NotesCrudService(IUnitOfWork unitOfWork) : base(unitOfWork)
+    private readonly Dictionary<CrudOperation, List<(Func<NoteDTO?, string?, bool>, string)>> _validations;
+    public override Dictionary<CrudOperation, List<(Func<NoteDTO?, string?, bool>, string)>> ValidationsByOperation =>
+        _validations;
+
+    public NotesCrudService(IUnitOfWork unitOfWork, IMapper mapper) : base(unitOfWork, mapper)
     {
         _validations = new() {
             [CrudOperation.Create] = [
-                ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.UserId), ErrorCodes.UserIdNotSupplied),
-                ((entity, entityId) => 
-                    entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                ((input, entityId) => input is null, ErrorCodes.InputDataNotFound),
+                ((input, entityId) => string.IsNullOrWhiteSpace(input!.UserId), ErrorCodes.UserIdNotSupplied),
+                ((input, entityId) => 
+                    input!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.CannotCreateDataForThisUserId
                 ),
-                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound),
+                ((input, entityId) => string.IsNullOrWhiteSpace(input!.Title), ErrorCodes.NoteTitleNotFound),
             ],
             [CrudOperation.ReadById] = [
-                ((entity, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.NoteIdNotSupplied)
+                ((input, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.NoteIdNotSupplied)
             ],
             [CrudOperation.Update] = [
-                ((entity, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
-                ((entity, entityId) => entity is null, ErrorCodes.InputDataNotFound),
-                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.UserId), ErrorCodes.UserIdNotSupplied),
-                ((entity, entityId) => 
-                    entity!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
+                ((input, entityId) => entityId == null, ErrorCodes.NoteIdNotSupplied),
+                ((input, entityId) => input is null, ErrorCodes.InputDataNotFound),
+                ((input, entityId) => string.IsNullOrWhiteSpace(input!.UserId), ErrorCodes.UserIdNotSupplied),
+                ((input, entityId) => 
+                    input!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.EntityDoesNotBelongToUser
                 ),
-                ((entity, entityId) => string.IsNullOrWhiteSpace(entity!.Title), ErrorCodes.NoteTitleNotFound)
+                ((input, entityId) => string.IsNullOrWhiteSpace(input!.Title), ErrorCodes.NoteTitleNotFound)
             ],
             [CrudOperation.Delete] = [
-                ((entity, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.NoteIdNotSupplied)
+                ((input, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.NoteIdNotSupplied)
             ]
         };
     }
@@ -49,7 +51,7 @@ public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
         return !CrudSettings.ValidateEntityBelongsToUser || entity.UserId == CrudSettings.UserId;
     }
 
-    public async Task<Result<IList<Note>, AppError>> GetUserNotes()
+    public async Task<Result<IList<NoteDTO>, AppError>> GetUserNotes()
     {
         //A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (string.IsNullOrWhiteSpace(CrudSettings.UserId))
@@ -62,7 +64,7 @@ public class NotesCrudService : EntityCrudService<Note>, INotesCrudService
         // or
         // (<Result<IList<Note>, AppError>>) notes;
         // (notes) as Result<IList<Note>, AppError>;
-        List<Note> result = notes.ToList();
+        List<NoteDTO> result = _mapper.Map<List<NoteDTO>>(notes);
         return result;
     }
 }

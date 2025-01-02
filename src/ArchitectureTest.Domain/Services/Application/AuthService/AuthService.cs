@@ -100,7 +100,9 @@ public class AuthService : IAuthService
         return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, false);
     }
 
-    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(string userId, string email, string? name, bool autoSave = true) {
+    private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(
+        string userId, string email, string? name, bool autoSave = true
+    ) {
         var resultToken = _jwtManager.GenerateToken(new UserTokenIdentity {
             Name = name,
             Email = email,

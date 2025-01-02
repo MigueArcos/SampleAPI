@@ -1,12 +1,11 @@
-using AutoMapper;
-
 using DomainEntities = ArchitectureTest.Domain.Entities;
 using DatabaseEntities = ArchitectureTest.Databases.SqlServer.Entities;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
 
-public class SqlServerMappingProfile : Profile {
-    public SqlServerMappingProfile()
+public class SqlServerMappingProfile : ApplicationModelsMappingProfile {
+    public SqlServerMappingProfile() : base()
     {
         CreateMap<DomainEntities.Note, DatabaseEntities.Note>().ReverseMap();
 

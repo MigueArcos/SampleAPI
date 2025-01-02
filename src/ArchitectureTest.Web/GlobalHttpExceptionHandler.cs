@@ -22,7 +22,9 @@ public class GlobalHttpExceptionHandler : IExceptionHandler
         if (string.IsNullOrWhiteSpace(identity?.UserId))
             _logger.LogError(exception, "An exception occurred");
         else
-            _logger.LogError(exception, "An exception occurred: UserId = {UserId}, Email = {Email}", identity.UserId, identity.Email);
+            _logger.LogError(
+                exception, "An exception occurred: UserId = {UserId}, Email = {Email}", identity.UserId, identity.Email
+            );
 
         var errorInfo = HttpResponses.TryGetErrorInfo(exception.Message);
 

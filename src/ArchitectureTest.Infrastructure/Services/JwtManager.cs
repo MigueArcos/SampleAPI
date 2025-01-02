@@ -23,7 +23,8 @@ public class JwtManager : IJwtManager {
     }
 
     public Result<JsonWebToken, AppError> GenerateToken(UserTokenIdentity identity) {
-        if (string.IsNullOrWhiteSpace(identity.UserId) || string.IsNullOrWhiteSpace(identity.Email) || string.IsNullOrWhiteSpace(identity.Name))
+        var nullOrWhite = string.IsNullOrWhiteSpace;
+        if (nullOrWhite(identity.UserId) || nullOrWhite(identity.Email) || nullOrWhite(identity.Name))
             return new AppError(ErrorCodes.CannotGenerateJwtToken);
 
         int tokenTtlSeconds = _configuration.GetValue<int>("ConfigData:Jwt:TokenTTLSeconds");
@@ -31,7 +32,7 @@ public class JwtManager : IJwtManager {
             Subject = new ClaimsIdentity(new Claim[] {
                 new Claim(ClaimTypes.NameIdentifier, identity.UserId.ToString()),
                 new Claim(ClaimTypes.Email, identity.Email),
-                new Claim(ClaimTypes.Name, identity.Name)
+                new Claim(ClaimTypes.Name, identity.Name!)
             }),
             Expires = DateTime.UtcNow.AddSeconds(tokenTtlSeconds),
             Issuer = _tokenValidationParameters.ValidIssuer,

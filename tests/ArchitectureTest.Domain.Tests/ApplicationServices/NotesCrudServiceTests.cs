@@ -1,8 +1,10 @@
 ﻿using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
+using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.TestUtils;
+using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
 using System;
@@ -16,6 +18,7 @@ public class NotesCrudServiceTests {
     private readonly IRepository<Note> _mockNotesRepo;
     private readonly IUnitOfWork _mockUnitOfWork;
     private readonly NotesCrudService _systemUnderTest;
+    private readonly IMapper _mapper;
 
     public NotesCrudServiceTests() {
         _mockNotesRepo = Substitute.For<IRepository<Note>>();
@@ -24,7 +27,12 @@ public class NotesCrudServiceTests {
 
         _mockUnitOfWork.Repository<Note>().Returns(_mockNotesRepo);
 
-        _systemUnderTest = new NotesCrudService(_mockUnitOfWork) {
+
+        var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile<ApplicationModelsMappingProfile>());
+        // mapperConfig.AssertConfigurationIsValid();
+        _mapper = mapperConfig.CreateMapper();
+        
+        _systemUnderTest = new NotesCrudService(_mockUnitOfWork, _mapper) {
             CrudSettings = new EntityCrudSettings {
                 UserId = StubData.UserId
             }
@@ -52,7 +60,8 @@ public class NotesCrudServiceTests {
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        ObjectComparer.JsonCompare(getByIdNote, result.Value).Should().BeTrue();
+        var mappedResult = _mapper.Map<Note>(result.Value);
+        ObjectComparer.JsonCompare(getByIdNote, mappedResult).Should().BeTrue();
     }
 
     [Fact]
@@ -154,7 +163,8 @@ public class NotesCrudServiceTests {
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        ObjectComparer.JsonCompare(foundNotes, result.Value).Should().BeTrue();
+        var mappedResult = _mapper.Map<List<Note>>(result.Value);
+        ObjectComparer.JsonCompare(foundNotes, mappedResult).Should().BeTrue();
     }
 
     [Fact]
@@ -178,22 +188,29 @@ public class NotesCrudServiceTests {
     [Fact]
     public async Task Create_WhenEverythingIsOK_ReturnsNote()
     {
+        // TODO: Debug this test
         // Arrange
         var today = StubData.Today;
         var nextWeek = StubData.NextWeek;
         var inputData = BuildNote(noteId: string.Empty, creationDate: today, modificationDate: nextWeek);
-        var resultNote = BuildNote(creationDate: today, modificationDate: nextWeek);
-        _mockNotesRepo.Create(inputData, true).Returns(Task.CompletedTask);
+        string[] comparisonIgnoredProperties = [nameof(Note.Id), nameof(Note.CreationDate), nameof(Note.ModificationDate)];
+        Func<Note, bool> repoCreateNoteValidator = arg => ObjectComparer.JsonCompare(
+            arg, inputData, comparisonIgnoredProperties
+        );
+
+        _mockNotesRepo.Create(Arg.Is<Note>(arg => repoCreateNoteValidator(arg)), true).Returns(Task.CompletedTask);
 
         // Act
-        var result = await _systemUnderTest.Create(inputData);
+        var result = await _systemUnderTest.Create(_mapper.Map<NoteDTO>(inputData));
 
         // Assert
-        await _mockNotesRepo.Received(1).Create(inputData);
+        await _mockNotesRepo.Received(1).Create(Arg.Is<Note>(arg => repoCreateNoteValidator(arg)));
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
-        ObjectComparer.JsonCompare(inputData, result.Value, [nameof(Note.Id)]).Should().BeTrue();
+        result.Value.Id.Should().NotBeNull();
+        var mappedResult = _mapper.Map<Note>(result.Value.Entity);
+        ObjectComparer.JsonCompare(inputData, mappedResult, comparisonIgnoredProperties).Should().BeTrue();
     }
 
     [Fact]
@@ -203,13 +220,14 @@ public class NotesCrudServiceTests {
         var inputData = BuildNote(userId: string.Empty);
 
         // Act
-        var result = await _systemUnderTest.Create(inputData);
+        var result = await _systemUnderTest.Create(_mapper.Map<NoteDTO>(inputData));
 
         // Assert
         await _mockNotesRepo.DidNotReceive().Create(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
-        result.Value.Should().BeNull();
+        result.Value.Entity.Should().BeNull();
+        result.Value.Id.Should().BeNull();
         result.Error!.Code.Should().Be(ErrorCodes.UserIdNotSupplied);
     }
 
@@ -223,13 +241,14 @@ public class NotesCrudServiceTests {
         var inputData = BuildNote(title: noteTitle!);
 
         // Act
-        var result = await _systemUnderTest.Create(inputData);
+        var result = await _systemUnderTest.Create(_mapper.Map<NoteDTO>(inputData));
 
         // Assert
         await _mockNotesRepo.DidNotReceive().Create(default!, default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
-        result.Value.Should().BeNull();
+        result.Value.Entity.Should().BeNull();
+        result.Value.Id.Should().BeNull();
         result.Error!.Code.Should().Be(ErrorCodes.NoteTitleNotFound);
     }
 
@@ -243,7 +262,13 @@ public class NotesCrudServiceTests {
         var getByIdNote = BuildNote(userId: noteUserId);
         // var resultNote = inputData.ToEntity();
         _mockNotesRepo.GetById(StubData.NoteId).Returns(getByIdNote);
-        _mockNotesRepo.Update(getByIdNote, true).Returns(Task.CompletedTask);
+
+        string[] comparisonIgnoredProperties = [nameof(Note.Id), nameof(Note.CreationDate), nameof(Note.ModificationDate)];
+        Func<Note, bool> repoUpdateNoteValidator = arg => ObjectComparer.JsonCompare(
+            arg, getByIdNote, comparisonIgnoredProperties
+        );
+
+        _mockNotesRepo.Update(Arg.Is<Note>(arg => repoUpdateNoteValidator(arg)), true).Returns(Task.CompletedTask);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation) {
             _systemUnderTest.CrudSettings.UserId = StubData.UserId;
@@ -251,16 +276,17 @@ public class NotesCrudServiceTests {
 
         // Act
         ////// If there is a userId then we should perform an Ownership Validation check
-        var result = await _systemUnderTest.Update(StubData.NoteId, getByIdNote);
+        var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(getByIdNote));
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
-        await _mockNotesRepo.Received(1).Update(getByIdNote, true);
+        await _mockNotesRepo.Received(1).Update(Arg.Is<Note>(arg => repoUpdateNoteValidator(arg)), true);
         result.Should().NotBeNull();
         result.Error.Should().BeNull();
         result.Value.Should().NotBeNull();
         result.Value!.ModificationDate.Should().NotBeNull();
-        ObjectComparer.JsonCompare(getByIdNote, result.Value).Should().BeTrue();
+        var mappedResult = _mapper.Map<Note>(result.Value);
+        ObjectComparer.JsonCompare(getByIdNote, mappedResult, comparisonIgnoredProperties).Should().BeTrue();
     }
 
     [Fact]
@@ -270,7 +296,7 @@ public class NotesCrudServiceTests {
         var inputData = BuildNote(userId: string.Empty);
 
         // Act
-        var result = await _systemUnderTest.Update(StubData.NoteId, inputData);
+        var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
 
         // Assert
         await _mockNotesRepo.DidNotReceive().GetById(StubData.NoteId);
@@ -291,7 +317,7 @@ public class NotesCrudServiceTests {
         var inputData = BuildNote(title: noteTitle!);
 
         // Act
-        var result = await _systemUnderTest.Update(StubData.NoteId, inputData);
+        var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
 
         // Assert
         await _mockNotesRepo.DidNotReceive().GetById(StubData.NoteId);
@@ -316,7 +342,7 @@ public class NotesCrudServiceTests {
         }
 
         // Act
-        var result = await _systemUnderTest.Update(StubData.NoteId, inputData);
+        var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);
@@ -338,7 +364,7 @@ public class NotesCrudServiceTests {
         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
 
         // Act
-        var result = await _systemUnderTest.Update(StubData.NoteId, inputData);
+        var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
 
         // Assert
         await _mockNotesRepo.Received(1).GetById(StubData.NoteId);

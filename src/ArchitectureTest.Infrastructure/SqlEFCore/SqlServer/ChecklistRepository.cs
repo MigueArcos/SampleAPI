@@ -7,10 +7,13 @@ using ArchitectureTest.Infrastructure.SqlEFCore.Common;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
 
-public class SqlServerChecklistRepository : BaseChecklistRepository<Database.Checklist>
+public class SqlServerChecklistRepository : BaseChecklistRepository<Database.Checklist, Database.ChecklistDetail>
 {
-    private readonly static Func<string, Expression<Func<Database.Checklist, bool>>> findByIdExpr = 
-        id => checklist => checklist.Id == id;
+    public SqlServerChecklistRepository(DatabaseContext dbContext, IMapper mapper) : base(dbContext, mapper) {}
 
-    public SqlServerChecklistRepository(DatabaseContext dbContext, IMapper mapper) : base(dbContext, mapper, findByIdExpr) {}
+    public override Expression<Func<Database.Checklist, bool>> BuildFindByIdPredicate(string id) =>
+        checklist => checklist.Id == id;
+
+    public override Expression<Func<Database.ChecklistDetail, bool>> BuildFindDetailByChecklistIdPredicate(string checklistId) =>
+        checklistDetail => checklistDetail.ChecklistId == checklistId;
 }

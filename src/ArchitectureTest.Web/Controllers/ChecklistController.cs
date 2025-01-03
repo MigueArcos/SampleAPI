@@ -4,7 +4,6 @@ using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Web.Controllers.Contracts;
 using ArchitectureTest.Web.HttpExtensions;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,12 +12,10 @@ namespace ArchitectureTest.Web.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>, IUpdate<UpdateChecklistDTO> {
-    private readonly IMapper _mapper;
     public ChecklistController(
         IChecklistCrudService entityCrudService, 
         IHttpContextAccessor httpContextAccesor, 
-        ILogger<ChecklistController> logger,
-        IMapper mapper
+        ILogger<ChecklistController> logger
     ) : base(entityCrudService, httpContextAccesor, logger)
     {
         string? userId = httpContextAccesor.GetUserIdentity()?.UserId;
@@ -26,7 +23,6 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
             ValidateEntityBelongsToUser = true,
             UserId = userId
         };
-        _mapper = mapper;
     }
 
     [HttpGet]
@@ -40,7 +36,7 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
         return Ok(result.Value);
     }
 
-    // Overrides original method and returns a NotFound result, the HttpPut must be modified to prevent routing errors
+    // Overrides original method and returns a NotFound result, the HttpPut attribute must be modified to prevent routing errors
     [HttpPut]
     public override Task<IActionResult> Update([FromRoute] string id, [FromBody] ChecklistDTO input) 
         => Task.FromResult<IActionResult>(NotFound());
@@ -49,7 +45,7 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
     [HttpPut("{id}")]
     public async Task<IActionResult> Update([FromRoute] string id, [FromBody] UpdateChecklistDTO input)
     {
-        var result = await base.Update(id, input);
+        var result = await base.Update(id, input).ConfigureAwait(false);
         return result;
     }
 

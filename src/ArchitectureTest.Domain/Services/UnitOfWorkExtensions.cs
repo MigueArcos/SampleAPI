@@ -36,20 +36,20 @@ public static class UnitOfWorkExtensions {
     ){
         try
         {
-            await unitOfWork.StartTransaction();
+            await unitOfWork.StartTransaction().ConfigureAwait(false);
             var result = await transactionFunc();
 
             if (result.Error != null){
-                await unitOfWork.Rollback();
+                await unitOfWork.Rollback().ConfigureAwait(false);
                 return result.Error;
             }
             else {
-                await unitOfWork.Commit();
+                await unitOfWork.Commit().ConfigureAwait(false);
                 return result.Value!;
             }
         }
         catch (Exception e) {
-            await unitOfWork.Rollback();
+            await unitOfWork.Rollback().ConfigureAwait(false);
             logger.LogError(e, "An exception occurred during DB transaction");
             return new AppError(ErrorCodes.RepoProblem);
         }

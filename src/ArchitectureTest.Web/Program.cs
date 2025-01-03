@@ -31,7 +31,7 @@ TokenValidationParameters tokenValidationParameters = new()
     ClockSkew = Debugger.IsAttached ? TimeSpan.Zero : TimeSpan.FromMinutes(10)
 };
 
-builder.Services.AddSqlServerConfiguration(configuration);
+builder.Services.AddMySqlConfiguration(configuration);
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJwtManager, JwtManager>(s => new JwtManager(tokenValidationParameters, configuration));

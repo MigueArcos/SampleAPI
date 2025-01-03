@@ -11,12 +11,14 @@ using DomainEntities = ArchitectureTest.Domain.Entities;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.Common;
 
-public class BaseChecklistRepository<DbType> : SqlRepository<DomainEntities.Checklist, DbType> where DbType : class {
-    private readonly Func<string, Expression<Func<DbType, bool>>> _findByIdPredicate;
-    public BaseChecklistRepository(
-        DbContext dbContext, IMapper mapper, Func<string, Expression<Func<DbType, bool>>> findByIdPredicate
-    ) : base(dbContext, mapper) {
-        _findByIdPredicate = findByIdPredicate;
+public abstract class BaseChecklistRepository<DbType, DetailType> : SqlRepository<DomainEntities.Checklist, DbType> 
+    where DetailType : class
+    where DbType : class 
+{
+    private readonly DbSet<DetailType> _checklistDetailsDbSet;
+    public BaseChecklistRepository(DbContext dbContext, IMapper mapper) : base(dbContext, mapper)
+    {
+        _checklistDetailsDbSet = dbContext.Set<DetailType>();
     }
 
     public override Task<IList<DomainEntities.Checklist>> Find(
@@ -41,7 +43,7 @@ public class BaseChecklistRepository<DbType> : SqlRepository<DomainEntities.Chec
     {
         return _dbSet
             .Include("ChecklistDetails")
-            .FirstOrDefaultAsync(_findByIdPredicate(id))
+            .FirstOrDefaultAsync(BuildFindByIdPredicate(id))
             .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<DomainEntities.Checklist?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
@@ -56,4 +58,18 @@ public class BaseChecklistRepository<DbType> : SqlRepository<DomainEntities.Chec
             .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<DomainEntities.Checklist?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
+
+    public async Task<int> DeleteDetails(string checklistId, bool autoSave = true)
+    {
+        int deleteCount = await _checklistDetailsDbSet.Where(BuildFindDetailByChecklistIdPredicate(checklistId))
+            .ExecuteDeleteAsync().ConfigureAwait(false);
+        
+        if (autoSave)
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
+        return deleteCount;
+    }
+
+    public abstract Expression<Func<DbType, bool>> BuildFindByIdPredicate(string id);
+
+    public abstract Expression<Func<DetailType, bool>> BuildFindDetailByChecklistIdPredicate(string checklistId);
 }

@@ -82,7 +82,7 @@ public class AuthService : IAuthService
         var jwtResult = resultJwtRead.Value;
 
         var transactionFunc = () => TransactionallyRefreshTokens(refreshTokenSearch.Id, jwtResult.Identity);
-        var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger);
+        var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger).ConfigureAwait(false);
 
         if (transactionResult.Error != null) 
             return transactionResult.Error;
@@ -97,7 +97,7 @@ public class AuthService : IAuthService
         await _tokensRepository.DeleteById(oldRefreshTokenId, false).ConfigureAwait(false);
 
         // Create a new token in Database
-        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, false);
+        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, false).ConfigureAwait(false);
     }
 
     private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(

@@ -16,7 +16,7 @@ public class SqlRepository<D, T> : IRepository<D>
     where D : BaseEntity<string> // Domain Entity
     where T : class             // Database Table Entity
 {
-    private readonly DbContext _dbContext;
+    protected readonly DbContext _dbContext;
     protected readonly IMapper _mapper;
     protected readonly DbSet<T> _dbSet;
 

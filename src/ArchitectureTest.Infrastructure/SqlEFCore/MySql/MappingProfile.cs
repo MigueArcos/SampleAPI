@@ -4,7 +4,8 @@ using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.MySql;
 
-public class MySqlMappingProfile : ApplicationModelsMappingProfile {
+public class MySqlMappingProfile : ApplicationModelsMappingProfile
+{
     public MySqlMappingProfile() : base()
     {
         CreateMap<DomainEntities.Note, DatabaseEntities.Note>().ReverseMap();

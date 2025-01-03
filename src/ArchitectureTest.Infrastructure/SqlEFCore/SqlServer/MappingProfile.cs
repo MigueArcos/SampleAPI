@@ -4,7 +4,8 @@ using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
 
-public class SqlServerMappingProfile : ApplicationModelsMappingProfile {
+public class SqlServerMappingProfile : ApplicationModelsMappingProfile
+{
     public SqlServerMappingProfile() : base()
     {
         CreateMap<DomainEntities.Note, DatabaseEntities.Note>().ReverseMap();

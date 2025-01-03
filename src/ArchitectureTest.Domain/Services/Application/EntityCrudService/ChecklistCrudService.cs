@@ -11,12 +11,13 @@ using AutoMapper;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
+using ValidationFunc = (Func<ChecklistDTO?, string?, bool>, string);
+
 public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, IChecklistCrudService
 {
-    private readonly Dictionary<CrudOperation, List<(Func<ChecklistDTO?, string?, bool>, string)>> _validations;
+    private readonly Dictionary<CrudOperation, List<ValidationFunc>> _validations;
 
-    public override Dictionary<CrudOperation, List<(Func<ChecklistDTO?, string?, bool>, string)>>ValidationsByOperation =>
-        _validations;
+    public override Dictionary<CrudOperation, List<ValidationFunc>>ValidationsByOperation => _validations;
 
     public ChecklistCrudService(IUnitOfWork unitOfWork, IMapper mapper) : base(unitOfWork, mapper) {
         _validations = new (){
@@ -62,7 +63,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
     public override async Task<Result<(ChecklistDTO Entity, string Id), AppError>> Create(ChecklistDTO input)
     {
         try {
-            await _unitOfWork.StartTransaction();
+            await _unitOfWork.StartTransaction().ConfigureAwait(false);
             var insertResult = await base.Create(input).ConfigureAwait(false);
 
             if (insertResult.Error is not null)
@@ -71,12 +72,12 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
             if (input.Details != null && input.Details.Count > 0)
                 await PostDetails(insertResult.Value!.Id!, input.Details).ConfigureAwait(false);
 
-            await _unitOfWork.Commit();
+            await _unitOfWork.Commit().ConfigureAwait(false);
             input = input with { Id = insertResult.Value!.Id };
             return (input, input.Id);
         }
         catch {
-            await _unitOfWork.Rollback();
+            await _unitOfWork.Rollback().ConfigureAwait(false);
             throw;
         }
     }
@@ -84,7 +85,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
     public override async Task<Result<ChecklistDTO, AppError>> Update(string entityId, ChecklistDTO input)
     {
         var k = input as UpdateChecklistDTO;
-        return await base.Update(entityId, input);
+        return await base.Update(entityId, input).ConfigureAwait(false);
     }
 
     private IList<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetailDTO> details, string? parentDetailId = null)

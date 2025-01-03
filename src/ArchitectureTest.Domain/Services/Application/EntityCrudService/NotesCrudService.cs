@@ -10,11 +10,13 @@ using AutoMapper;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
+using ValidationFunc = (Func<NoteDTO?, string?, bool>, string);
+
+
 public class NotesCrudService : EntityCrudService<Note, NoteDTO>, INotesCrudService
 {
-    private readonly Dictionary<CrudOperation, List<(Func<NoteDTO?, string?, bool>, string)>> _validations;
-    public override Dictionary<CrudOperation, List<(Func<NoteDTO?, string?, bool>, string)>> ValidationsByOperation =>
-        _validations;
+    private readonly Dictionary<CrudOperation, List<ValidationFunc>> _validations;
+    public override Dictionary<CrudOperation, List<ValidationFunc>> ValidationsByOperation => _validations;
 
     public NotesCrudService(IUnitOfWork unitOfWork, IMapper mapper) : base(unitOfWork, mapper)
     {

@@ -70,7 +70,10 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
                 return insertResult.Error;
 
             if (input.Details != null && input.Details.Count > 0)
-                await PostDetails(insertResult.Value!.Id!, input.Details).ConfigureAwait(false);
+            {
+                var flattenedDetails = FlattenDetails(insertResult.Value.Id, input.Details);
+                await InsertDetails(flattenedDetails).ConfigureAwait(false);
+            }
 
             await _unitOfWork.Commit().ConfigureAwait(false);
             input = input with { Id = insertResult.Value!.Id };
@@ -88,42 +91,41 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         return await base.Update(entityId, input).ConfigureAwait(false);
     }
 
-    private IList<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetailDTO> details, string? parentDetailId = null)
+
+    private async Task InsertDetails(List<ChecklistDetailDTO> details)
     {
-        var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetailDTO {
-            Id = cD.Id,
-            ChecklistId = cD.ChecklistId,
-            ParentDetailId = cD.ParentDetailId,
-            TaskName = cD.TaskName,
-            Status = cD.Status,
-            CreationDate = cD.CreationDate,
-            ModificationDate = cD.ModificationDate
-        }).ToList();
-        selection.ForEach(i => {
-            i.SubItems = GetChecklistDetails(details, i.Id);
-        });
-        return selection;
+        var insertTasks = new List<Task>();
+        details.ForEach(d => 
+            insertTasks.Add(_repository.Create(_mapper.Map<Checklist>(d))
+        ));
+        await Task.WhenAll(insertTasks).ConfigureAwait(false);
     }
 
-    // TODO: Optimize this method now that we have the logic generation in app rather than in DB
-    private async Task<bool> PostDetails(
+    private List<ChecklistDetailDTO> FlattenDetails(
         string parentChecklistId, IList<ChecklistDetailDTO> details, string? parentDetailId = null
     ) {
-        for(int i = 0; i < details.Count; i++){
-            var d = details[i];
-            d = d with { 
+        var flattenedDetails = new List<ChecklistDetailDTO>();
+        for(int i = 0; i < details.Count; i++)
+        {
+            var detail = details[i];
+            detail = detail with { 
                 Id = Guid.CreateVersion7().ToString("N"),
                 ParentDetailId = parentDetailId,
-                ChecklistId = parentChecklistId
+                ChecklistId = parentChecklistId,
+                CreationDate = DateTime.Now,
+                ModificationDate = null,
             };
-            await _unitOfWork.Repository<ChecklistDetail>().Create(_mapper.Map<ChecklistDetail>(d))
-                .ConfigureAwait(false);
 
-            if (d.SubItems != null && d.SubItems.Count > 0) {    
-                await PostDetails(parentChecklistId, d.SubItems, d.Id).ConfigureAwait(false);
-            }
+            flattenedDetails.Add(detail);
+
+            if (detail.SubItems != null && detail.SubItems.Count > 0)
+            {
+                // detail.SubItems = FillDetails(parentChecklistId, detail.SubItems, detail.Id);
+                flattenedDetails.AddRange(FlattenDetails(parentChecklistId, detail.SubItems, detail.Id));
+            }   
+                
         }
-        return true;
+        return flattenedDetails;
     }
 
     public override bool EntityBelongsToUser(Checklist entity) {

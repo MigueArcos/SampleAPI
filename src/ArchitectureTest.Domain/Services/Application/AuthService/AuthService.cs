@@ -94,10 +94,11 @@ public class AuthService : IAuthService
         string oldRefreshTokenId, UserTokenIdentity tokenIdentity
     ){
         // Delete previous token from database
-        await _tokensRepository.DeleteById(oldRefreshTokenId, false).ConfigureAwait(false);
+        await _tokensRepository.DeleteById(oldRefreshTokenId, autoSave: false).ConfigureAwait(false);
 
         // Create a new token in Database
-        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, false).ConfigureAwait(false);
+        return await CreateUserJwt(tokenIdentity.UserId, tokenIdentity.Email, tokenIdentity.Name, autoSave: false)
+            .ConfigureAwait(false);
     }
 
     private async Task<Result<JsonWebToken, AppError>> CreateUserJwt(

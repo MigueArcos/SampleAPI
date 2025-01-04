@@ -178,7 +178,7 @@ public class NotesCrudServiceTests {
         var result = await _systemUnderTest.GetUserNotes();
 
         // Assert
-        await _mockNotesRepo.DidNotReceiveWithAnyArgs().GetById(StubData.NoteId);
+        await _mockNotesRepo.DidNotReceiveWithAnyArgs().Find(default);
         result.Should().NotBeNull();
         result.Error.Should().NotBeNull();
         result.Value.Should().BeNull();

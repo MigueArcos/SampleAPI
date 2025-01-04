@@ -1,6 +1,8 @@
 namespace ArchitectureTest.Domain.Errors;
 
-public struct ErrorMessages {
+public static class ErrorMessages 
+{
+    public const string DbTransactionError = "An exception occurred during DB transaction";
     public const string UnknownError = "Error desconocido";
     public const string InvalidEmail = "Correo electrónico inválido";
     public const string InvalidPassword = "La contraseña no es válida";

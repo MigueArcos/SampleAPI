@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -14,13 +15,28 @@ public static class ObjectComparer {
         return firstJson == secondJson;
     }
 
+    public static bool JsonTransformAndCompare<T, R>(T first, T second) {
+        string firstJson = JsonSerializer.Serialize(first);
+        string secondJson = JsonSerializer.Serialize(second);
+
+        var firstAsValueObject = JsonSerializer.Deserialize<R>(firstJson);
+        var secondAsValueObject = JsonSerializer.Deserialize<R>(secondJson);
+
+        firstJson = JsonSerializer.Serialize(firstAsValueObject);
+        secondJson = JsonSerializer.Serialize(secondAsValueObject);
+
+        return firstJson == secondJson;
+    }
+
     public static bool JsonCompareIgnoringProperties(string firstJson, string secondJson, string[] propertiesToIgnore) {
         var firstAsDictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(firstJson);
         var secondAsDictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(secondJson);
-        foreach (var prop in propertiesToIgnore){
+
+        Array.ForEach(propertiesToIgnore, prop => {
             firstAsDictionary!.Remove(prop);
             secondAsDictionary!.Remove(prop);
-        }
+        });
+
         string newFirstJson = JsonSerializer.Serialize(firstAsDictionary);
         string newSecondJson = JsonSerializer.Serialize(secondAsDictionary);
         return newFirstJson == newSecondJson;

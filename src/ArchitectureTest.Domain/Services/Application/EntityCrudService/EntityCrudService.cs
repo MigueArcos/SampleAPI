@@ -17,6 +17,8 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     protected readonly IRepository<TEntity> _repository;
     protected readonly IUnitOfWork _unitOfWork;
     protected readonly IMapper _mapper;
+    protected bool _autoSave = true;
+
     public EntityCrudSettings CrudSettings { get; set; } = new EntityCrudSettings {
         ValidateEntityBelongsToUser = false
     };
@@ -35,7 +37,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
             inputEntity.Id = Guid.CreateVersion7().ToString("N");
             inputEntity.CreationDate = DateTime.Now;
             inputEntity.ModificationDate = null;
-            await _repository.Create(inputEntity).ConfigureAwait(false);
+            await _repository.Create(inputEntity, _autoSave).ConfigureAwait(false);
             return (_mapper.Map<TDto>(inputEntity), inputEntity.Id);
         }
         return requestError;
@@ -73,7 +75,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
         inputEntity.Id = entityId;
         inputEntity.CreationDate = entity.CreationDate;
         inputEntity.ModificationDate = DateTime.Now;
-        await _repository.Update(inputEntity).ConfigureAwait(false);
+        await _repository.Update(inputEntity, _autoSave).ConfigureAwait(false);
         
         return _mapper.Map<TDto>(inputEntity);
     }
@@ -90,7 +92,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
         if (!EntityBelongsToUser(entity))
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
         
-        await _repository.DeleteById(entityId).ConfigureAwait(false);
+        await _repository.DeleteById(entityId, _autoSave).ConfigureAwait(false);
 
         return null;
     }
@@ -109,6 +111,8 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 
         return null;
     }
+
+    protected void ResetAutoSaveOption() => _autoSave = true;
 
     public abstract bool EntityBelongsToUser(TEntity entity);
     public abstract Dictionary<CrudOperation, List<(Func<TDto?, string?, bool>, string)>> ValidationsByOperation { get; }

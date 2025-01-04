@@ -426,7 +426,7 @@ public class AuthServiceTests {
         _mockJwtManager.Received(1).GenerateToken(Arg.Is<UserTokenIdentity>(a => generateTokenInputValidator(a)));
         await _mockUsersTokenRepo.Received(1).Create(Arg.Is<UserToken>(a => repoAddUserTokenInputValidator(a)), false);
         await _mockUnitOfWork.Received(1).Commit();
-        _mockLogger.Received(1).LogError(thrownException, "An exception occurred during DB transaction");
+        _mockLogger.Received(1).LogError(thrownException, ErrorMessages.DbTransactionError);
         await _mockUnitOfWork.Received(1).Rollback();
 
 

@@ -14,7 +14,7 @@ public class SqlServerMappingProfile : ApplicationModelsMappingProfile
         CreateMap<DatabaseEntities.Checklist, DomainEntities.Checklist>()
             .ForMember(e => e.Details, o => o.MapFrom(src => src.ChecklistDetails))
             .AfterMap((src, dest, context) => {
-                dest.Details = DomainEntities.Checklist.FormatChecklistDetails(dest.Details);
+                dest.Details = FormatChecklistDetails(dest.Details);
             });
 
         CreateMap<DomainEntities.ChecklistDetail, DatabaseEntities.ChecklistDetail>().ReverseMap();

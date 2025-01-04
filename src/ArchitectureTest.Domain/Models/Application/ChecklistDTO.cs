@@ -10,7 +10,7 @@ public record ChecklistDTO
     public string? Title { get; init; }
     public IList<ChecklistDetailDTO>? Details { get; init; }
     public DateTime? CreationDate { get; init; }
-    public DateTime? ModificationDat { get; init; }
+    public DateTime? ModificationDate { get; init; }
 }
 
 public record ChecklistDetailDTO

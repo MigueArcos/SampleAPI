@@ -27,7 +27,7 @@ public class SqlRepository<D, T> : IRepository<D>
         _dbSet = dbContext.Set<T>();
     }
 
-    public async Task Create(D domainEntity, bool autoSave = true)
+    public virtual async Task Create(D domainEntity, bool autoSave = true)
     {
         var dbEntity = _mapper.Map<T>(domainEntity);
         await _dbSet.AddAsync(dbEntity).ConfigureAwait(false);
@@ -36,7 +36,7 @@ public class SqlRepository<D, T> : IRepository<D>
             await _dbContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    public async Task DeleteById(string id, bool autoSave)
+    public virtual async Task DeleteById(string id, bool autoSave)
     {
         T? dbEntity = await _dbSet.FindAsync(id).ConfigureAwait(false)
             ?? throw new Exception(ErrorCodes.EntityNotFound);
@@ -73,7 +73,7 @@ public class SqlRepository<D, T> : IRepository<D>
             .ContinueWith(t => _mapper.Map<D?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    public async Task Update(D entity, bool autoSave = true)
+    public virtual async Task Update(D entity, bool autoSave = true)
     {
         _dbSet.Update(_mapper.Map<T>(entity));
 

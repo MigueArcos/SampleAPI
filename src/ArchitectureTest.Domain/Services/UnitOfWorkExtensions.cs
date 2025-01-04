@@ -32,12 +32,13 @@ namespace ArchitectureTest.Domain.Services;
 
 public static class UnitOfWorkExtensions {
     public static async Task<Result<T, AppError>> RunAsyncTransaction<T>(
-        this IUnitOfWork unitOfWork, Func<Task<Result<T, AppError>>> transactionFunc, ILogger logger
+        this IUnitOfWork unitOfWork, Func<Task<Result<T, AppError>>> transactionFunc,
+        ILogger logger, Action? finallyCallback = null
     ){
         try
         {
             await unitOfWork.StartTransaction().ConfigureAwait(false);
-            var result = await transactionFunc();
+            var result = await transactionFunc().ConfigureAwait(false);
 
             if (result.Error != null){
                 await unitOfWork.Rollback().ConfigureAwait(false);
@@ -50,8 +51,33 @@ public static class UnitOfWorkExtensions {
         }
         catch (Exception e) {
             await unitOfWork.Rollback().ConfigureAwait(false);
-            logger.LogError(e, "An exception occurred during DB transaction");
+            logger.LogError(e, ErrorMessages.DbTransactionError);
             return new AppError(ErrorCodes.RepoProblem);
+        }
+        finally {
+            finallyCallback?.Invoke();
+        }
+    }
+
+    public static async Task<AppError?> RunAsyncTransaction(
+        this IUnitOfWork unitOfWork, Func<Task> transactionFunc,
+        ILogger logger, Action? finallyCallback = null
+    ){
+        try
+        {
+            await unitOfWork.StartTransaction().ConfigureAwait(false);
+            await transactionFunc().ConfigureAwait(false);
+            
+            await unitOfWork.Commit().ConfigureAwait(false);
+            return null;
+        }
+        catch (Exception e) {
+            await unitOfWork.Rollback().ConfigureAwait(false);
+            logger.LogError(e, ErrorMessages.DbTransactionError);
+            return new AppError(ErrorCodes.RepoProblem);
+        }
+        finally {
+            finallyCallback?.Invoke();
         }
     }
 }

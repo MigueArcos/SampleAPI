@@ -38,12 +38,19 @@ public class BaseUnitOfWork : IUnitOfWork, IDisposable {
         }
         finally {
             _transaction!.Dispose();
+            // Put the transaction to null after dispose, this is to avoid the problem that a Rollback may be called after 
+            // Commit (when this fails), but it should not be possible that first is called Rollback and then Commit
+            _transaction = null;
         }
     }
 
-    public async Task Rollback() {
-        await _transaction!.RollbackAsync().ConfigureAwait(false);
-        _transaction!.Dispose();
+    public async Task Rollback()
+    {
+        if (_transaction is not null)
+        {
+            await _transaction.RollbackAsync().ConfigureAwait(false);
+            _transaction.Dispose();
+        }
     }
 
     public async Task StartTransaction() {

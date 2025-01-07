@@ -34,10 +34,10 @@ public class ApplicationModelsMappingProfile : Profile
         return selection;
     }
 
-    public static List<ChecklistDetailDTO> FlattenChecklistDetails(
-        string parentChecklistId, IList<ChecklistDetailDTO>? details, string? parentDetailId = null
+    public static List<ChecklistDetail> FlattenAndGenerateChecklistDetails(
+        string parentChecklistId, IList<ChecklistDetail>? details, string? parentDetailId = null
     ) {
-        var flattenedDetails = new List<ChecklistDetailDTO>();
+        var flattenedDetails = new List<ChecklistDetail>();
         if (details == null)
             return flattenedDetails;
 
@@ -45,8 +45,11 @@ public class ApplicationModelsMappingProfile : Profile
         {
             var detail = details[i];
             var subItems = detail.SubItems;
-            detail = detail with { 
+
+            var newDetail = new ChecklistDetail {
                 Id = Guid.CreateVersion7().ToString("N"),
+                Status = detail.Status,
+                TaskName = detail.TaskName,
                 ParentDetailId = parentDetailId,
                 ChecklistId = parentChecklistId,
                 CreationDate = DateTime.Now,
@@ -54,12 +57,44 @@ public class ApplicationModelsMappingProfile : Profile
                 SubItems = null
             };
 
-            flattenedDetails.Add(detail);
+            flattenedDetails.Add(newDetail);
 
             if (subItems != null && subItems.Count > 0)
             {
                 // detail.SubItems = FlattenChecklistDetails(parentChecklistId, detail.SubItems, detail.Id);
-                flattenedDetails.AddRange(FlattenChecklistDetails(parentChecklistId, subItems, detail.Id));
+                flattenedDetails.AddRange(FlattenAndGenerateChecklistDetails(parentChecklistId, subItems, newDetail.Id));
+            }
+        }
+        return flattenedDetails;
+    }
+
+    public static List<ChecklistDetail> FlattenChecklistDetails(IList<ChecklistDetail>? details) {
+        var flattenedDetails = new List<ChecklistDetail>();
+        if (details == null)
+            return flattenedDetails;
+
+        for(int i = 0; i < details.Count; i++)
+        {
+            var detail = details[i];
+            var subItems = detail.SubItems;
+            
+            var newDetail = new ChecklistDetail {
+                Id = detail.Id,
+                Status = detail.Status,
+                TaskName = detail.TaskName,
+                ParentDetailId = detail.ParentDetailId,
+                ChecklistId = detail.ChecklistId,
+                CreationDate = DateTime.Now,
+                ModificationDate = null,
+                SubItems = null
+            };
+
+            flattenedDetails.Add(newDetail);
+
+            if (subItems != null && subItems.Count > 0)
+            {
+                // detail.SubItems = FlattenChecklistDetails(parentChecklistId, detail.SubItems, detail.Id);
+                flattenedDetails.AddRange(FlattenChecklistDetails(subItems));
             }
         }
         return flattenedDetails;

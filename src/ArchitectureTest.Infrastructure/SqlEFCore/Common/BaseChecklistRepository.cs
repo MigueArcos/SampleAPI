@@ -62,7 +62,7 @@ public abstract class BaseChecklistRepository<DbType, DetailType> :
     }
 
     // TODO: The delete operations have a weird behavior, if we delete the details using ExecuteDeleteAsync and Delete the
-    // parent checklist using the Remove method (the one in the parent) it throws exception (seems related to the exception).
+    // parent checklist using the Remove method (the one in the parent) it throws exception (seems related to the transaction).
     // This seems to only work if we use the same method for both remove operations (foreach => Remove or ExecuteDeleteAsync)
     // Check this question on why this method of Delete + DeleteDetails is split
     // https://chatgpt.com/share/677b2e35-f710-8000-80a4-17e992841d10

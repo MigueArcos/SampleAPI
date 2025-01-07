@@ -22,6 +22,7 @@ public class ChecklistCrudServiceTests {
     private readonly ChecklistCrudService _systemUnderTest;
     private readonly IMapper _mapper;
     private readonly ILogger<ChecklistCrudService> _mockLogger;
+    private readonly Random _random = new();
 
     public ChecklistCrudServiceTests() {
         _mockChecklistRepo = Substitute.For<IChecklistRepository>();
@@ -191,12 +192,6 @@ public class ChecklistCrudServiceTests {
         result.Error!.Code.Should().Be(ErrorCodes.UserIdNotSupplied);
     }
 
-    internal record ChecklistDetailValueObject(
-        string ChecklistId, string ParentDetailId, string TaskName, bool Status, List<ChecklistDetailValueObject>? SubItems
-    );
-
-    internal record ChecklistValueObject(string UserId, string Title, List<ChecklistDetailValueObject>? Details);
-
     [Fact]
     public async Task Create_WhenEverythingIsOK_ReturnsChecklist()
     {
@@ -207,19 +202,17 @@ public class ChecklistCrudServiceTests {
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
-        var flattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(inputData.Id, mappedInputData.Details);
+        var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
         // ];
 
-        foreach (var d in flattenedDetails)
-        {
-            var detail = _mapper.Map<ChecklistDetail>(d);
+        flattenedDetails.ForEach(d => {
             _mockChecklistDetailsRepo.Create(
-                Arg.Is<ChecklistDetail>(arg => arg.TaskName == detail.TaskName && arg.Status == detail.Status), false
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
             ).Returns(Task.CompletedTask);
-        }
+        });
 
         _mockChecklistRepo.Create(Arg.Is<Checklist>(arg => repoCreateChecklistValidator(arg)), false)
             .Returns(Task.CompletedTask);
@@ -238,9 +231,8 @@ public class ChecklistCrudServiceTests {
 
         foreach (var d in flattenedDetails)
         {
-            var detail = _mapper.Map<ChecklistDetail>(d);
             await _mockChecklistDetailsRepo.Received(1).Create(
-                Arg.Is<ChecklistDetail>(arg => arg.TaskName == detail.TaskName && arg.Status == detail.Status), false
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
             );
         }
 
@@ -295,19 +287,17 @@ public class ChecklistCrudServiceTests {
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
-        var flattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(inputData.Id, mappedInputData.Details);
+        var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
         // ];
 
-        foreach (var d in flattenedDetails)
-        {
-            var detail = _mapper.Map<ChecklistDetail>(d);
+        flattenedDetails.ForEach(d => {
             _mockChecklistDetailsRepo.Create(
-                Arg.Is<ChecklistDetail>(arg => arg.TaskName == detail.TaskName && arg.Status == detail.Status), false
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
             ).Returns(Task.CompletedTask);
-        }
+        });
 
         _mockChecklistRepo.Create(Arg.Is<Checklist>(arg => repoCreateChecklistValidator(arg)), false)
             .Returns(Task.CompletedTask);
@@ -327,9 +317,8 @@ public class ChecklistCrudServiceTests {
 
         foreach (var d in flattenedDetails)
         {
-            var detail = _mapper.Map<ChecklistDetail>(d);
             await _mockChecklistDetailsRepo.Received(1).Create(
-                Arg.Is<ChecklistDetail>(arg => arg.TaskName == detail.TaskName && arg.Status == detail.Status), false
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
             );
         }
 
@@ -389,6 +378,472 @@ public class ChecklistCrudServiceTests {
         await _mockUnitOfWork.DidNotReceive().Commit();
         await _mockUnitOfWork.Received(1).Rollback();
         _mockLogger.DidNotReceiveWithAnyArgs().LogError((Exception) default!, default);
+    }
+
+    // Update process is the longest one, it's composed of these steps:
+        // 1. StartTransaction
+        // 2. GetById
+        // 3. Flatten and Validate DetailsToUpdate
+        // 4. Validate DetailsToDelete (If one detail in both UpdateAndDelete, Delete it and remove it from Update)
+        // 5. Flatten DetailsToAdd
+        // 6. Insert DetailsToAdd
+        // 7. Update DetailsToUpdate
+        // 8. Delete DetailsToDelete
+        // 9. Update Parent
+        // 10. Commit
+    
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenEverythingIsOK_ReturnsChecklist(bool performOwnershipValidation)
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
+        // take n random items to update and also n random items to delete from getByIdChecklist
+        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        detailsToUpdate.ForEach(d => {
+            d.TaskName = StubData.CreateRandomString();
+            d.Status = RandomBool();
+        });
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
+        );
+        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate();
+        
+        Func<Checklist, bool> repoUpdateChecklistValidator = arg => 
+            arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
+            arg.Title == inputData.Title && arg.Details?.Count == 0;
+
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+            inputId, _mapper.Map<List<ChecklistDetail>>(inputData.DetailsToAdd)
+        );
+
+        _mockChecklistRepo.GetById(inputId).Returns(getByIdChecklist);
+
+        _mockChecklistRepo.Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false)
+            .Returns(Task.CompletedTask);
+
+        inputData.DetailsToDelete?.ForEach(id => {
+            _mockChecklistDetailsRepo.DeleteById(id).Returns(Task.CompletedTask);
+        });
+        
+        actualDetailsToUpdate?.ForEach(d => {
+            _mockChecklistDetailsRepo.Update(
+                Arg.Is<ChecklistDetail>(arg =>
+                    arg.TaskName == d.TaskName && arg.Status == d.Status && arg.Id == d.Id && 
+                    arg.ChecklistId == d.ChecklistId && arg.ParentDetailId == d.ParentDetailId
+                ), false
+            ).Returns(Task.CompletedTask);
+        });
+
+        flattenedDetailsToAdd.ForEach(d => {
+            _mockChecklistDetailsRepo.Create(
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
+            ).Returns(Task.CompletedTask);
+        });
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        if (performOwnershipValidation) {
+            _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        }
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().BeNull();
+        result.Value.Should().NotBeNull();
+        result.Value!.Id.Should().NotBeNull();
+        result.Value!.Should().BeOfType<UpdateChecklistDTO>();
+
+        await _mockChecklistRepo.Received(1).GetById(inputId);
+        await _mockUnitOfWork.Received(1).StartTransaction();
+        await _mockChecklistRepo.Received(1).Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false);
+
+        foreach (var id in inputData.DetailsToDelete!)
+        {
+            await _mockChecklistDetailsRepo.Received(1).DeleteById(id, false);
+        }
+
+        foreach (var d in actualDetailsToUpdate!)
+        {
+            await _mockChecklistDetailsRepo.Received(1).Update(
+                Arg.Is<ChecklistDetail>(arg =>
+                    arg.TaskName == d.TaskName && arg.Status == d.Status && arg.Id == d.Id && 
+                    arg.ChecklistId == d.ChecklistId && arg.ParentDetailId == d.ParentDetailId
+                ), false
+            );
+        }
+
+        foreach (var d in flattenedDetailsToAdd)
+        {
+            await _mockChecklistDetailsRepo.Received(1).Create(
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
+            );
+        }
+
+        var mappedResult = result.Value as UpdateChecklistDTO;
+        await _mockUnitOfWork.Received(1).Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+        // ObjectComparer.JsonTransformAndCompare<UpdateChecklistDTO, UpdateChecklistDTOValueObject>(inputData, mappedResult!)
+        //     .Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenAnExceptionIsThrownDuringTransaction_ReturnsError(bool performOwnershipValidation)
+    {
+        // Arrange
+        var thrownException = new Exception(ErrorCodes.UnknownError);
+        var inputId = StubData.ChecklistId;
+        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
+        // take n random items to update and also n random items to delete from getByIdChecklist
+        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        detailsToUpdate.ForEach(d => {
+            d.TaskName = StubData.CreateRandomString();
+            d.Status = RandomBool();
+        });
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
+        );
+        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate();
+        
+        Func<Checklist, bool> repoUpdateChecklistValidator = arg => 
+            arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
+            arg.Title == inputData.Title && arg.Details?.Count == 0;
+
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+            inputId, _mapper.Map<List<ChecklistDetail>>(inputData.DetailsToAdd)
+        );
+
+        _mockChecklistRepo.GetById(inputId).Returns(getByIdChecklist);
+
+        _mockChecklistRepo.Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false)
+            .Returns(Task.CompletedTask);
+
+        inputData.DetailsToDelete?.ForEach(id => {
+            _mockChecklistDetailsRepo.DeleteById(id).Returns(Task.CompletedTask);
+        });
+        
+        actualDetailsToUpdate?.ForEach(d => {
+            _mockChecklistDetailsRepo.Update(
+                Arg.Is<ChecklistDetail>(arg =>
+                    arg.TaskName == d.TaskName && arg.Status == d.Status && arg.Id == d.Id && 
+                    arg.ChecklistId == d.ChecklistId && arg.ParentDetailId == d.ParentDetailId
+                ), false
+            ).Returns(Task.CompletedTask);
+        });
+
+        flattenedDetailsToAdd.ForEach(d => {
+            _mockChecklistDetailsRepo.Create(
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
+            ).Returns(Task.CompletedTask);
+        });
+        _mockUnitOfWork.When(m => m.Commit()).Throw(thrownException);
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        if (performOwnershipValidation) {
+            _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        }
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.RepoProblem);
+
+        await _mockChecklistRepo.Received(1).GetById(inputId);
+        await _mockUnitOfWork.Received(1).StartTransaction();
+        await _mockChecklistRepo.Received(1).Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false);
+
+        foreach (var id in inputData.DetailsToDelete!)
+        {
+            await _mockChecklistDetailsRepo.Received(1).DeleteById(id, false);
+        }
+
+        foreach (var d in actualDetailsToUpdate!)
+        {
+            await _mockChecklistDetailsRepo.Received(1).Update(
+                Arg.Is<ChecklistDetail>(arg =>
+                    arg.TaskName == d.TaskName && arg.Status == d.Status && arg.Id == d.Id && 
+                    arg.ChecklistId == d.ChecklistId && arg.ParentDetailId == d.ParentDetailId
+                ), false
+            );
+        }
+
+        foreach (var d in flattenedDetailsToAdd)
+        {
+            await _mockChecklistDetailsRepo.Received(1).Create(
+                Arg.Is<ChecklistDetail>(arg => arg.TaskName == d.TaskName && arg.Status == d.Status), false
+            );
+        }
+
+        await _mockUnitOfWork.Received(1).Commit();
+        await _mockUnitOfWork.Received(1).Rollback();
+        _mockLogger.Received(1).LogError(thrownException, ErrorMessages.DbTransactionError);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenOneChecklistDetailToDeleteDoesNotExists_ReturnsError(bool performOwnershipValidation)
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
+        // take n random items to update and also n random items to delete from getByIdChecklist
+        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        detailsToDelete.Add(StubData.CreateRandomString());
+        detailsToUpdate.ForEach(d => {
+            d.TaskName = StubData.CreateRandomString();
+            d.Status = RandomBool();
+        });
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
+        );
+        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate();
+
+        _mockChecklistRepo.GetById(inputId).Returns(getByIdChecklist);
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        if (performOwnershipValidation) {
+            _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        }
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.OneOrMoreChecklistDetailToDeleteNotFound);
+
+        await _mockChecklistRepo.Received(1).GetById(inputId);
+        await _mockUnitOfWork.DidNotReceive().StartTransaction();
+        await _mockChecklistRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().DeleteById(default!, false);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Create(default!, default);
+
+        await _mockUnitOfWork.DidNotReceive().Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenOneChecklistDetailToUpdateDoesNotExists_ReturnsError(bool performOwnershipValidation)
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
+        // take n random items to update and also n random items to delete from getByIdChecklist
+        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        detailsToUpdate.Add(BuildChecklistDetail());
+        detailsToUpdate.ForEach(d => {
+            d.TaskName = StubData.CreateRandomString();
+            d.Status = RandomBool();
+        });
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
+        );
+
+        _mockChecklistRepo.GetById(inputId).Returns(getByIdChecklist);
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        if (performOwnershipValidation) {
+            _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        }
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound);
+
+        await _mockChecklistRepo.Received(1).GetById(inputId);
+        await _mockUnitOfWork.DidNotReceive().StartTransaction();
+        await _mockChecklistRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().DeleteById(default!, false);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Create(default!, default);
+
+        await _mockUnitOfWork.DidNotReceive().Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenUserIdNotProvided_ReturnsError(bool performOwnershipValidation)
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, userId: string.Empty
+        );
+
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        if (performOwnershipValidation) {
+            _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        }
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.UserIdNotSupplied);
+
+        await _mockChecklistRepo.DidNotReceive().GetById(inputId);
+        await _mockUnitOfWork.DidNotReceive().StartTransaction();
+        await _mockChecklistRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().DeleteById(default!, false);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Create(default!, default);
+
+        await _mockUnitOfWork.DidNotReceive().Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenChecklistTitleNotProvided_ReturnsError(bool performOwnershipValidation)
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, title: string.Empty
+        );
+
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        if (performOwnershipValidation) {
+            _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        }
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.ChecklistTitleNotFound);
+
+        await _mockChecklistRepo.DidNotReceive().GetById(inputId);
+        await _mockUnitOfWork.DidNotReceive().StartTransaction();
+        await _mockChecklistRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().DeleteById(default!, false);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Create(default!, default);
+
+        await _mockUnitOfWork.DidNotReceive().Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+    }
+
+    [Fact]
+    public async Task Update_WhenChecklistDoesNotBelongToUser_ReturnsError()
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+        var getByIdChecklist = BuildChecklist(checklistId: inputId, userId: "250"); // this is not the owner of this Checklist
+        var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
+        // take n random items to update and also n random items to delete from getByIdChecklist
+        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        detailsToUpdate.ForEach(d => {
+            d.TaskName = StubData.CreateRandomString();
+            d.Status = RandomBool();
+        });
+
+        var inputData = BuildUpdateChecklistModel(
+            checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
+        );
+
+        _mockChecklistRepo.GetById(inputId).Returns(getByIdChecklist);
+
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
+        _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.EntityDoesNotBelongToUser);
+
+        await _mockChecklistRepo.Received(1).GetById(inputId);
+        await _mockUnitOfWork.DidNotReceive().StartTransaction();
+        await _mockChecklistRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().DeleteById(default!, false);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Create(default!, default);
+
+        await _mockUnitOfWork.DidNotReceive().Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_WhenChecklistNotFound_ReturnsError(bool performOwnershipValidation)
+    {
+        // Arrange
+        var inputId = StubData.ChecklistId;
+
+        _mockChecklistRepo.GetById(inputId).Returns((Checklist) default!);
+
+        _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
+        _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+        var inputData = BuildUpdateChecklistModel(checklistId: inputId);
+        
+
+        // Act
+        var result = await _systemUnderTest.Update(inputId, inputData);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Error.Should().NotBeNull();
+        result.Value.Should().BeNull();
+        result.Error!.Code.Should().Be(ErrorCodes.EntityNotFound);
+
+        await _mockChecklistRepo.Received(1).GetById(inputId);
+        await _mockUnitOfWork.DidNotReceive().StartTransaction();
+        await _mockChecklistRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().DeleteById(default!, false);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Update(default!, default);
+        await _mockChecklistDetailsRepo.DidNotReceiveWithAnyArgs().Create(default!, default);
+
+        await _mockUnitOfWork.DidNotReceive().Commit();
+        await _mockUnitOfWork.DidNotReceive().Rollback();
+        _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
     }
 
     [Theory]
@@ -523,147 +978,16 @@ public class ChecklistCrudServiceTests {
         _mockLogger.DidNotReceiveWithAnyArgs().LogError((Exception) default!, default);
     }
 
-    // [Fact]
-    // public async Task Delete_WhenNoteDoesNotBelongToUser_ReturnsError()
-    // {
-    //     // Arrange
-    //     var getByIdNote = BuildNote(userId: "25");
-    //     _mockChecklistRepo.GetById(StubData.NoteId).Returns(getByIdNote);
-    //     _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
-    //     _systemUnderTest.CrudSettings.UserId = StubData.UserId;
+    internal record ChecklistDetailValueObject(
+        string ChecklistId, string ParentDetailId, string TaskName, bool Status, List<ChecklistDetailValueObject>? SubItems
+    );
 
-    //     // Act
-    //     var result = await _systemUnderTest.DeleteById(StubData.NoteId);
+    internal record ChecklistValueObject(string UserId, string Title, List<ChecklistDetailValueObject>? Details);
 
-    //     // Assert
-    //     await _mockChecklistRepo.Received(1).GetById(StubData.NoteId);
-    //     await _mockChecklistRepo.DidNotReceive().DeleteById(default!, default);
-    //     result.Should().NotBeNull();
-    //     result!.Code.Should().Be(ErrorCodes.EntityDoesNotBelongToUser);
-    // }
-
-    // [Theory]
-    // [InlineData(true)]
-    // [InlineData(false)]
-    // public async Task Update_WhenEverythingIsOK_ReturnsModifiedNote(bool performOwnershipValidation)
-    // {
-    //     // Arrange
-    //     string noteUserId = performOwnershipValidation ? StubData.UserId : "100";
-    //     var getByIdNote = BuildNote(userId: noteUserId);
-    //     // var resultNote = inputData.ToEntity();
-    //     _mockChecklistRepo.GetById(StubData.NoteId).Returns(getByIdNote);
-
-    //     string[] comparisonIgnoredProperties = [nameof(Note.Id), nameof(Note.CreationDate), nameof(Note.ModificationDate)];
-    //     Func<Note, bool> repoUpdateNoteValidator = arg => ObjectComparer.JsonCompare(
-    //         arg, getByIdNote, comparisonIgnoredProperties
-    //     );
-
-    //     _mockChecklistRepo.Update(Arg.Is<Note>(arg => repoUpdateNoteValidator(arg)), true).Returns(Task.CompletedTask);
-    //     _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
-    //     if (performOwnershipValidation) {
-    //         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
-    //     }
-
-    //     // Act
-    //     ////// If there is a userId then we should perform an Ownership Validation check
-    //     var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(getByIdNote));
-
-    //     // Assert
-    //     await _mockChecklistRepo.Received(1).GetById(StubData.NoteId);
-    //     await _mockChecklistRepo.Received(1).Update(Arg.Is<Note>(arg => repoUpdateNoteValidator(arg)), true);
-    //     result.Should().NotBeNull();
-    //     result.Error.Should().BeNull();
-    //     result.Value.Should().NotBeNull();
-    //     result.Value!.ModificationDate.Should().NotBeNull();
-    //     var mappedResult = _mapper.Map<Note>(result.Value);
-    //     ObjectComparer.JsonCompare(getByIdNote, mappedResult, comparisonIgnoredProperties).Should().BeTrue();
-    // }
-
-    // [Fact]
-    // public async Task Update_WhenUserIdNotProvided_ReturnsError()
-    // {
-    //     // Arrange
-    //     var inputData = BuildNote(userId: string.Empty);
-
-    //     // Act
-    //     var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
-
-    //     // Assert
-    //     await _mockChecklistRepo.DidNotReceive().GetById(StubData.NoteId);
-    //     await _mockChecklistRepo.DidNotReceive().Update(default!, default);
-    //     result.Should().NotBeNull();
-    //     result.Error.Should().NotBeNull();
-    //     result.Value.Should().BeNull();
-    //     result.Error!.Code.Should().Be(ErrorCodes.UserIdNotSupplied);
-    // }
-
-    // [Theory]
-    // [InlineData("")]
-    // [InlineData(null)]
-    // [InlineData("   ")]
-    // public async Task Update_WhenNoteTitleNotProvided_ReturnsError(string? noteTitle)
-    // {
-    //     // Arrange
-    //     var inputData = BuildNote(title: noteTitle!);
-
-    //     // Act
-    //     var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
-
-    //     // Assert
-    //     await _mockChecklistRepo.DidNotReceive().GetById(StubData.NoteId);
-    //     await _mockChecklistRepo.DidNotReceive().Update(default!, default);
-    //     result.Should().NotBeNull();
-    //     result.Error.Should().NotBeNull();
-    //     result.Value.Should().BeNull();
-    //     result.Error!.Code.Should().Be(ErrorCodes.NoteTitleNotFound);
-    // }
-
-    // [Theory]
-    // [InlineData(true)]
-    // [InlineData(false)]
-    // public async Task Update_WhenNoteNotFound_ReturnsError(bool performOwnershipValidation)
-    // {
-    //     // Arrange
-    //     var inputData = BuildNote(noteId: string.Empty);
-    //     _mockChecklistRepo.GetById(StubData.NoteId).Returns((Note) default!);
-    //     _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
-    //     if (performOwnershipValidation) {
-    //         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
-    //     }
-
-    //     // Act
-    //     var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
-
-    //     // Assert
-    //     await _mockChecklistRepo.Received(1).GetById(StubData.NoteId);
-    //     await _mockChecklistRepo.DidNotReceive().Update(default!, default);
-    //     result.Should().NotBeNull();
-    //     result.Error.Should().NotBeNull();
-    //     result.Value.Should().BeNull();
-    //     result.Error!.Code.Should().Be(ErrorCodes.EntityNotFound);
-    // }
-
-    // [Fact]
-    // public async Task Update_WhenNoteDoesNotBelongToUser_ReturnsError()
-    // {
-    //     // Arrange
-    //     var inputData = BuildNote(noteId: string.Empty);
-    //     var resultNote = BuildNote(userId: "25");
-    //     _mockChecklistRepo.GetById(StubData.NoteId).Returns(resultNote);
-    //     _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
-    //     _systemUnderTest.CrudSettings.UserId = StubData.UserId;
-
-    //     // Act
-    //     var result = await _systemUnderTest.Update(StubData.NoteId, _mapper.Map<NoteDTO>(inputData));
-
-    //     // Assert
-    //     await _mockChecklistRepo.Received(1).GetById(StubData.NoteId);
-    //     await _mockChecklistRepo.DidNotReceive().Update(default!, default);
-    //     result.Should().NotBeNull();
-    //     result.Error.Should().NotBeNull();
-    //     result.Value.Should().BeNull();
-    //     result.Error!.Code.Should().Be(ErrorCodes.EntityDoesNotBelongToUser);
-    // }
+    internal record UpdateChecklistDTOValueObject(
+        string UserId, string Title, List<ChecklistDetailValueObject>? DetailsToAdd,
+        List<ChecklistDetailValueObject>? DetailsToUpdate, List<string>? DetailsToDelete
+    );
 
 
     private Checklist BuildChecklist(
@@ -679,6 +1003,25 @@ public class ChecklistCrudServiceTests {
             Details = details,
             CreationDate = creationDate ?? StubData.Today,
             ModificationDate = modificationDate ?? StubData.NextWeek
+        };
+    }
+
+    private UpdateChecklistDTO BuildUpdateChecklistModel(
+        string checklistId = StubData.ChecklistId, string userId = StubData.UserId,
+        string title = StubData.ChecklistTitle, List<ChecklistDetail>? detailsToAdd = null,
+        List<ChecklistDetail>? detailsToUpdate = null, List<string>? detailsToDelete = null
+    ) {
+        detailsToAdd ??= BuildRandomDetails(checklistId);
+        // detailsToUpdate ??= BuildRandomDetails(checklistId);
+        // detailsToDelete ??= 
+
+        return new UpdateChecklistDTO {
+            Id = checklistId,
+            UserId = userId,
+            Title = title,
+            DetailsToAdd = _mapper.Map<List<ChecklistDetailDTO>>(detailsToAdd),
+            DetailsToUpdate = _mapper.Map<List<ChecklistDetailDTO>>(detailsToUpdate),
+            DetailsToDelete = detailsToDelete
         };
     }
 
@@ -711,5 +1054,22 @@ public class ChecklistCrudServiceTests {
             CreationDate = creationDate ?? StubData.Today,
             ModificationDate = modificationDate ?? StubData.NextWeek
         };
+    }
+
+    private bool RandomBool() => _random.NextDouble() >= 0.5;
+
+    private (List<ChecklistDetail> DetailToUpdate, List<string> DetailsToDelete) PickRandomDetails(List<ChecklistDetail> flattenedDetails)
+    {
+        var detailsToUpdate = new List<ChecklistDetail>();
+        var detailsToDelete = new List<string>();
+    
+        flattenedDetails.ForEach(detail => {
+            if (RandomBool())
+                detailsToUpdate.Add(detail);
+            if (RandomBool())
+                detailsToDelete.Add(detail.Id);
+        });
+        
+        return (detailsToUpdate, detailsToDelete);
     }
 }

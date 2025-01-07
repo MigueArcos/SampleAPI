@@ -20,6 +20,7 @@ public struct ErrorCodes {
     public const string NoteIdNotSupplied = "note-id-not-supplied";
     public const string NoteDoesNotExists = "note-does-not-exists";
     public const string NoteTitleNotFound = "note-title-not-found";
+    public const string ChecklistTitleNotFound = "checklist-title-not-found";
     public const string ChecklistIdNotSupplied = "checklist-id-not-supplied";
     public const string ChecklistDoesNotExists = "checklis-does-not-exists";
     public const string UserIdNotSupplied = "missing-uid";
@@ -29,5 +30,7 @@ public struct ErrorCodes {
     public const string EntityDoesNotBelongToUser = "missing-permissions-over-entry";
     public const string CannotCreateDataForThisUserId = "cannot-create-data-for-this-user-id";
     public const string ValidationsFailed = "validations-failed";
-    public const string RepoProblem = "repo-error";     
+    public const string RepoProblem = "repo-error";
+    public const string OneOrMoreChecklistDetailToUpdateNotFound = "one-or-more-checklist-detail-to-update-does-not-exists"; 
+    public const string OneOrMoreChecklistDetailToDeleteNotFound = "one-or-more-checklist-detail-to-delete-does-not-exists"; 
 }

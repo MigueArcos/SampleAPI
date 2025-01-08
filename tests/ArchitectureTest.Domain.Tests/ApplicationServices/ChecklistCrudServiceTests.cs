@@ -202,7 +202,8 @@ public class ChecklistCrudServiceTests {
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
-        var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
+        var flattenedDetails = ApplicationModelsMappingProfile
+            .FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
@@ -287,7 +288,8 @@ public class ChecklistCrudServiceTests {
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
-        var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
+        var flattenedDetails = ApplicationModelsMappingProfile
+            .FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
@@ -1058,8 +1060,9 @@ public class ChecklistCrudServiceTests {
 
     private bool RandomBool() => _random.NextDouble() >= 0.5;
 
-    private (List<ChecklistDetail> DetailToUpdate, List<string> DetailsToDelete) PickRandomDetails(List<ChecklistDetail> flattenedDetails)
-    {
+    private (List<ChecklistDetail> DetailToUpdate, List<string> DetailsToDelete) PickRandomDetails(
+        List<ChecklistDetail> flattenedDetails
+    ){
         var detailsToUpdate = new List<ChecklistDetail>();
         var detailsToDelete = new List<string>();
     

@@ -62,8 +62,8 @@ public class SqlRepository<D, T> : IRepository<D>
     public virtual Task<D?> FindSingle(Expression<Func<D, bool>> whereFilters)
     {
         var whereForDatabase = whereFilters.ReplaceLambdaParameter<D, T>();
-        return _dbSet.FirstOrDefaultAsync(whereForDatabase)
-            .AvoidTracking(_dbSet)
+        return _dbSet.AsNoTracking()
+            .FirstOrDefaultAsync(whereForDatabase)
             .ContinueWith(t => _mapper.Map<D?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 

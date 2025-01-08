@@ -208,11 +208,16 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         if (details == null || details.Count == 0)
             return;
 
-        var updateTasks = new List<Task>();
-        details.ForEach(d => 
-            updateTasks.Add(_checklistDetailsRepo.Update(d, autoSave: false)
-        ));
-        await Task.WhenAll(updateTasks).ConfigureAwait(false);
+        // [[[[[ This does work concurrently ]]]]] Update impl does not use anything async but it works (don't know why)
+        // var updateTasks = new List<Task>();
+        // details.ForEach(d => 
+        //     updateTasks.Add(_checklistDetailsRepo.Update(d, autoSave: false)
+        // ));
+        // await Task.WhenAll(updateTasks).ConfigureAwait(false);
+        foreach (var d in details)
+        {
+            await _checklistDetailsRepo.Update(d, autoSave: false).ConfigureAwait(false);
+        }
     }
 
     private async Task DeleteDetails(List<string>? detailsIDs)
@@ -220,11 +225,19 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         if (detailsIDs == null || detailsIDs.Count == 0)
             return;
 
-        var deleteTasks = new List<Task>();
-        detailsIDs.ForEach(id => 
-            deleteTasks.Add(_checklistDetailsRepo.DeleteById(id, autoSave: false)
-        ));
-        await Task.WhenAll(deleteTasks).ConfigureAwait(false);
+        // var deleteTasks = new List<Task>();
+        // detailsIDs.ForEach(id => 
+        //     deleteTasks.Add(_checklistDetailsRepo.DeleteById(id, autoSave: false)
+        // ));
+        // [[[[[ This doesn't work concurrently ]]]]] Delete impl does not use anything async
+        // await Task.WhenAll(deleteTasks).ConfigureAwait(false);
+
+        // TODO: Deleting a parentDetailId can lead to orphan ChecklistDetails, although this doesn't break anything,
+        // only creates orphans
+        foreach (var id in detailsIDs)
+        {
+            await _checklistDetailsRepo.DeleteById(id, autoSave: false).ConfigureAwait(false);
+        }
     }
 
     public override bool EntityBelongsToUser(Checklist entity) {

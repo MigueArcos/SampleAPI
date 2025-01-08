@@ -44,9 +44,9 @@ public abstract class BaseChecklistRepository<DbType, DetailType> :
     public override Task<DomainEntities.Checklist?> GetById(string id)
     {
         return _dbSet
+            .AsNoTracking()
             .Include("ChecklistDetails")
             .FirstOrDefaultAsync(BuildFindByIdPredicate(id))
-            .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<DomainEntities.Checklist?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 
@@ -55,9 +55,9 @@ public abstract class BaseChecklistRepository<DbType, DetailType> :
         var whereForDatabase = whereFilters.ReplaceLambdaParameter<DomainEntities.Checklist, DbType>();
 
         return _dbSet
+            .AsNoTracking()
             .Include("ChecklistDetails")
             .FirstOrDefaultAsync(whereForDatabase)
-            .AvoidTracking(_dbSet)
             .ContinueWith(t => _mapper.Map<DomainEntities.Checklist?>(t.Result), TaskContinuationOptions.ExecuteSynchronously);
     }
 

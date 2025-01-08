@@ -88,8 +88,9 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
         return null;
     }
     
-    protected async Task<Result<TEntity, AppError>> ValidateAndGetEntity(CrudOperation crudOperation, string entityId, TDto? dto = null)
-    {
+    protected async Task<Result<TEntity, AppError>> ValidateAndGetEntity(
+        CrudOperation crudOperation, string entityId, TDto? dto = null
+    ){
         if (RequestIsValid(crudOperation, entityId, dto) is AppError requestError && requestError is not null)
             return requestError;
         

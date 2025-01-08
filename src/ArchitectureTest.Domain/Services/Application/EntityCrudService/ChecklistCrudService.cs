@@ -115,20 +115,24 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
             return entityResult.Error;
         
         var entity = entityResult.Value;
-        var allEntityDetailsIDs = ApplicationModelsMappingProfile.FlattenChecklistDetails(entity!.Details)
-            .Select(d => d.Id);
+        var allEntityDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(entity!.Details);
+        var allEntityDetailsIDs = allEntityDetails.Select(d => d.Id);
         
         var updateDto = input as UpdateChecklistDTO;
-        var detailsToUpdate = updateDto!.ProcessDetailsToUpdate();
-        var detailsToUpdateIDs = detailsToUpdate?.Select(d => d.Id);
 
-        var detailsToUpdateIDsIntersected = allEntityDetailsIDs.Intersect(detailsToUpdateIDs ?? []);
-        if (detailsToUpdateIDsIntersected.Count() != (detailsToUpdateIDs ?? []).Count()) // comparing int to int?
-            return new AppError(ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound);
-
-        var detailsToDeleteIDsIntersected = allEntityDetailsIDs.Intersect(updateDto.DetailsToDelete ?? []);
-        if (detailsToDeleteIDsIntersected.Count() != (updateDto.DetailsToDelete ?? []).Count())
+        var detailsToDeleteIDsIntersected = allEntityDetailsIDs.Intersect(updateDto?.DetailsToDelete ?? []);
+        if (detailsToDeleteIDsIntersected.Count() != (updateDto?.DetailsToDelete ?? []).Count()) // comparing int to int?
             return new AppError(ErrorCodes.OneOrMoreChecklistDetailToDeleteNotFound);
+        
+        var allDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(
+            allEntityDetails, updateDto?.DetailsToDelete
+        );
+
+        var detailsToUpdate = updateDto?.ProcessDetailsToUpdate(allDetailsToDelete);
+        var detailsToUpdateIDs = detailsToUpdate?.Select(d => d.Id);
+        var detailsToUpdateIDsIntersected = allEntityDetailsIDs.Intersect(detailsToUpdateIDs ?? []);
+        if (detailsToUpdateIDsIntersected.Count() != (detailsToUpdateIDs ?? []).Count())
+            return new AppError(ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound);
 
         var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
             entityId, _mapper.Map<List<ChecklistDetail>>(updateDto!.DetailsToAdd)
@@ -141,7 +145,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         checklist.ModificationDate = DateTime.Now;
 
         var transactionFunc = () => TransactionallyUpdateChecklist(
-            checklist, flattenedDetailsToAdd, _mapper.Map<List<ChecklistDetail>>(detailsToUpdate), updateDto.DetailsToDelete
+            checklist, flattenedDetailsToAdd, _mapper.Map<List<ChecklistDetail>>(detailsToUpdate), allDetailsToDelete
         );
 
         var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger, ResetAutoSaveOption)
@@ -154,7 +158,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
             Details = [],
             DetailsToAdd = _mapper.Map<List<ChecklistDetailDTO>?>(flattenedDetailsToAdd),
             DetailsToUpdate = detailsToUpdate,
-            DetailsToDelete = updateDto.DetailsToDelete
+            DetailsToDelete = allDetailsToDelete
         };
     }
 

@@ -33,14 +33,14 @@ public record UpdateChecklistDTO : ChecklistDTO
         Details = [];
     }
 
-    public List<ChecklistDetailDTO>? ProcessDetailsToUpdate()
+    public List<ChecklistDetailDTO>? ProcessDetailsToUpdate(List<string>? allDetailsToDelete)
     {
         // Remove all details without ID and also set the SubItems of these details to empty []
         var detailsToUpdateAsDictionary = DetailsToUpdate?
             .Where(d => !string.IsNullOrWhiteSpace(d.Id))
             .ToDictionary(d => d.Id!, d => d with { SubItems = [] }) ?? [];
 
-        DetailsToDelete?.ForEach(id => {
+        allDetailsToDelete?.ForEach(id => {
             detailsToUpdateAsDictionary.Remove(id);
         });
 

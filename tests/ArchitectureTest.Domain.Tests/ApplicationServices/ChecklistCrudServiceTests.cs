@@ -413,8 +413,9 @@ public class ChecklistCrudServiceTests {
         var inputData = BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
-        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate();
-        
+        var actualDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(oldFlattenedDetails, detailsToDelete);
+        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate(actualDetailsToDelete);
+
         Func<Checklist, bool> repoUpdateChecklistValidator = arg => 
             arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
             arg.Title == inputData.Title && arg.Details?.Count == 0;
@@ -428,7 +429,7 @@ public class ChecklistCrudServiceTests {
         _mockChecklistRepo.Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false)
             .Returns(Task.CompletedTask);
 
-        inputData.DetailsToDelete?.ForEach(id => {
+        actualDetailsToDelete?.ForEach(id => {
             _mockChecklistDetailsRepo.DeleteById(id).Returns(Task.CompletedTask);
         });
         
@@ -465,7 +466,7 @@ public class ChecklistCrudServiceTests {
         await _mockUnitOfWork.Received(1).StartTransaction();
         await _mockChecklistRepo.Received(1).Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false);
 
-        foreach (var id in inputData.DetailsToDelete!)
+        foreach (var id in actualDetailsToDelete!)
         {
             await _mockChecklistDetailsRepo.Received(1).DeleteById(id, false);
         }
@@ -515,7 +516,8 @@ public class ChecklistCrudServiceTests {
         var inputData = BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
-        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate();
+        var actualDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(oldFlattenedDetails, detailsToDelete);
+        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate(actualDetailsToDelete);
         
         Func<Checklist, bool> repoUpdateChecklistValidator = arg => 
             arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
@@ -530,7 +532,7 @@ public class ChecklistCrudServiceTests {
         _mockChecklistRepo.Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false)
             .Returns(Task.CompletedTask);
 
-        inputData.DetailsToDelete?.ForEach(id => {
+        actualDetailsToDelete?.ForEach(id => {
             _mockChecklistDetailsRepo.DeleteById(id).Returns(Task.CompletedTask);
         });
         
@@ -567,7 +569,7 @@ public class ChecklistCrudServiceTests {
         await _mockUnitOfWork.Received(1).StartTransaction();
         await _mockChecklistRepo.Received(1).Update(Arg.Is<Checklist>(arg => repoUpdateChecklistValidator(arg)), false);
 
-        foreach (var id in inputData.DetailsToDelete!)
+        foreach (var id in actualDetailsToDelete!)
         {
             await _mockChecklistDetailsRepo.Received(1).DeleteById(id, false);
         }
@@ -614,7 +616,8 @@ public class ChecklistCrudServiceTests {
         var inputData = BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
-        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate();
+        var actualDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(oldFlattenedDetails, detailsToDelete);
+        var actualDetailsToUpdate = inputData.ProcessDetailsToUpdate(actualDetailsToDelete);
 
         _mockChecklistRepo.GetById(inputId).Returns(getByIdChecklist);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;

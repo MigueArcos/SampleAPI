@@ -34,6 +34,25 @@ public class ApplicationModelsMappingProfile : Profile
         return selection;
     }
 
+    public static List<string> FindAllDetailsToRemove(
+        ICollection<ChecklistDetail>? flattenedDetails, List<string>? detailsToRemove
+    ){
+        List<string> findDetailsToRemoveRecursive(List<string>? currentIDsToRemove){
+            List<string> result = [];
+
+            currentIDsToRemove?.ForEach(id => {
+                result.Add(id);
+                var childDetails = flattenedDetails?.Where(d => d.ParentDetailId == id).Select(d => d.Id).ToList();
+                if (childDetails != null && childDetails.Count > 0)
+                    result.AddRange(findDetailsToRemoveRecursive(childDetails));
+            });
+
+            return result;
+        }
+
+        return findDetailsToRemoveRecursive(detailsToRemove).Distinct().ToList();
+    }
+
     public static List<ChecklistDetail> FlattenAndGenerateChecklistDetails(
         string parentChecklistId, IList<ChecklistDetail>? details, string? parentDetailId = null
     ) {

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ namespace ArchitectureTest.Web.Controllers;
 
 [AllowAnonymous]
 [Route("api/[controller]")]
+[ExcludeFromCodeCoverage]
 public class HealthController : ControllerBase
 {
     [HttpGet]

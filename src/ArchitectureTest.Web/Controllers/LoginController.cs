@@ -31,16 +31,10 @@ public class LoginController : BaseController {
                 return HandleError(tokenResult.Error);
 
             var token = tokenResult.Value!;
-            // bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
-            if (saveAuthInCookie) {
-                HttpContext.SetCookie(
-                    AppConstants.SessionCookie, 
-                    JsonSerializer.Serialize(new Dictionary<string, string> {
-                        [AppConstants.Token] = token.Token,
-                        [AppConstants.RefreshToken] = token.RefreshToken
-                    })
-                );
-            }
+            
+            if (saveAuthInCookie)
+                SaveAuthInCookie(token.Token, token.RefreshToken);
+
             return Ok(token);
         }
         else{
@@ -63,16 +57,10 @@ public class LoginController : BaseController {
                 return HandleError(tokenResult.Error);
 
             var token = tokenResult.Value!;
-            // bool saveAuthInCookie = HttpContext.Request.Headers[AppConstants.SaveAuthInCookieHeader] == "true";
-            if (saveAuthInCookie) {
-                HttpContext.SetCookie(
-                    AppConstants.SessionCookie,
-                    JsonSerializer.Serialize(new Dictionary<string, string> {
-                        [AppConstants.Token] = token.Token,
-                        [AppConstants.RefreshToken] = token.RefreshToken
-                    })
-                );
-            }
+
+            if (saveAuthInCookie)
+                SaveAuthInCookie(token.Token, token.RefreshToken);
+
             return Ok(token);
         }
         else {
@@ -82,6 +70,17 @@ public class LoginController : BaseController {
                 Errors = errors.Select(e => new HttpErrorInfo { ErrorCode = e }).ToList()
             });
         }
+    }
+
+    private void SaveAuthInCookie(string token, string refreshToken)
+    {
+        HttpContext.SetCookie(
+            AppConstants.SessionCookie,
+            JsonSerializer.Serialize(new Dictionary<string, string> {
+                [AppConstants.Token] = token,
+                [AppConstants.RefreshToken] = refreshToken
+            })
+        );
     }
 }
 

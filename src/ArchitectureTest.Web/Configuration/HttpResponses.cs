@@ -161,6 +161,21 @@ public static class HttpResponses
         {
             HttpStatusCode = StatusCodes.Status400BadRequest,
             ErrorCode = ErrorCodes.IncorrectInputData
+        },
+        [ErrorCodes.ChecklistTitleNotFound] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status400BadRequest,
+            ErrorCode = ErrorCodes.ChecklistTitleNotFound
+        },
+        [ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status400BadRequest,
+            ErrorCode = ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound
+        },
+        [ErrorCodes.OneOrMoreChecklistDetailToDeleteNotFound] = new HttpErrorInfo
+        {
+            HttpStatusCode = StatusCodes.Status400BadRequest,
+            ErrorCode = ErrorCodes.OneOrMoreChecklistDetailToDeleteNotFound
         }
     };
 

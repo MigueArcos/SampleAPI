@@ -8,6 +8,7 @@ using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService;
 
@@ -16,10 +17,18 @@ using ValidationFunc = (Func<ChecklistDTO?, string?, bool>, string);
 public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, IChecklistCrudService
 {
     private readonly Dictionary<CrudOperation, List<ValidationFunc>> _validations;
+    private readonly ILogger<ChecklistCrudService> _logger;
+    private readonly IRepository<ChecklistDetail> _checklistDetailsRepo;
+    private readonly IChecklistRepository _checklistRepo;
 
     public override Dictionary<CrudOperation, List<ValidationFunc>>ValidationsByOperation => _validations;
 
-    public ChecklistCrudService(IUnitOfWork unitOfWork, IMapper mapper) : base(unitOfWork, mapper) {
+    public ChecklistCrudService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<ChecklistCrudService> logger)
+        : base(unitOfWork, mapper)
+    {
+        _logger = logger;
+        _checklistDetailsRepo = _unitOfWork.Repository<ChecklistDetail>();
+        _checklistRepo = (IChecklistRepository) _unitOfWork.Repository<Checklist>();
         _validations = new (){
             [CrudOperation.Create] = [
                 ((input, entityId) => input is null, ErrorCodes.InputDataNotFound),
@@ -41,7 +50,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
                     input!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.EntityDoesNotBelongToUser
                 ),
-                ((input, entityId) => string.IsNullOrWhiteSpace(input!.Title), ErrorCodes.NoteTitleNotFound)
+                ((input, entityId) => string.IsNullOrWhiteSpace(input!.Title), ErrorCodes.ChecklistTitleNotFound)
             ],
             [CrudOperation.Delete] = [
                 ((input, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.ChecklistIdNotSupplied)
@@ -62,68 +71,177 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
     public override async Task<Result<(ChecklistDTO Entity, string Id), AppError>> Create(ChecklistDTO input)
     {
+        _autoSave = false;
         try {
             await _unitOfWork.StartTransaction().ConfigureAwait(false);
             var insertResult = await base.Create(input).ConfigureAwait(false);
 
             if (insertResult.Error is not null)
+            {
+                await _unitOfWork.Rollback().ConfigureAwait(false);
                 return insertResult.Error;
+            }
 
             if (input.Details != null && input.Details.Count > 0)
-                await PostDetails(insertResult.Value!.Id!, input.Details).ConfigureAwait(false);
+            {
+                var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+                    insertResult.Value.Id, _mapper.Map<List<ChecklistDetail>>(input.Details)
+                );
+                await InsertDetails(flattenedDetails).ConfigureAwait(false);
+            }
 
             await _unitOfWork.Commit().ConfigureAwait(false);
             input = input with { Id = insertResult.Value!.Id };
             return (input, input.Id);
         }
-        catch {
+        catch (Exception e)
+        {
             await _unitOfWork.Rollback().ConfigureAwait(false);
-            throw;
+            _logger.LogError(e, ErrorMessages.DbTransactionError);
+            return new AppError(ErrorCodes.RepoProblem);
+        }
+        finally {
+            _autoSave = true;
         }
     }
 
     public override async Task<Result<ChecklistDTO, AppError>> Update(string entityId, ChecklistDTO input)
     {
-        var k = input as UpdateChecklistDTO;
-        return await base.Update(entityId, input).ConfigureAwait(false);
+        _autoSave = false;
+        var entityResult = await ValidateAndGetEntity(CrudOperation.Update, entityId, input)
+            .ConfigureAwait(false);
+
+        if (entityResult.Error != null)
+            return entityResult.Error;
+        
+        var entity = entityResult.Value;
+        var allEntityDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(entity!.Details);
+        var allEntityDetailsIDs = allEntityDetails.Select(d => d.Id);
+        
+        var updateDto = input as UpdateChecklistDTO;
+
+        var detailsToDeleteIDsIntersected = allEntityDetailsIDs.Intersect(updateDto?.DetailsToDelete ?? []);
+        if (detailsToDeleteIDsIntersected.Count() != (updateDto?.DetailsToDelete ?? []).Count()) // comparing int to int?
+            return new AppError(ErrorCodes.OneOrMoreChecklistDetailToDeleteNotFound);
+        
+        var allDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(
+            allEntityDetails, updateDto?.DetailsToDelete
+        );
+
+        var detailsToUpdate = updateDto?.ProcessDetailsToUpdate(allDetailsToDelete);
+        var detailsToUpdateIDs = detailsToUpdate?.Select(d => d.Id);
+        var detailsToUpdateIDsIntersected = allEntityDetailsIDs.Intersect(detailsToUpdateIDs ?? []);
+        if (detailsToUpdateIDsIntersected.Count() != (detailsToUpdateIDs ?? []).Count())
+            return new AppError(ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound);
+
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+            entityId, _mapper.Map<List<ChecklistDetail>>(updateDto!.DetailsToAdd)
+        );
+        
+        var checklist = _mapper.Map<Checklist>(input);
+        // Update entity modificationDate
+        checklist.Id = entityId;
+        checklist.CreationDate = entity.CreationDate;
+        checklist.ModificationDate = DateTime.Now;
+
+        var transactionFunc = () => TransactionallyUpdateChecklist(
+            checklist, flattenedDetailsToAdd, _mapper.Map<List<ChecklistDetail>>(detailsToUpdate), allDetailsToDelete
+        );
+
+        var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger, ResetAutoSaveOption)
+            .ConfigureAwait(false);
+        
+        if (transactionResult != null)
+            return transactionResult;
+
+        return updateDto with {
+            Details = [],
+            DetailsToAdd = _mapper.Map<List<ChecklistDetailDTO>?>(flattenedDetailsToAdd),
+            DetailsToUpdate = detailsToUpdate,
+            DetailsToDelete = allDetailsToDelete
+        };
     }
 
-    private IList<ChecklistDetailDTO> GetChecklistDetails(ICollection<ChecklistDetailDTO> details, string? parentDetailId = null)
+    public override async Task<AppError?> DeleteById(string entityId)
     {
-        var selection = details.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetailDTO {
-            Id = cD.Id,
-            ChecklistId = cD.ChecklistId,
-            ParentDetailId = cD.ParentDetailId,
-            TaskName = cD.TaskName,
-            Status = cD.Status,
-            CreationDate = cD.CreationDate,
-            ModificationDate = cD.ModificationDate
-        }).ToList();
-        selection.ForEach(i => {
-            i.SubItems = GetChecklistDetails(details, i.Id);
-        });
-        return selection;
+        var entityResult = await ValidateAndGetEntity(CrudOperation.Delete, entityId)
+            .ConfigureAwait(false);
+
+        if (entityResult.Error != null)
+            return entityResult.Error;
+        
+        _autoSave = false;
+        var transactionFunc = () => TransactionallyDeleteChecklist(entityId);
+        var transactionResult = await _unitOfWork.RunAsyncTransaction(transactionFunc, _logger, ResetAutoSaveOption)
+            .ConfigureAwait(false);
+
+        return transactionResult;
     }
 
-    // TODO: Optimize this method now that we have the logic generation in app rather than in DB
-    private async Task<bool> PostDetails(
-        string parentChecklistId, IList<ChecklistDetailDTO> details, string? parentDetailId = null
-    ) {
-        for(int i = 0; i < details.Count; i++){
-            var d = details[i];
-            d = d with { 
-                Id = Guid.CreateVersion7().ToString("N"),
-                ParentDetailId = parentDetailId,
-                ChecklistId = parentChecklistId
-            };
-            await _unitOfWork.Repository<ChecklistDetail>().Create(_mapper.Map<ChecklistDetail>(d))
-                .ConfigureAwait(false);
+    public async Task TransactionallyDeleteChecklist(string checklistId)
+    {
+        await _checklistRepo.DeleteDetails(checklistId, autoSave: false).ConfigureAwait(false);
+        await _checklistRepo.DeleteById(checklistId, autoSave: false).ConfigureAwait(false);
+    }
 
-            if (d.SubItems != null && d.SubItems.Count > 0) {    
-                await PostDetails(parentChecklistId, d.SubItems, d.Id).ConfigureAwait(false);
-            }
+    public async Task TransactionallyUpdateChecklist(
+        Checklist checklist, List<ChecklistDetail>? detailsToAdd,
+        List<ChecklistDetail>? detailsToUpdate, List<string>? detailsToDelete
+    ){
+        await _checklistRepo.Update(checklist, autoSave: false).ConfigureAwait(false);
+        await DeleteDetails(detailsToDelete).ConfigureAwait(false);
+        await UpdateDetails(detailsToUpdate).ConfigureAwait(false);
+        await InsertDetails(detailsToAdd).ConfigureAwait(false);
+    }
+
+
+    private async Task InsertDetails(List<ChecklistDetail>? details)
+    {
+        if (details == null || details.Count == 0)
+            return;
+
+        var insertTasks = new List<Task>();
+        details.ForEach(d => 
+            insertTasks.Add(_checklistDetailsRepo.Create(d, autoSave: false)
+        ));
+        await Task.WhenAll(insertTasks).ConfigureAwait(false);
+    }
+
+    private async Task UpdateDetails(List<ChecklistDetail>? details)
+    {
+        if (details == null || details.Count == 0)
+            return;
+
+        // [[[[[ This does work concurrently ]]]]] Update impl does not use anything async but it works (don't know why)
+        // var updateTasks = new List<Task>();
+        // details.ForEach(d => 
+        //     updateTasks.Add(_checklistDetailsRepo.Update(d, autoSave: false)
+        // ));
+        // await Task.WhenAll(updateTasks).ConfigureAwait(false);
+        foreach (var d in details)
+        {
+            await _checklistDetailsRepo.Update(d, autoSave: false).ConfigureAwait(false);
         }
-        return true;
+    }
+
+    private async Task DeleteDetails(List<string>? detailsIDs)
+    {
+        if (detailsIDs == null || detailsIDs.Count == 0)
+            return;
+
+        // var deleteTasks = new List<Task>();
+        // detailsIDs.ForEach(id => 
+        //     deleteTasks.Add(_checklistDetailsRepo.DeleteById(id, autoSave: false)
+        // ));
+        // [[[[[ This doesn't work concurrently ]]]]] Delete impl does not use anything async
+        // await Task.WhenAll(deleteTasks).ConfigureAwait(false);
+
+        // TODO: Deleting a parentDetailId can lead to orphan ChecklistDetails, although this doesn't break anything,
+        // only creates orphans
+        foreach (var id in detailsIDs)
+        {
+            await _checklistDetailsRepo.DeleteById(id, autoSave: false).ConfigureAwait(false);
+        }
     }
 
     public override bool EntityBelongsToUser(Checklist entity) {

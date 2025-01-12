@@ -17,6 +17,8 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
     protected readonly IRepository<TEntity> _repository;
     protected readonly IUnitOfWork _unitOfWork;
     protected readonly IMapper _mapper;
+    protected bool _autoSave = true;
+
     public EntityCrudSettings CrudSettings { get; set; } = new EntityCrudSettings {
         ValidateEntityBelongsToUser = false
     };
@@ -35,7 +37,7 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
             inputEntity.Id = Guid.CreateVersion7().ToString("N");
             inputEntity.CreationDate = DateTime.Now;
             inputEntity.ModificationDate = null;
-            await _repository.Create(inputEntity).ConfigureAwait(false);
+            await _repository.Create(inputEntity, _autoSave).ConfigureAwait(false);
             return (_mapper.Map<TDto>(inputEntity), inputEntity.Id);
         }
         return requestError;
@@ -43,7 +45,53 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 
     public virtual async Task<Result<TDto, AppError>> GetById(string entityId)
     {
-        if (RequestIsValid(CrudOperation.ReadById, entityId: entityId) is AppError requestError && requestError is not null)
+        var entityResult = await ValidateAndGetEntity(CrudOperation.ReadById, entityId)
+            .ConfigureAwait(false);
+
+        if (entityResult.Error != null)
+            return entityResult.Error;
+
+        var entity = entityResult.Value;
+
+        return _mapper.Map<TDto>(entity);    
+    }
+
+    public virtual async Task<Result<TDto, AppError>> Update(string entityId, TDto input)
+    {
+        var entityResult = await ValidateAndGetEntity(CrudOperation.Update, entityId, dto: input)
+            .ConfigureAwait(false);
+
+        if (entityResult.Error != null)
+            return entityResult.Error;
+
+        var entity = entityResult.Value!;
+
+        var inputAsEntity = _mapper.Map<TEntity>(input);
+        inputAsEntity.Id = entityId;
+        inputAsEntity.CreationDate = entity.CreationDate;
+        inputAsEntity.ModificationDate = DateTime.Now;
+        await _repository.Update(inputAsEntity, _autoSave).ConfigureAwait(false);
+        
+        return _mapper.Map<TDto>(inputAsEntity);
+    }
+
+    public virtual async Task<AppError?> DeleteById(string entityId)
+    {
+        var entityResult = await ValidateAndGetEntity(CrudOperation.Delete, entityId)
+            .ConfigureAwait(false);
+
+        if (entityResult.Error != null)
+            return entityResult.Error;
+        
+        await _repository.DeleteById(entityId, _autoSave).ConfigureAwait(false);
+
+        return null;
+    }
+    
+    protected async Task<Result<TEntity, AppError>> ValidateAndGetEntity(
+        CrudOperation crudOperation, string entityId, TDto? dto = null
+    ){
+        if (RequestIsValid(crudOperation, entityId, dto) is AppError requestError && requestError is not null)
             return requestError;
         
         var entity = await _repository.GetById(entityId).ConfigureAwait(false);
@@ -52,47 +100,8 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 
         if (!EntityBelongsToUser(entity)) 
             return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
-
-        return _mapper.Map<TDto>(entity);    
-    }
-
-    public virtual async Task<Result<TDto, AppError>> Update(string entityId, TDto input)
-    {
-        if (RequestIsValid(CrudOperation.Update, entityId, input) is AppError requestError && requestError is not null)
-            return requestError;
         
-        var entity = await _repository.GetById(entityId).ConfigureAwait(false);
-
-        if (entity == null)
-            return new AppError(ErrorCodes.EntityNotFound);
-
-        if (!EntityBelongsToUser(entity))
-            return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
-
-        var inputEntity = _mapper.Map<TEntity>(input);
-        inputEntity.Id = entityId;
-        inputEntity.CreationDate = entity.CreationDate;
-        inputEntity.ModificationDate = DateTime.Now;
-        await _repository.Update(inputEntity).ConfigureAwait(false);
-        
-        return _mapper.Map<TDto>(inputEntity);
-    }
-
-    public virtual async Task<AppError?> DeleteById(string entityId)
-    {
-        if (RequestIsValid(CrudOperation.Delete, entityId: entityId) is AppError requestError && requestError is not null)
-            return requestError;
-
-        var entity = await _repository.GetById(entityId).ConfigureAwait(false);
-        if (entity == null)
-            return new AppError(ErrorCodes.EntityNotFound);
-        
-        if (!EntityBelongsToUser(entity))
-            return new AppError(ErrorCodes.EntityDoesNotBelongToUser);
-        
-        await _repository.DeleteById(entityId).ConfigureAwait(false);
-
-        return null;
+        return entity;
     }
 
     public virtual AppError? RequestIsValid(CrudOperation crudOperation, string? entityId = null, TDto? dto = null)
@@ -109,6 +118,8 @@ public abstract class EntityCrudService<TEntity, TDto> : ICrudService<TEntity, T
 
         return null;
     }
+
+    protected void ResetAutoSaveOption() => _autoSave = true;
 
     public abstract bool EntityBelongsToUser(TEntity entity);
     public abstract Dictionary<CrudOperation, List<(Func<TDto?, string?, bool>, string)>> ValidationsByOperation { get; }

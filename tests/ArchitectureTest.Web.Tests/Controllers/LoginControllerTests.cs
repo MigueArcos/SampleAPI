@@ -28,7 +28,7 @@ public class LoginControllerTest {
         _systemUnderTest = new LoginController(_mockAuthService, _mockLogger);
     }
 
-     [Fact]
+    [Fact]
     public async Task SignIn_WhenEverythingIsOK_ShouldReturnJwt()
     {
         // Arrange

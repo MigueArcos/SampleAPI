@@ -1,8 +1,8 @@
 ﻿namespace ArchitectureTest.Web.Extensions;
 
 public static class CookieExtensions {
-    public static void SetCookie(this HttpContext context, string cookieName, string value) {
-        if (!context.CookieExists(cookieName)) {
+    public static void SetResponseCookie(this HttpContext context, string cookieName, string value) {
+        if (!context.CheckIfCookieExistsInRequest(cookieName)) {
             context.Response.Cookies.Append(
                 cookieName,
                 value,
@@ -31,20 +31,20 @@ public static class CookieExtensions {
         }
     }
 
-    public static void RemoveCookie(this HttpContext context, string cookieName) {
-        if (context.CookieExists(cookieName)) {
+    public static void RemoveCookieFromReponse(this HttpContext context, string cookieName) {
+        if (context.CheckIfCookieExistsInRequest(cookieName)) {
             context.Response.Cookies.Delete(cookieName);
         }
     }
 
-    public static string? GetCookieValue(this HttpContext context, string cookieName) {
-        if (context.CookieExists(cookieName)) {
+    public static string? GetCookieValueFromRequest(this HttpContext context, string cookieName) {
+        if (context.CheckIfCookieExistsInRequest(cookieName)) {
             return context.Request?.Cookies[cookieName];
         }
         return string.Empty;
     }
 
-    public static bool CookieExists(this HttpContext context, string cookieName) {
+    public static bool CheckIfCookieExistsInRequest(this HttpContext context, string cookieName) {
         return context.Request.Cookies[cookieName] != null;
     }
 }

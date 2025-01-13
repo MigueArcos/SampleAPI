@@ -23,10 +23,10 @@ public class Result<TValue, TError>
         Error = error;
     }
 
-    //happy path
+    // Happy path
     public static implicit operator Result<TValue, TError>(TValue value) => new Result<TValue, TError>(value);
 
-    //error path
+    // Error path
     public static implicit operator Result<TValue, TError>(TError error) => new Result<TValue, TError>(error);
 
     public Result<TValue, TError> Match(

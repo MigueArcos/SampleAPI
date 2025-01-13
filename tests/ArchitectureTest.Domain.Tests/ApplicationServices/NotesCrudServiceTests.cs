@@ -29,7 +29,8 @@ public class NotesCrudServiceTests {
 
 
         var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile<ApplicationModelsMappingProfile>());
-        // mapperConfig.AssertConfigurationIsValid();
+        mapperConfig.AssertConfigurationIsValid();
+
         _mapper = mapperConfig.CreateMapper();
         
         _systemUnderTest = new NotesCrudService(_mockUnitOfWork, _mapper) {

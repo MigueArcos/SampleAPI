@@ -15,12 +15,14 @@ using FluentAssertions;
 using Microsoft.Net.Http.Headers;
 using ArchitectureTest.Web.Configuration;
 using System.Text.Json;
+using ArchitectureTest.Domain.Models.Application;
+using ArchitectureTest.Domain.Errors;
+using System;
 
 namespace ArchitectureTest.Web.Tests.Authentication;
 
 public class CustomJwtBearerEventsTests
 {
-    private readonly IHttpContextAccessor _mockHttpContextAccessor;
     private readonly ILogger<CustomJwtBearerEvents> _mockLogger;
     private readonly IAuthService _mockAuthService;
 
@@ -31,26 +33,13 @@ public class CustomJwtBearerEventsTests
     public CustomJwtBearerEventsTests()
     {
         _mockAuthService = Substitute.For<IAuthService>();
-        _mockHttpContextAccessor = Substitute.For<IHttpContextAccessor>();
         _mockLogger = Substitute.For<ILogger<CustomJwtBearerEvents>>();
-
-        var userClaims = new List<Claim> {
-            new Claim(ClaimTypes.NameIdentifier, StubData.UserId.ToString()),
-            new Claim(ClaimTypes.Email, StubData.Email),
-            new Claim(ClaimTypes.Name, StubData.UserName),
-        };
-        var identity = new ClaimsIdentity(userClaims, "TestAuthType");
-    
-        var httpContext = new DefaultHttpContext {
-            User = new ClaimsPrincipal(identity)
-        };
-
-        _mockHttpContextAccessor.HttpContext.Returns(httpContext);
 
         _systemUnderTest = new CustomJwtBearerEvents(
             _mockLogger, _mockAuthService
         );
     }
+
     public class TestAuthScheme : IAuthenticationHandler
     {
         public Task<AuthenticateResult> AuthenticateAsync()
@@ -110,7 +99,7 @@ public class CustomJwtBearerEventsTests
     public async Task MessageReceived_WhenIsNotAnonymousAndHeaderContainsToken_ShouldReturnCompletedTask()
     {
         // Arrange
-        var httpContext = SetupHttpContext(isAnonymous: false, tokenInHeader: true);
+        var httpContext = SetupHttpContext(isAnonymous: false, tokensInHeaders: true);
         var bearerOptions = new JwtBearerOptions();
         var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
         var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
@@ -126,7 +115,7 @@ public class CustomJwtBearerEventsTests
     public async Task MessageReceived_WhenIsNotAnonymousAndCookieContainsToken_ShouldReturnCompletedTask()
     {
         // Arrange
-        var httpContext = SetupHttpContext(isAnonymous: false, tokenInCookie: true);
+        var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: true);
         var bearerOptions = new JwtBearerOptions();
         var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
         var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
@@ -142,7 +131,7 @@ public class CustomJwtBearerEventsTests
     public async Task MessageReceived_WhenIsNotAnonymousAndCookieIsMalformed_ShouldReturnCompletedTaskWithEmptyToken()
     {
         // Arrange
-        var httpContext = SetupHttpContext(isAnonymous: false, tokenInCookie: true, valueForCookie: "{badJson");
+        var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: true, valueForCookie: "{badJson");
         var bearerOptions = new JwtBearerOptions();
         var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
         var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
@@ -155,22 +144,83 @@ public class CustomJwtBearerEventsTests
     }
 
     [Fact]
-    public async Task AuthenticationFailed_WhenRefreshTokenExistInCookie_ShouldLoginSuccessfully()
+    public async Task Challenge_WhenAuthFailureIsNotNull_ShouldLogException()
     {
         // Arrange
-        var httpContext = SetupHttpContext(isAnonymous: false, tokenInCookie: true);
+        var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: true, valueForCookie: "{badJson");
         var bearerOptions = new JwtBearerOptions();
         var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
+        var thrownException = new Exception(ErrorCodes.UnknownError);
+        var inputData = new JwtBearerChallengeContext(httpContext, authScheme, bearerOptions, default!){
+            AuthenticateFailure = thrownException,
+            Error = ErrorCodes.UnknownError,
+            ErrorDescription = ErrorMessages.DefaultErrorMessageForExceptions
+        };
+    
+        // Act
+        await _systemUnderTest.Challenge(inputData);
+
+        // Assert
+        _mockLogger.ReceivedWithAnyArgs(1).LogError(
+            thrownException,
+            default,
+            inputData.Error,
+            inputData.ErrorDescription
+        );
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task AuthenticationFailed_WhenRefreshTokenExistsAndIsValid_ShouldRefreshLoginSuccessfully(
+        bool tokensInCookie, bool tokensInHeaders
+    ){
+        // Arrange
+        var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: tokensInCookie, tokensInHeaders: tokensInHeaders);
+        var bearerOptions = new JwtBearerOptions();
+        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
+        var jwt = BuildJwt();
+        var claimsPrincipal = BuildClaimsPrincipal();
+        _mockAuthService.ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken).Returns((jwt, claimsPrincipal));
         var inputData = new AuthenticationFailedContext(httpContext, authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.AuthenticationFailed(inputData);
 
         // Assert
+        inputData.Principal.Should().Be(claimsPrincipal);
+        await _mockAuthService.Received(1).ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken);
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task AuthenticationFailed_WhenAuthServiceFails_ShouldNotRefreshLogin(
+        bool tokensInCookie, bool tokensInHeaders
+    ){
+        // Arrange
+        var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: tokensInCookie, tokensInHeaders: tokensInHeaders);
+        var bearerOptions = new JwtBearerOptions();
+        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
+        _mockAuthService.ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken)
+            .Returns(new AppError(ErrorCodes.RefreshTokenExpired));
+        var inputData = new AuthenticationFailedContext(httpContext, authScheme, bearerOptions);
+    
+        // Act
+        await _systemUnderTest.AuthenticationFailed(inputData);
+
+        // Assert
+        var expectedErrorInfo = HttpResponses.TryGetErrorInfo(ErrorCodes.RefreshTokenExpired);
+        inputData.Principal.Should().BeNull();
+        httpContext.Response.StatusCode.Should().Be(expectedErrorInfo.HttpStatusCode);
+
+        await _mockAuthService.Received(1).ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken);
     }
 
     private HttpContext SetupHttpContext(
-        bool isAnonymous = false, bool tokenInHeader = false, bool tokenInCookie = false, string? valueForCookie = null
+        bool isAnonymous = false, bool tokensInHeaders = false, bool tokensInCookie = false, string? valueForCookie = null
     ){
         
         static Task requestDelegate(HttpContext context) => Task.CompletedTask;
@@ -185,13 +235,16 @@ public class CustomJwtBearerEventsTests
         httpContext.Request.Host = new HostString("localhost");
         httpContext.Request.Scheme = "https";
 
-        if (tokenInHeader)
+        if (tokensInHeaders)
+        {
             httpContext.Request.Headers[HeaderNames.Authorization] = $"Bearer {StubData.JwtToken}";
+            httpContext.Request.Headers[AppConstants.RefreshTokenHeader] = StubData.RefreshToken;
+        }
         
         var cookies = new DictionaryRequestCookieCollection();
         httpContext.Request.Cookies = cookies;
 
-        if (tokenInCookie)
+        if (tokensInCookie)
             cookies.Add(
                 AppConstants.SessionCookie,
                 valueForCookie ?? JsonSerializer.Serialize(new Dictionary<string, string> {
@@ -201,5 +254,31 @@ public class CustomJwtBearerEventsTests
             );
 
         return httpContext;
+    }
+
+    private JsonWebToken BuildJwt(
+        string userId = StubData.UserId, string email = StubData.Email,
+        string token = StubData.JwtToken, string refreshToken = StubData.RefreshToken
+    ) {
+        return new JsonWebToken {
+            UserId = userId,
+            Email = email,
+            ExpiresIn = 3600,
+            Token = token,
+            RefreshToken = refreshToken
+        };
+    }
+
+    private ClaimsPrincipal BuildClaimsPrincipal(
+        string userId = StubData.UserId, string email = StubData.Email, string userName = StubData.UserName
+    ){
+        var userClaims = new List<Claim> {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Name, userName),
+        };
+        var identity = new ClaimsIdentity(userClaims, "TestAuthType");
+
+        return new ClaimsPrincipal(identity);
     }
 }

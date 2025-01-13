@@ -33,7 +33,7 @@ public class ChecklistControllerTest
         _mockLogger = Substitute.For<ILogger<ChecklistController>>();
 
         var userClaims = new List<Claim> {
-            new Claim(ClaimTypes.NameIdentifier, StubData.UserId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, StubData.UserId),
             new Claim(ClaimTypes.Email, StubData.Email),
             new Claim(ClaimTypes.Name, StubData.UserName),
         };

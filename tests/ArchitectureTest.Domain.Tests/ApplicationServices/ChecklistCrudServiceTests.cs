@@ -36,7 +36,8 @@ public class ChecklistCrudServiceTests {
         _mockUnitOfWork.Repository<ChecklistDetail>().Returns(_mockChecklistDetailsRepo);
 
         var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile<ApplicationModelsMappingProfile>());
-        // mapperConfig.AssertConfigurationIsValid();
+        mapperConfig.AssertConfigurationIsValid();
+
         _mapper = mapperConfig.CreateMapper();
         
         _systemUnderTest = new ChecklistCrudService(_mockUnitOfWork, _mapper, _mockLogger) {

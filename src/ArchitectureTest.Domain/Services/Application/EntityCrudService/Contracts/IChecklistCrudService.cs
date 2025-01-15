@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 
+// Note
 // It would have been great to use a single generic type parameter for ICrudService, and define the application models
 // in the web layer, in a way that the web layer does the mapping in a ControllerBase with the 2 type arguments only in
 // that layer, but that would create problems in the application layer when we want to use transactions because the app

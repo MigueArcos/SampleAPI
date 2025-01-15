@@ -5,6 +5,7 @@ namespace ArchitectureTest.Infrastructure.ExpressionUtils;
 
 public static class ExpressionExtensions
 {
+    // Note
     // This code is taken from here:
     // https://stackoverflow.com/questions/76102803/how-to-convert-type-expression-to-work-on-different-type-in-c-sharp#answer-76114155
     // TODO: When replacing the Expression types, not all queries work, we must check why, specifically

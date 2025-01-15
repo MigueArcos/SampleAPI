@@ -60,7 +60,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
     public async Task<Result<IList<ChecklistDTO>, AppError>> GetUserChecklists()
     {
-        //A more complete validation can be performed here since we have the unitOfWork and access to all repos
+        // A more complete validation can be performed here since we have the unitOfWork and access to all repos
         if (string.IsNullOrWhiteSpace(CrudSettings.UserId))
             return new AppError(ErrorCodes.UserIdNotSupplied);
 

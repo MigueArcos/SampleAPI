@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Infrastructure.SqlEFCore.MySql;
 using ArchitectureTest.Infrastructure.SqlEFCore.SqlServer;
@@ -10,6 +11,7 @@ using SqlServerDatabase = ArchitectureTest.Databases.SqlServer;
 
 namespace ArchitectureTest.Infrastructure.SqlEFCore;
 
+[ExcludeFromCodeCoverage]
 public static class DependencyInjection
 {
     public static void AddSqlServerConfiguration(this IServiceCollection services, IConfiguration configuration)

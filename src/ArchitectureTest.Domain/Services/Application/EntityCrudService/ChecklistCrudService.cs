@@ -197,11 +197,11 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
     private async Task InsertDetails(List<ChecklistDetail>? details)
     {
-        if (details == null || details.Count == 0)
+        if (details?.Count == 0)
             return;
 
         var insertTasks = new List<Task>();
-        details.ForEach(d => 
+        details!.ForEach(d => 
             insertTasks.Add(_checklistDetailsRepo.Create(d, autoSave: false)
         ));
         await Task.WhenAll(insertTasks).ConfigureAwait(false);
@@ -209,7 +209,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
     private async Task UpdateDetails(List<ChecklistDetail>? details)
     {
-        if (details == null || details.Count == 0)
+        if (details?.Count == 0)
             return;
 
         // [[[[[ This does work concurrently ]]]]] Update impl does not use anything async but it works (don't know why)
@@ -218,7 +218,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         //     updateTasks.Add(_checklistDetailsRepo.Update(d, autoSave: false)
         // ));
         // await Task.WhenAll(updateTasks).ConfigureAwait(false);
-        foreach (var d in details)
+        foreach (var d in details!)
         {
             await _checklistDetailsRepo.Update(d, autoSave: false).ConfigureAwait(false);
         }
@@ -226,7 +226,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
     private async Task DeleteDetails(List<string>? detailsIDs)
     {
-        if (detailsIDs == null || detailsIDs.Count == 0)
+        if (detailsIDs?.Count == 0)
             return;
 
         // var deleteTasks = new List<Task>();
@@ -238,7 +238,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
         // TODO: Deleting a parentDetailId can lead to orphan ChecklistDetails, although this doesn't break anything,
         // only creates orphans
-        foreach (var id in detailsIDs)
+        foreach (var id in detailsIDs!)
         {
             await _checklistDetailsRepo.DeleteById(id, autoSave: false).ConfigureAwait(false);
         }

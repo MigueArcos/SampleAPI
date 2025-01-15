@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArchitectureTest.Web.Controllers;
 
-public abstract class EntityCrudController<TEntity, TDto> : BaseController, IGet, IDelete, IUpdate<TDto>, ICreate<TDto>
+public abstract class EntityCrudController<TEntity, TDto> : BaseController, IRead, IDelete, IUpdate<TDto>, ICreate<TDto>
     where TEntity : BaseEntity<string>
     where TDto : class
 {

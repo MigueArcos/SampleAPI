@@ -25,10 +25,9 @@ public class CustomJwtBearerEventsTests
 {
     private readonly ILogger<CustomJwtBearerEvents> _mockLogger;
     private readonly IAuthService _mockAuthService;
-
+    private readonly AuthenticationScheme _authScheme = new("schemaName", "displayName", typeof(IAuthenticationHandler));
 
     private readonly CustomJwtBearerEvents _systemUnderTest;
-
 
     public CustomJwtBearerEventsTests()
     {
@@ -40,53 +39,13 @@ public class CustomJwtBearerEventsTests
         );
     }
 
-    public class TestAuthScheme : IAuthenticationHandler
-    {
-        public Task<AuthenticateResult> AuthenticateAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task ChallengeAsync(AuthenticationProperties? properties)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task ForbidAsync(AuthenticationProperties? properties)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-    public class AnonymousAttr : IAllowAnonymous {
-
-    }
-
-    public class DictionaryRequestCookieCollection : Dictionary<string, string>, IRequestCookieCollection
-    {
-        public new ICollection<string> Keys => base.Keys;
-
-        public new string this[string key]{
-            get {
-                TryGetValue(key, out var value);
-                return value!;
-            }
-            set => base[key] = value;
-        }
-    }
-
     [Fact]
     public async Task MessageReceived_WhenIsAnonymous_ShouldReturnCompletedTask()
     {
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: true);
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
-        var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
+        var inputData = new MessageReceivedContext(httpContext, _authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.MessageReceived(inputData);
@@ -101,8 +60,7 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInHeaders: true);
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
-        var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
+        var inputData = new MessageReceivedContext(httpContext, _authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.MessageReceived(inputData);
@@ -117,8 +75,7 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: true);
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
-        var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
+        var inputData = new MessageReceivedContext(httpContext, _authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.MessageReceived(inputData);
@@ -133,8 +90,7 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: true, valueForCookie: "{badJson");
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
-        var inputData = new MessageReceivedContext(httpContext, authScheme, bearerOptions);
+        var inputData = new MessageReceivedContext(httpContext, _authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.MessageReceived(inputData);
@@ -149,9 +105,8 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: true, valueForCookie: "{badJson");
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
         var thrownException = new Exception(ErrorCodes.UnknownError);
-        var inputData = new JwtBearerChallengeContext(httpContext, authScheme, bearerOptions, default!){
+        var inputData = new JwtBearerChallengeContext(httpContext, _authScheme, bearerOptions, default!){
             AuthenticateFailure = thrownException,
             Error = ErrorCodes.UnknownError,
             ErrorDescription = ErrorMessages.DefaultErrorMessageForExceptions
@@ -179,11 +134,10 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: tokensInCookie, tokensInHeaders: tokensInHeaders);
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
         var jwt = BuildJwt();
         var claimsPrincipal = BuildClaimsPrincipal();
         _mockAuthService.ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken).Returns((jwt, claimsPrincipal));
-        var inputData = new AuthenticationFailedContext(httpContext, authScheme, bearerOptions);
+        var inputData = new AuthenticationFailedContext(httpContext, _authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.AuthenticationFailed(inputData);
@@ -203,10 +157,9 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: tokensInCookie, tokensInHeaders: tokensInHeaders);
         var bearerOptions = new JwtBearerOptions();
-        var authScheme = new AuthenticationScheme("schemaName", "displayName", typeof(TestAuthScheme));
         _mockAuthService.ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken)
             .Returns(new AppError(ErrorCodes.RefreshTokenExpired));
-        var inputData = new AuthenticationFailedContext(httpContext, authScheme, bearerOptions);
+        var inputData = new AuthenticationFailedContext(httpContext, _authScheme, bearerOptions);
     
         // Act
         await _systemUnderTest.AuthenticationFailed(inputData);
@@ -226,8 +179,8 @@ public class CustomJwtBearerEventsTests
         static Task requestDelegate(HttpContext context) => Task.CompletedTask;
 
         var httpContext = new DefaultHttpContext();
-        var anonymous = new AnonymousAttr();
-        var metadata = new EndpointMetadataCollection(isAnonymous ? anonymous : null!);
+        var anonymousAttribute = Substitute.For<IAllowAnonymous>();
+        var metadata = new EndpointMetadataCollection(isAnonymous ? anonymousAttribute : null!);
 
         var endpoint = new Endpoint(requestDelegate, metadata, "endpoint");
         httpContext.SetEndpoint(endpoint);
@@ -241,13 +194,12 @@ public class CustomJwtBearerEventsTests
             httpContext.Request.Headers[AppConstants.RefreshTokenHeader] = StubData.RefreshToken;
         }
         
-        var cookies = new DictionaryRequestCookieCollection();
-        httpContext.Request.Cookies = cookies;
+        var cookiesMock = Substitute.For<IRequestCookieCollection>();
+        httpContext.Request.Cookies = cookiesMock;
 
         if (tokensInCookie)
-            cookies.Add(
-                AppConstants.SessionCookie,
-                valueForCookie ?? JsonSerializer.Serialize(new Dictionary<string, string> {
+            cookiesMock[AppConstants.SessionCookie].Returns(valueForCookie ?? JsonSerializer.Serialize(
+                new Dictionary<string, string> {
                     [AppConstants.Token] = StubData.JwtToken,
                     [AppConstants.RefreshToken] = StubData.RefreshToken
                 })

@@ -14,8 +14,6 @@ using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models.Application;
 using NSubstitute;
 using FluentAssertions;
-using ArchitectureTest.Web.Extensions;
-using System.Text.Json;
 
 namespace ArchitectureTest.Web.Tests.Controllers;
 

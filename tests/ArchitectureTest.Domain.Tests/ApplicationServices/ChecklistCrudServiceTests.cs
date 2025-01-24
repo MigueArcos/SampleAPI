@@ -204,7 +204,7 @@ public class ChecklistCrudServiceTests {
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
         var flattenedDetails = ApplicationModelsMappingProfile
-            .FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
+            .FlattenAndPopulateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
@@ -290,7 +290,7 @@ public class ChecklistCrudServiceTests {
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
         var flattenedDetails = ApplicationModelsMappingProfile
-            .FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
+            .FlattenAndPopulateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
@@ -421,7 +421,7 @@ public class ChecklistCrudServiceTests {
             arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
             arg.Title == inputData.Title && arg.Details?.Count == 0;
 
-        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndPopulateChecklistDetails(
             inputId, _mapper.Map<List<ChecklistDetail>>(inputData.DetailsToAdd)
         );
 
@@ -524,7 +524,7 @@ public class ChecklistCrudServiceTests {
             arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
             arg.Title == inputData.Title && arg.Details?.Count == 0;
 
-        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndPopulateChecklistDetails(
             inputId, _mapper.Map<List<ChecklistDetail>>(inputData.DetailsToAdd)
         );
 

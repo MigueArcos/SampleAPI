@@ -36,7 +36,7 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
         return Ok(result.Value);
     }
 
-    // Overrides original method and returns a NotFound result, the HttpPut attribute must be modified to prevent routing errors
+    // Overrides original method, the HttpPut attribute must be modified to prevent routing errors
     [HttpPut]
     public override Task<IActionResult> Update([FromRoute] string id, [FromBody] ChecklistDTO input) 
         => Update(id, (UpdateChecklistDTO) input);

@@ -84,7 +84,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
 
             if (input.Details != null && input.Details.Count > 0)
             {
-                var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+                var flattenedDetails = ApplicationModelsMappingProfile.FlattenAndPopulateChecklistDetails(
                     insertResult.Value.Id, _mapper.Map<List<ChecklistDetail>>(input.Details)
                 );
                 await InsertDetails(flattenedDetails).ConfigureAwait(false);
@@ -134,7 +134,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
         if (detailsToUpdateIDsIntersected.Count() != (detailsToUpdateIDs ?? []).Count())
             return new AppError(ErrorCodes.OneOrMoreChecklistDetailToUpdateNotFound);
 
-        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndPopulateChecklistDetails(
             entityId, _mapper.Map<List<ChecklistDetail>>(updateDto!.DetailsToAdd)
         );
         

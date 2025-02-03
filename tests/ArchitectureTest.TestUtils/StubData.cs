@@ -9,6 +9,7 @@ public static class StubData {
     public const string HashedPassword = "10000.key.salt";
     public const string UserName = "Test User";
     public const string JwtToken = "eyzhdhhdhd.fhfhhf.fggg";
+    public const string ValidOldJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxIiwiZW1haWwiOiJtaWd1ZTMwMDk5NUBnbWFpbC5jb20iLCJ1bmlxdWVfbmFtZSI6Ik1pZ3VlbCBBbmdlbCIsIm5iZiI6MTczODU1NTYxOSwiZXhwIjoxNzM4NTU5MjE5LCJpYXQiOjE3Mzg1NTU2MTksImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0IiwiYXVkIjoiQW55QXVkaWVuY2UifQ.P3hAW7P9kgLvVkulS1Meyw1d5AlrO1Q02h4LKt24_bA";
     public const string RefreshToken = "4nyR3fr35hT0k3n";
     public const string UserId = "1";
     public const string NoteId = "10";

@@ -16,7 +16,7 @@ public class ApplicationModelsMappingProfile : Profile
         CreateMap<ChecklistDetail, ChecklistDetailDTO>().ReverseMap();
     }
 
-    public static List<ChecklistDetail>? FormatChecklistDetails(
+    public static List<ChecklistDetail> FormatChecklistDetails(
         ICollection<ChecklistDetail>? flattenedDetails, string? parentDetailId = null
     ){
         var selection = flattenedDetails?.Where(d => d.ParentDetailId == parentDetailId).Select(cD => new ChecklistDetail {
@@ -31,7 +31,7 @@ public class ApplicationModelsMappingProfile : Profile
         selection?.ForEach(i => {
             i.SubItems = FormatChecklistDetails(flattenedDetails, i.Id);
         });
-        return selection;
+        return selection ?? [];
     }
 
     public static List<string> FindAllDetailsToRemove(
@@ -42,8 +42,8 @@ public class ApplicationModelsMappingProfile : Profile
 
             currentIDsToRemove?.ForEach(id => {
                 result.Add(id);
-                var childDetails = flattenedDetails?.Where(d => d.ParentDetailId == id).Select(d => d.Id).ToList();
-                if (childDetails != null && childDetails.Count > 0)
+                var childDetails = flattenedDetails?.Where(d => d.ParentDetailId == id).Select(d => d.Id).ToList() ?? [];
+                if (childDetails.Count > 0)
                     result.AddRange(findDetailsToRemoveRecursive(childDetails));
             });
 
@@ -53,8 +53,8 @@ public class ApplicationModelsMappingProfile : Profile
         return findDetailsToRemoveRecursive(detailsToRemove).Distinct().ToList();
     }
 
-    public static List<ChecklistDetail> FlattenAndGenerateChecklistDetails(
-        string parentChecklistId, IList<ChecklistDetail>? details, string? parentDetailId = null
+    public static List<ChecklistDetail> FlattenAndPopulateChecklistDetails(
+        string checklistId, IList<ChecklistDetail>? details, string? parentDetailId = null
     ) {
         var flattenedDetails = new List<ChecklistDetail>();
         if (details == null)
@@ -70,7 +70,7 @@ public class ApplicationModelsMappingProfile : Profile
                 Status = detail.Status,
                 TaskName = detail.TaskName,
                 ParentDetailId = parentDetailId,
-                ChecklistId = parentChecklistId,
+                ChecklistId = checklistId,
                 CreationDate = DateTime.Now,
                 ModificationDate = null,
                 SubItems = null
@@ -81,7 +81,7 @@ public class ApplicationModelsMappingProfile : Profile
             if (subItems != null && subItems.Count > 0)
             {
                 // detail.SubItems = FlattenChecklistDetails(parentChecklistId, detail.SubItems, detail.Id);
-                flattenedDetails.AddRange(FlattenAndGenerateChecklistDetails(parentChecklistId, subItems, newDetail.Id));
+                flattenedDetails.AddRange(FlattenAndPopulateChecklistDetails(checklistId, subItems, newDetail.Id));
             }
         }
         return flattenedDetails;

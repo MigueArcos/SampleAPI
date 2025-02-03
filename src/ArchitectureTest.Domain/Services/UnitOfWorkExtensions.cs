@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ArchitectureTest.Domain.Services;
 
+// Notes
 // - Why this is an extension method and not part of the interface?
 //   This simplifies testability, because if this would be part of the interface, then we would need to mock this method
 //   to use this real implementation, the other option would be to use the concrete BaseUnitOfWork, but that class requires

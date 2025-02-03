@@ -74,7 +74,7 @@ public class LoginController : BaseController {
 
     private void SaveAuthInCookie(string token, string refreshToken)
     {
-        HttpContext.SetCookie(
+        HttpContext.SetResponseCookie(
             AppConstants.SessionCookie,
             JsonSerializer.Serialize(new Dictionary<string, string> {
                 [AppConstants.Token] = token,

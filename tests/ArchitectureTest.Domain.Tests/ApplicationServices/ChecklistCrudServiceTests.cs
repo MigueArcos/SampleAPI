@@ -36,7 +36,8 @@ public class ChecklistCrudServiceTests {
         _mockUnitOfWork.Repository<ChecklistDetail>().Returns(_mockChecklistDetailsRepo);
 
         var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile<ApplicationModelsMappingProfile>());
-        // mapperConfig.AssertConfigurationIsValid();
+        mapperConfig.AssertConfigurationIsValid();
+
         _mapper = mapperConfig.CreateMapper();
         
         _systemUnderTest = new ChecklistCrudService(_mockUnitOfWork, _mapper, _mockLogger) {
@@ -203,7 +204,7 @@ public class ChecklistCrudServiceTests {
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
         var flattenedDetails = ApplicationModelsMappingProfile
-            .FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
+            .FlattenAndPopulateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
@@ -289,7 +290,7 @@ public class ChecklistCrudServiceTests {
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
             ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
         var flattenedDetails = ApplicationModelsMappingProfile
-            .FlattenAndGenerateChecklistDetails(inputData.Id, inputData.Details);
+            .FlattenAndPopulateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
         //     nameof(ChecklistDetail.Id), nameof(ChecklistDetail.ChecklistId), nameof(ChecklistDetail.ParentDetailId),
         //     nameof(ChecklistDetail.CreationDate), nameof(ChecklistDetail.ModificationDate)
@@ -386,7 +387,7 @@ public class ChecklistCrudServiceTests {
         // 1. StartTransaction
         // 2. GetById
         // 3. Flatten and Validate DetailsToUpdate
-        // 4. Validate DetailsToDelete (If one detail in both UpdateAndDelete, Delete it and remove it from Update)
+        // 4. Validate DetailsToDelete (If one detail is in both Update & Delete, Delete it and remove it from Update)
         // 5. Flatten DetailsToAdd
         // 6. Insert DetailsToAdd
         // 7. Update DetailsToUpdate
@@ -420,7 +421,7 @@ public class ChecklistCrudServiceTests {
             arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
             arg.Title == inputData.Title && arg.Details?.Count == 0;
 
-        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndPopulateChecklistDetails(
             inputId, _mapper.Map<List<ChecklistDetail>>(inputData.DetailsToAdd)
         );
 
@@ -523,7 +524,7 @@ public class ChecklistCrudServiceTests {
             arg.Id == inputData.Id && arg.UserId == inputData.UserId &&
             arg.Title == inputData.Title && arg.Details?.Count == 0;
 
-        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndGenerateChecklistDetails(
+        var flattenedDetailsToAdd = ApplicationModelsMappingProfile.FlattenAndPopulateChecklistDetails(
             inputId, _mapper.Map<List<ChecklistDetail>>(inputData.DetailsToAdd)
         );
 
@@ -1033,7 +1034,7 @@ public class ChecklistCrudServiceTests {
     private List<ChecklistDetail>? BuildRandomDetails(string checklistId, int depth = 0, string? parentDetailId = null)
     {
         var details = new List<ChecklistDetail>();
-        int detailsNumber = new Random().Next(depth == 0 ? 1 : 0, 5 - depth);
+        int detailsNumber = _random.Next(depth == 0 ? 1 : 0, 5 - depth);
         for (int i = 0; i < detailsNumber; i++)
         {
             var detail = BuildChecklistDetail(

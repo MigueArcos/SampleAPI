@@ -36,7 +36,7 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
         return Ok(result.Value);
     }
 
-    // Overrides original method and returns a NotFound result, the HttpPut attribute must be modified to prevent routing errors
+    // Overrides original method, the HttpPut attribute must be modified to prevent routing errors
     [HttpPut]
     public override Task<IActionResult> Update([FromRoute] string id, [FromBody] ChecklistDTO input) 
         => Update(id, (UpdateChecklistDTO) input);
@@ -60,7 +60,8 @@ public class ChecklistController : EntityCrudController<Checklist, ChecklistDTO>
     //     return s;
     // }
 
-    /// We can add Authorize attribute for each method (overriding the default one and calling super.Method()), 
-    /// but in this case we are using the attribute at class Level, check out this answer for more details
-    /// https://stackoverflow.com/questions/48198071/add-attribute-to-inherited-function-c-sharp#answer-48198206
+    // Note
+    // We can add Authorize attribute for each method (overriding the default one and calling super.Method()), 
+    // but in this case we are using the attribute at class Level, check out this answer for more details
+    // https://stackoverflow.com/questions/48198071/add-attribute-to-inherited-function-c-sharp#answer-48198206
 }

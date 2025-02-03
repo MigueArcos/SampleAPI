@@ -32,11 +32,10 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
     public override Task Challenge(JwtBearerChallengeContext context) {
         if (context.AuthenticateFailure != null)
         {
-            _logger.LogError(JsonSerializer.Serialize(new {
-                AuthFailure = context.AuthenticateFailure.Message,
-                context.Error,
-                context.ErrorDescription
-            }));
+            _logger.LogError(
+                context.AuthenticateFailure,
+                "AuthFailure: Error = {Error}, ErrorDescription = {ErrorDescription}", context.Error, context.ErrorDescription
+            );
         }
         return base.Challenge(context);
     }
@@ -61,7 +60,7 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
 
             // if there was a cookie, then set again the cookie with the new value
             if (!string.IsNullOrEmpty(context.HttpContext.Request.Cookies[AppConstants.SessionCookie])) {
-                context.HttpContext.SetCookie(
+                context.HttpContext.SetResponseCookie(
                     AppConstants.SessionCookie,
                     JsonSerializer.Serialize(new Dictionary<string, string> {
                         [AppConstants.Token] = newToken.Token,
@@ -74,9 +73,9 @@ public class CustomJwtBearerEvents : JwtBearerEvents {
         }
     }
 
-    public override Task TokenValidated(TokenValidatedContext context) {
-        return Task.CompletedTask;
-    }
+    // public override Task TokenValidated(TokenValidatedContext context) {
+    //     return Task.CompletedTask;
+    // }
 
     private async Task WriteErrorToHttpResponse(HttpResponse httpResponseContext, string errorCode) {
         var errorInfo = HttpResponses.TryGetErrorInfo(errorCode, message => _logger.LogError(message))!;

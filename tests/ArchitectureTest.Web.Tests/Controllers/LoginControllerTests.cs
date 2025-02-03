@@ -25,11 +25,18 @@ public class LoginControllerTest {
     public LoginControllerTest() {
         _mockAuthService = Substitute.For<IAuthService>();
         _mockLogger = Substitute.For<ILogger<LoginController>>();
-        _systemUnderTest = new LoginController(_mockAuthService, _mockLogger);
+
+        _systemUnderTest = new LoginController(_mockAuthService, _mockLogger) {
+            ControllerContext = new ControllerContext {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
     }
 
-     [Fact]
-    public async Task SignIn_WhenEverythingIsOK_ShouldReturnJwt()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SignIn_WhenEverythingIsOK_ShouldReturnJwt(bool saveAuthInCookie)
     {
         // Arrange
         var jwtMockResult = BuildJwt();
@@ -40,7 +47,7 @@ public class LoginControllerTest {
         _mockAuthService.SignIn(inputData).Returns(jwtMockResult);
     
         // Act
-        var result = await _systemUnderTest.SignIn(inputData, false) as ObjectResult;
+        var result = await _systemUnderTest.SignIn(inputData, saveAuthInCookie) as ObjectResult;
 
         // Assert
         await _mockAuthService.Received(1).SignIn(inputData);
@@ -49,6 +56,15 @@ public class LoginControllerTest {
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
         result!.Value.Should().BeOfType<JsonWebToken>();
         ObjectComparer.JsonCompare(jwtMockResult, result.Value as JsonWebToken).Should().BeTrue();
+
+        if (saveAuthInCookie)
+        {
+            var sessionCookie = _systemUnderTest.Response.Headers["Set-Cookie"].ToString(); // this actually is in headers
+            sessionCookie.Should().NotBeNullOrWhiteSpace();
+            sessionCookie.Contains(AppConstants.SessionCookie).Should().BeTrue();
+            sessionCookie.Contains(jwtMockResult.Token).Should().BeTrue();
+            sessionCookie.Contains(jwtMockResult.RefreshToken).Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -153,8 +169,10 @@ public class LoginControllerTest {
         results.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task SignUp_WhenEverythingIsOK_ShouldReturnJwt()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SignUp_WhenEverythingIsOK_ShouldReturnJwt(bool saveAuthInCookie)
     {
         // Arrange
         var jwtMockResult = BuildJwt();
@@ -166,7 +184,7 @@ public class LoginControllerTest {
         _mockAuthService.SignUp(inputData).Returns(jwtMockResult);
     
         // Act
-        var result = await _systemUnderTest.SignUp(inputData, false) as ObjectResult;
+        var result = await _systemUnderTest.SignUp(inputData, saveAuthInCookie) as ObjectResult;
 
         // Assert
         await _mockAuthService.Received(1).SignUp(inputData);
@@ -175,6 +193,15 @@ public class LoginControllerTest {
         result!.StatusCode.Should().Be(StatusCodes.Status200OK);
         result!.Value.Should().BeOfType<JsonWebToken>();
         ObjectComparer.JsonCompare(jwtMockResult, result.Value as JsonWebToken).Should().BeTrue();
+
+        if (saveAuthInCookie)
+        {
+            var sessionCookie = _systemUnderTest.Response.Headers["Set-Cookie"].ToString(); // this actually is in headers
+            sessionCookie.Should().NotBeNullOrWhiteSpace();
+            sessionCookie.Contains(AppConstants.SessionCookie).Should().BeTrue();
+            sessionCookie.Contains(jwtMockResult.Token).Should().BeTrue();
+            sessionCookie.Contains(jwtMockResult.RefreshToken).Should().BeTrue();
+        }
     }
 
     [Fact]

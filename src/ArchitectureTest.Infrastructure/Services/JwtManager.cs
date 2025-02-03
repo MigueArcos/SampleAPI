@@ -30,7 +30,7 @@ public class JwtManager : IJwtManager {
         int tokenTtlSeconds = _configuration.GetValue<int>("ConfigData:Jwt:TokenTTLSeconds");
         var tokenDescriptor = new SecurityTokenDescriptor {
             Subject = new ClaimsIdentity(new Claim[] {
-                new Claim(ClaimTypes.NameIdentifier, identity.UserId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, identity.UserId),
                 new Claim(ClaimTypes.Email, identity.Email),
                 new Claim(ClaimTypes.Name, identity.Name!)
             }),

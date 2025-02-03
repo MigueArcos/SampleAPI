@@ -49,7 +49,8 @@ public record UpdateChecklistDTO : ChecklistDTO
 
     public List<ChecklistDetailDTO>? DetailsToAdd { get; init; }
 
-    // These Details will be "plain details", this means that its properties SubItems will be ignored, why?
+    // Note
+    // These Details will be "plain details", this means that its SubItems will be ignored, why?
     // This is because at this point we already know its IDs, so we expect all DetailsToUpdate to have its IDs already
     // populated, if we would use SubItems for these Detail we would need to use a complex logic to move the ParentDetailId
     // accordingly to the corresponding parent, although possible, this is cumbersome and can lead to possible data problems

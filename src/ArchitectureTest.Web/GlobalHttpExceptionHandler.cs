@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Web.Configuration;
 using ArchitectureTest.Web.HttpExtensions;
 using Microsoft.AspNetCore.Diagnostics;
@@ -20,7 +21,7 @@ public class GlobalHttpExceptionHandler : IExceptionHandler
     ){   
         var identity = httpContext.GetUserIdentity();
         if (string.IsNullOrWhiteSpace(identity?.UserId))
-            _logger.LogError(exception, "An exception occurred");
+            _logger.LogError(exception, ErrorMessages.DefaultErrorMessageForExceptions);
         else
             _logger.LogError(
                 exception, "An exception occurred: UserId = {UserId}, Email = {Email}", identity.UserId, identity.Email

@@ -12,42 +12,42 @@ namespace ArchitectureTest.IntegrationTests.Endpoints;
 
 public abstract class BaseLoginTests
 {
-  private readonly WebApplicationFactory<Program> _factory;
-  private readonly JsonSerializerOptions _serializerOptions = new () {
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-  };
-
-  public BaseLoginTests(WebApplicationFactory<Program> factory)
-  {
-    _factory = factory;
-  }
-
-  [Fact]
-  public async Task SignIn_WhenEverythingOK_ReturnsJwt()
-  {
-    // Arrange
-    var signInModel = new SignInModel {
-      Email = "migue300995@gmail.com",
-      Password = "zeusensacion"
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly JsonSerializerOptions _serializerOptions = new () {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
-    using StringContent jsonContent = new(
-      JsonSerializer.Serialize(signInModel), Encoding.UTF8, MediaTypeNames.Application.Json
-    );
-    var client = _factory.CreateClient();
 
-    // Act
-    var response = await client.PostAsync("api/login/sign-in", jsonContent);
+    public BaseLoginTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
 
-    // Assert
-    response.EnsureSuccessStatusCode();
-    response.Content.Headers.ContentType!.ToString().Should().Contain(MediaTypeNames.Application.Json);
-    var rawBody = await response.Content.ReadAsStringAsync();
-    var body = JsonSerializer.Deserialize<JsonWebToken>(rawBody, _serializerOptions)!;
-    body.Should().NotBeNull();
-    body.Email.Should().Be(signInModel.Email);
-    body.Token.Should().NotBeNullOrWhiteSpace();
-    body.RefreshToken.Should().NotBeNullOrWhiteSpace();
-  }
+    [Fact]
+    public async Task SignIn_WhenEverythingOK_ReturnsJwt()
+    {
+        // Arrange
+        var signInModel = new SignInModel {
+            Email = "migue300995@gmail.com",
+            Password = "zeusensacion"
+        };
+        using StringContent jsonContent = new(
+            JsonSerializer.Serialize(signInModel), Encoding.UTF8, MediaTypeNames.Application.Json
+        );
+        var client = _factory.CreateClient();
+
+        // Act
+        var response = await client.PostAsync("api/login/sign-in", jsonContent);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        response.Content.Headers.ContentType!.ToString().Should().Contain(MediaTypeNames.Application.Json);
+        var rawBody = await response.Content.ReadAsStringAsync();
+        var body = JsonSerializer.Deserialize<JsonWebToken>(rawBody, _serializerOptions)!;
+        body.Should().NotBeNull();
+        body.Email.Should().Be(signInModel.Email);
+        body.Token.Should().NotBeNullOrWhiteSpace();
+        body.RefreshToken.Should().NotBeNullOrWhiteSpace();
+    }
 }
 
 [Collection("AppRunningWithMySql")]

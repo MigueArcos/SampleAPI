@@ -10,32 +10,32 @@ namespace ArchitectureTest.IntegrationTests.Endpoints;
 
 public abstract class BaseHealthTests
 {
-  private readonly WebApplicationFactory<Program> _factory;
-  private readonly JsonSerializerOptions _serializerOptions = new () {
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-  };
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly JsonSerializerOptions _serializerOptions = new () {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
 
-  public BaseHealthTests(WebApplicationFactory<Program> factory)
-  {
-    _factory = factory;
-  }
+    public BaseHealthTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
 
-  [Fact]
-  public async Task Health_WhenHostCreatedSuccessfully_ReturnsOK()
-  {
-    // Arrange
-    var client = _factory.CreateClient();
+    [Fact]
+    public async Task Health_WhenHostCreatedSuccessfully_ReturnsOK()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
 
-    // Act
-    var response = await client.GetAsync("api/health");
+        // Act
+        var response = await client.GetAsync("api/health");
 
-    // Assert
-    response.EnsureSuccessStatusCode();
-    response.Content.Headers.ContentType!.ToString().Should().Contain(MediaTypeNames.Application.Json);
-    var rawBody = await response.Content.ReadAsStringAsync();
-    var body = JsonSerializer.Deserialize<HealthController.HealthInfo>(rawBody, _serializerOptions)!;
-    body.Should().NotBeNull();
-  }
+        // Assert
+        response.EnsureSuccessStatusCode();
+        response.Content.Headers.ContentType!.ToString().Should().Contain(MediaTypeNames.Application.Json);
+        var rawBody = await response.Content.ReadAsStringAsync();
+        var body = JsonSerializer.Deserialize<HealthController.HealthInfo>(rawBody, _serializerOptions)!;
+        body.Should().NotBeNull();
+    }
 }
 
 [Collection("AppRunningWithMySql")]

@@ -372,7 +372,7 @@ public class ChecklistCrudServiceTests {
         result.Error.Should().NotBeNull();
         result.Value.Entity.Should().BeNull();
         result.Value.Id.Should().BeNull();
-        result.Error!.Code.Should().Be(ErrorCodes.NoteTitleNotFound);
+        result.Error!.Code.Should().Be(ErrorCodes.ChecklistTitleNotFound);
 
         await _mockUnitOfWork.Received(1).StartTransaction();
         await _mockChecklistRepo.DidNotReceive().Create(default!, default);

@@ -9,6 +9,7 @@ using ArchitectureTest.Domain.Entities;
 using ArchitectureTest.Domain.Errors;
 using ArchitectureTest.Domain.Models;
 using ArchitectureTest.Domain.Models.Application;
+using ArchitectureTest.Domain.Services;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService;
 using ArchitectureTest.Domain.Services.Application.EntityCrudService.Contracts;
 using ArchitectureTest.Domain.Services.Infrastructure;
@@ -50,6 +51,29 @@ public abstract class BaseChecklistsTests
         var client = _factory.CreateClient();
         var checklistId = "2";
         client.DefaultRequestHeaders.Add(HeaderNames.Authorization, $"Bearer {_jwt.Token}");
+
+        // Act
+        var response = await client.GetAsync($"api/checklist/{checklistId}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        response.Content.Headers.ContentType!.ToString().Should().Contain(MediaTypeNames.Application.Json);
+        var rawBody = await response.Content.ReadAsStringAsync();
+        var body = JsonSerializer.Deserialize<ChecklistDTO>(rawBody, _serializerOptions)!;
+        body.Should().NotBeNull();
+        body.Id.Should().Be(checklistId);
+        body.CreationDate.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetChecklistById_WhenEverythingOKButUsingRefreshToken_ReturnsChecklist()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var checklistId = "2";
+        await SaveRefreshToken(_jwt.UserId, _jwt.RefreshToken);
+        client.DefaultRequestHeaders.Add(HeaderNames.Authorization, $"Bearer {StubData.ValidOldJwt}");
+        client.DefaultRequestHeaders.Add(AppConstants.RefreshTokenHeader, _jwt.RefreshToken);
 
         // Act
         var response = await client.GetAsync($"api/checklist/{checklistId}");
@@ -316,7 +340,7 @@ public abstract class BaseChecklistsTests
     }
 
     [Fact]
-    public async Task DeleteById_WhenEverythingOK_ReturnsChecklist()
+    public async Task DeleteById_WhenEverythingOK_ReturnsNoContent()
     {
         // Arrange
         var client = _factory.CreateClient();
@@ -376,6 +400,19 @@ public abstract class BaseChecklistsTests
         var jwtManagerService = scope.ServiceProvider.GetService<IJwtManager>()!;
         var jwt = jwtManagerService!.GenerateToken(tokenIdentity);
         return jwt.Value!;
+    }
+
+    private async Task SaveRefreshToken(string userId, string refreshToken)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>()!;
+        await unitOfWork.Repository<UserToken>().Create(new UserToken {
+            Id = Guid.CreateVersion7().ToString("N"),
+            UserId = userId,
+            Token = refreshToken,
+            TokenTypeId = $"{(int) Domain.Enums.TokenType.RefreshToken}",
+            ExpiryTime = DateTime.Now.AddHours(720)
+        });
     }
 
     private async Task<ChecklistDTO> GetChecklistFromDatabase(string checklistId)
@@ -482,5 +519,5 @@ public class MySqlChecklistsTests(MySqlApplicationFactory factory) : BaseCheckli
 public class SqlServerChecklistsTests(SqlServerApplicationFactory factory) : BaseChecklistsTests(factory)
 {
     // [Fact]
-    // public Task Debug() => Update_WhenEverythingOK_ReturnsSuccess();
+    // public Task Debug() => GetChecklistById_WhenEverythingOKButUsingRefreshToken_ReturnsChecklist();
 }

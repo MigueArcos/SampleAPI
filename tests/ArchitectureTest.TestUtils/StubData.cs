@@ -3,7 +3,8 @@ using System.Linq;
 
 namespace ArchitectureTest.TestUtils;
 
-public static class StubData {
+public static class StubData
+{
     public const string Email = "system@undertest.com";
     public const string Password = "P455w0rd";
     public const string HashedPassword = "10000.key.salt";

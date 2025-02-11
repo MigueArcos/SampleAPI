@@ -164,7 +164,7 @@ public abstract class BaseNotesTests
     public async Task Create_WhenEverythingOK_ReturnsSuccess()
     {
         // Arrange
-        var inputData = BuildNote(noteId: null!, userId: _jwt.UserId);
+        var inputData = TestDataBuilders.BuildNote(noteId: null!, userId: _jwt.UserId);
         var mappedInputData = _mapper.Map<NoteDTO>(inputData);
         var client = _factory.CreateClient();
         using StringContent jsonContent = new(
@@ -190,7 +190,7 @@ public abstract class BaseNotesTests
     public async Task Create_WhenUserIsUnauthorized_ReturnsError()
     {
         // Arrange
-        var inputData = BuildNote(noteId: null!, userId: _jwt.UserId);
+        var inputData = TestDataBuilders.BuildNote(noteId: null!, userId: _jwt.UserId);
         var mappedInputData = _mapper.Map<NoteDTO>(inputData);
         var client = _factory.CreateClient();
         using StringContent jsonContent = new(
@@ -209,7 +209,7 @@ public abstract class BaseNotesTests
     public async Task Create_WhenThereIsAValidationError_ReturnsError()
     {
         // Arrange
-        var inputData = BuildNote(noteId: null!, userId: _jwt.UserId, title: string.Empty);
+        var inputData = TestDataBuilders.BuildNote(noteId: null!, userId: _jwt.UserId, title: string.Empty);
         var mappedInputData = _mapper.Map<NoteDTO>(inputData);
         var client = _factory.CreateClient();
         using StringContent jsonContent = new(
@@ -374,20 +374,6 @@ public abstract class BaseNotesTests
         var notesService = scope.ServiceProvider.GetService<ICrudService<Note, NoteDTO>>()!;
         var note = await notesService!.GetById(noteId);
         return note.Value!;
-    }
-
-    private Note BuildNote(
-        string noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
-        string userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
-    ) {
-        return new Note {
-            Id = noteId,
-            Title = title,
-            Content = content,
-            UserId = userId,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek
-        };
     }
 
     private JsonWebToken GenerateJwt()

@@ -32,7 +32,6 @@ public abstract class BaseChecklistsTests
     };
     private readonly JsonWebToken _jwt;
     private readonly IMapper _mapper;
-    private readonly Random _random = new();
 
     public BaseChecklistsTests(WebApplicationFactory<Program> factory)
     {
@@ -163,7 +162,7 @@ public abstract class BaseChecklistsTests
     public async Task Create_WhenEverythingOK_ReturnsSuccess()
     {
         // Arrange
-        var inputData = BuildChecklist(checklistId: null!, userId: _jwt.UserId);
+        var inputData = TestDataBuilders.BuildChecklist(checklistId: null!, userId: _jwt.UserId);
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         var client = _factory.CreateClient();
         using StringContent jsonContent = new(
@@ -189,7 +188,7 @@ public abstract class BaseChecklistsTests
     public async Task Create_WhenUserIsUnauthorized_ReturnsError()
     {
         // Arrange
-        var inputData = BuildChecklist(checklistId: null!, userId: _jwt.UserId);
+        var inputData = TestDataBuilders.BuildChecklist(checklistId: null!, userId: _jwt.UserId);
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         var client = _factory.CreateClient();
         using StringContent jsonContent = new(
@@ -208,7 +207,7 @@ public abstract class BaseChecklistsTests
     public async Task Create_WhenThereIsAValidationError_ReturnsError()
     {
         // Arrange
-        var inputData = BuildChecklist(checklistId: null!, userId: _jwt.UserId, title: string.Empty);
+        var inputData = TestDataBuilders.BuildChecklist(checklistId: null!, userId: _jwt.UserId, title: string.Empty);
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         var client = _factory.CreateClient();
         using StringContent jsonContent = new(
@@ -239,12 +238,12 @@ public abstract class BaseChecklistsTests
             _mapper.Map<List<ChecklistDetail>>(checklistToUpdate.Details)
         );
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: checklistId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete,
             title: newTitle, userId: _jwt.UserId
         );
@@ -281,12 +280,12 @@ public abstract class BaseChecklistsTests
             _mapper.Map<List<ChecklistDetail>>(checklistToUpdate.Details)
         );
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: checklistId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete,
             title: newTitle, userId: _jwt.UserId
         );
@@ -313,12 +312,12 @@ public abstract class BaseChecklistsTests
             _mapper.Map<List<ChecklistDetail>>(checklistToUpdate.Details)
         );
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: checklistId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete,
             title: string.Empty, userId: _jwt.UserId
         );
@@ -421,90 +420,6 @@ public abstract class BaseChecklistsTests
         var checklistService = scope.ServiceProvider.GetService<IChecklistCrudService>()!;
         var checklist = await checklistService!.GetById(checklistId);
         return checklist.Value!;
-    }
-
-    private Checklist BuildChecklist(
-        string checklistId = StubData.ChecklistId, string userId = StubData.UserId, string title = StubData.ChecklistTitle,
-        DateTime? creationDate = null, DateTime? modificationDate = null, List<ChecklistDetail>? details = null
-    ) {
-        details ??= BuildRandomDetails(checklistId);
-
-        return new Checklist {
-            Id = checklistId,
-            UserId = userId,
-            Title = title,
-            Details = details,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek
-        };
-    }
-
-    private UpdateChecklistDTO BuildUpdateChecklistModel(
-        string checklistId = StubData.ChecklistId, string userId = StubData.UserId,
-        string title = StubData.ChecklistTitle, List<ChecklistDetail>? detailsToAdd = null,
-        List<ChecklistDetail>? detailsToUpdate = null, List<string>? detailsToDelete = null
-    ) {
-        detailsToAdd ??= BuildRandomDetails(checklistId);
-        // detailsToUpdate ??= BuildRandomDetails(checklistId);
-        // detailsToDelete ??= 
-
-        return new UpdateChecklistDTO {
-            Id = checklistId,
-            UserId = userId,
-            Title = title,
-            DetailsToAdd = _mapper.Map<List<ChecklistDetailDTO>>(detailsToAdd),
-            DetailsToUpdate = _mapper.Map<List<ChecklistDetailDTO>>(detailsToUpdate),
-            DetailsToDelete = detailsToDelete
-        };
-    }
-
-    private List<ChecklistDetail>? BuildRandomDetails(string checklistId, int depth = 0, string? parentDetailId = null)
-    {
-        var details = new List<ChecklistDetail>();
-        int detailsNumber = _random.Next(depth == 0 ? 1 : 0, 5 - depth);
-        for (int i = 0; i < detailsNumber; i++)
-        {
-            var detail = BuildChecklistDetail(
-                checklistId: checklistId, taskName: StubData.CreateRandomString(), parentDetailId: parentDetailId
-            );
-            detail.SubItems = BuildRandomDetails(checklistId, depth + 1, detail.Id);
-            // detail.SubItems = [];
-            details.Add(detail);
-        }
-        return details;
-    }
-
-    private ChecklistDetail BuildChecklistDetail(
-        string? detailId = null, string checklistId = StubData.ChecklistId, string taskName = StubData.ChecklistTaskName,
-        string? parentDetailId = null, bool status = true, DateTime? creationDate = null, DateTime? modificationDate = null
-    ) {
-        return new ChecklistDetail {
-            Id = string.IsNullOrWhiteSpace(detailId) ? Guid.CreateVersion7().ToString("N") : detailId,
-            ChecklistId = checklistId,
-            TaskName = taskName,
-            ParentDetailId = parentDetailId,
-            Status = status,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek
-        };
-    }
-
-    private bool RandomBool() => _random.NextDouble() >= 0.5;
-
-    private (List<ChecklistDetail> DetailToUpdate, List<string> DetailsToDelete) PickRandomDetails(
-        List<ChecklistDetail> flattenedDetails
-    ){
-        var detailsToUpdate = new List<ChecklistDetail>();
-        var detailsToDelete = new List<string>();
-
-        flattenedDetails.ForEach(detail => {
-            if (RandomBool())
-                detailsToUpdate.Add(detail);
-            if (RandomBool())
-                detailsToDelete.Add(detail.Id);
-        });
-        
-        return (detailsToUpdate, detailsToDelete);
     }
 }
 

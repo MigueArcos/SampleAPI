@@ -22,7 +22,6 @@ public class ChecklistCrudServiceTests {
     private readonly ChecklistCrudService _systemUnderTest;
     private readonly IMapper _mapper;
     private readonly ILogger<ChecklistCrudService> _mockLogger;
-    private readonly Random _random = new();
 
     public ChecklistCrudServiceTests() {
         _mockChecklistRepo = Substitute.For<IChecklistRepository>();
@@ -53,7 +52,7 @@ public class ChecklistCrudServiceTests {
     public async Task GetById_WhenEverythingIsOK_ReturnsChecklist(bool performOwnershipValidation)
     {
         // Arrange
-        var getByIdChecklist = BuildChecklist();
+        var getByIdChecklist = TestDataBuilders.BuildChecklist();
         _mockChecklistRepo.GetById(getByIdChecklist.Id).Returns(getByIdChecklist);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         if (performOwnershipValidation) {
@@ -76,7 +75,7 @@ public class ChecklistCrudServiceTests {
     public async Task GetById_WhenOwnershipValidationFails_ReturnsError()
     {
         // Arrange
-        var getByIdChecklist = BuildChecklist();
+        var getByIdChecklist = TestDataBuilders.BuildChecklist();
         _mockChecklistRepo.GetById(getByIdChecklist.Id).Returns(getByIdChecklist);
 
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
@@ -155,9 +154,9 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         var foundChecklists = new List<Checklist> {
-            BuildChecklist(checklistId: "1"),
-            BuildChecklist(checklistId: "2"),
-            BuildChecklist(checklistId: "3")
+            TestDataBuilders.BuildChecklist(checklistId: "1"),
+            TestDataBuilders.BuildChecklist(checklistId: "2"),
+            TestDataBuilders.BuildChecklist(checklistId: "3")
         };
         _mockChecklistRepo.Find(default).ReturnsForAnyArgs(foundChecklists);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
@@ -199,10 +198,10 @@ public class ChecklistCrudServiceTests {
         // Arrange
         var today = StubData.Today;
         var nextWeek = StubData.NextWeek;
-        var inputData = BuildChecklist(creationDate: today, modificationDate: nextWeek);
+        var inputData = TestDataBuilders.BuildChecklist(creationDate: today, modificationDate: nextWeek);
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
-            ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
+            ObjectComparer.JsonTransformAndCompare<Checklist, TestDataBuilders.ChecklistValueObject>(arg, inputData);
         var flattenedDetails = ApplicationModelsMappingProfile
             .FlattenAndPopulateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
@@ -242,7 +241,8 @@ public class ChecklistCrudServiceTests {
         await _mockUnitOfWork.Received(1).Commit();
         await _mockUnitOfWork.DidNotReceive().Rollback();
         _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
-        ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(inputData, mappedResult).Should().BeTrue();
+        ObjectComparer.JsonTransformAndCompare<Checklist, TestDataBuilders.ChecklistValueObject>(inputData, mappedResult)
+            .Should().BeTrue();
     }
 
     [Fact]
@@ -251,10 +251,10 @@ public class ChecklistCrudServiceTests {
         // Arrange
         var today = StubData.Today;
         var nextWeek = StubData.NextWeek;
-        var inputData = BuildChecklist(creationDate: today, modificationDate: nextWeek, details: []);
+        var inputData = TestDataBuilders.BuildChecklist(creationDate: today, modificationDate: nextWeek, details: []);
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
-            ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
+            ObjectComparer.JsonTransformAndCompare<Checklist, TestDataBuilders.ChecklistValueObject>(arg, inputData);
 
         _mockChecklistRepo.Create(Arg.Is<Checklist>(arg => repoCreateChecklistValidator(arg)), false)
             .Returns(Task.CompletedTask);
@@ -275,7 +275,8 @@ public class ChecklistCrudServiceTests {
         await _mockUnitOfWork.Received(1).Commit();
         await _mockUnitOfWork.DidNotReceive().Rollback();
         _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
-        ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(inputData, mappedResult).Should().BeTrue();
+        ObjectComparer.JsonTransformAndCompare<Checklist, TestDataBuilders.ChecklistValueObject>(inputData, mappedResult)
+            .Should().BeTrue();
     }
 
     [Fact]
@@ -285,10 +286,10 @@ public class ChecklistCrudServiceTests {
         var thrownException = new Exception(ErrorCodes.UnknownError);
         var today = StubData.Today;
         var nextWeek = StubData.NextWeek;
-        var inputData = BuildChecklist(creationDate: today, modificationDate: nextWeek);
+        var inputData = TestDataBuilders.BuildChecklist(creationDate: today, modificationDate: nextWeek);
         var mappedInputData = _mapper.Map<ChecklistDTO>(inputData);
         Func<Checklist, bool> repoCreateChecklistValidator = arg => 
-            ObjectComparer.JsonTransformAndCompare<Checklist, ChecklistValueObject>(arg, inputData);
+            ObjectComparer.JsonTransformAndCompare<Checklist, TestDataBuilders.ChecklistValueObject>(arg, inputData);
         var flattenedDetails = ApplicationModelsMappingProfile
             .FlattenAndPopulateChecklistDetails(inputData.Id, inputData.Details);
         // string[] propertiesToIgnoreChecklistDetail = [
@@ -334,7 +335,7 @@ public class ChecklistCrudServiceTests {
     public async Task Create_WhenUserIdNotProvided_ReturnsError()
     {
         // Arrange
-        var inputData = BuildChecklist(userId: string.Empty);
+        var inputData = TestDataBuilders.BuildChecklist(userId: string.Empty);
 
         // Act
         var result = await _systemUnderTest.Create(_mapper.Map<ChecklistDTO>(inputData));
@@ -362,7 +363,7 @@ public class ChecklistCrudServiceTests {
     public async Task Create_WhenChecklistTitleNotProvided_ReturnsError(string? checklistTitle)
     {
         // Arrange
-        var inputData = BuildChecklist(title: checklistTitle!);
+        var inputData = TestDataBuilders.BuildChecklist(title: checklistTitle!);
 
         // Act
         var result = await _systemUnderTest.Create(_mapper.Map<ChecklistDTO>(inputData));
@@ -402,16 +403,16 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         var inputId = StubData.ChecklistId;
-        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(checklistId: inputId);
         var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
         var actualDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(oldFlattenedDetails, detailsToDelete);
@@ -505,16 +506,16 @@ public class ChecklistCrudServiceTests {
         // Arrange
         var thrownException = new Exception(ErrorCodes.UnknownError);
         var inputId = StubData.ChecklistId;
-        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(checklistId: inputId);
         var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
         var actualDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(oldFlattenedDetails, detailsToDelete);
@@ -604,17 +605,17 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         var inputId = StubData.ChecklistId;
-        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(checklistId: inputId);
         var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToDelete.Add(StubData.CreateRandomString());
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
         var actualDetailsToDelete = ApplicationModelsMappingProfile.FindAllDetailsToRemove(oldFlattenedDetails, detailsToDelete);
@@ -654,17 +655,17 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         var inputId = StubData.ChecklistId;
-        var getByIdChecklist = BuildChecklist(checklistId: inputId);
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(checklistId: inputId);
         var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
-        detailsToUpdate.Add(BuildChecklistDetail());
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
+        detailsToUpdate.Add(TestDataBuilders.BuildChecklistDetail());
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
 
@@ -703,7 +704,7 @@ public class ChecklistCrudServiceTests {
         // Arrange
         var inputId = StubData.ChecklistId;
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, userId: string.Empty
         );
 
@@ -741,7 +742,7 @@ public class ChecklistCrudServiceTests {
         // Arrange
         var inputId = StubData.ChecklistId;
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, title: string.Empty
         );
 
@@ -776,16 +777,16 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         var inputId = StubData.ChecklistId;
-        var getByIdChecklist = BuildChecklist(checklistId: inputId, userId: "250"); // this is not the owner of this Checklist
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(checklistId: inputId, userId: "250"); // this is not the owner of this Checklist
         var oldFlattenedDetails = ApplicationModelsMappingProfile.FlattenChecklistDetails(getByIdChecklist.Details);
         // take n random items to update and also n random items to delete from getByIdChecklist
-        var (detailsToUpdate, detailsToDelete) = PickRandomDetails(oldFlattenedDetails);
+        var (detailsToUpdate, detailsToDelete) = TestDataBuilders.PickRandomDetails(oldFlattenedDetails);
         detailsToUpdate.ForEach(d => {
             d.TaskName = StubData.CreateRandomString();
-            d.Status = RandomBool();
+            d.Status = TestDataBuilders.RandomBool();
         });
 
-        var inputData = BuildUpdateChecklistModel(
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(
             checklistId: inputId, detailsToUpdate: detailsToUpdate, detailsToDelete: detailsToDelete
         );
 
@@ -828,8 +829,7 @@ public class ChecklistCrudServiceTests {
 
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = performOwnershipValidation;
         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
-        var inputData = BuildUpdateChecklistModel(checklistId: inputId);
-        
+        var inputData = TestDataBuilders.BuildUpdateChecklistModel(checklistId: inputId);
 
         // Act
         var result = await _systemUnderTest.Update(inputId, inputData);
@@ -859,7 +859,7 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         string checklistUserId = performOwnershipValidation ? StubData.UserId : "100";
-        var getByIdChecklist = BuildChecklist(userId: checklistUserId);
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(userId: checklistUserId);
         _mockChecklistRepo.GetById(StubData.ChecklistId).Returns(getByIdChecklist);
         _mockChecklistRepo.DeleteById(StubData.ChecklistId, false).Returns(Task.CompletedTask);
         _mockChecklistRepo.DeleteDetails(StubData.ChecklistId, false).Returns(1);
@@ -890,7 +890,7 @@ public class ChecklistCrudServiceTests {
     {
         // Arrange
         var thrownException = new Exception(ErrorCodes.UnknownError);
-        var getByIdChecklist = BuildChecklist(checklistId: StubData.ChecklistId);
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(checklistId: StubData.ChecklistId);
         _mockChecklistRepo.GetById(StubData.ChecklistId).Returns(getByIdChecklist);
         _mockChecklistRepo.DeleteDetails(StubData.ChecklistId, false).Returns(1);
         _mockChecklistRepo.DeleteById(StubData.ChecklistId, false).Returns(Task.CompletedTask);
@@ -939,7 +939,7 @@ public class ChecklistCrudServiceTests {
     public async Task DeleteById_WhenChecklistDoesNotBelongToUser_ReturnsError()
     {
         // Arrange
-        var getByIdChecklist = BuildChecklist(userId: "100"); // 100 is not the user making the request
+        var getByIdChecklist = TestDataBuilders.BuildChecklist(userId: "100"); // 100 is not the user making the request
         _mockChecklistRepo.GetById(StubData.ChecklistId).Returns(getByIdChecklist);
         _systemUnderTest.CrudSettings.ValidateEntityBelongsToUser = true;
         _systemUnderTest.CrudSettings.UserId = StubData.UserId;
@@ -982,101 +982,5 @@ public class ChecklistCrudServiceTests {
         await _mockUnitOfWork.DidNotReceive().Commit();
         await _mockUnitOfWork.DidNotReceive().Rollback();
         _mockLogger.DidNotReceiveWithAnyArgs().LogError((Exception) default!, default);
-    }
-
-    internal record ChecklistDetailValueObject(
-        string ChecklistId, string ParentDetailId, string TaskName, bool Status, List<ChecklistDetailValueObject>? SubItems
-    );
-
-    internal record ChecklistValueObject(string UserId, string Title, List<ChecklistDetailValueObject>? Details);
-
-    internal record UpdateChecklistDTOValueObject(
-        string UserId, string Title, List<ChecklistDetailValueObject>? DetailsToAdd,
-        List<ChecklistDetailValueObject>? DetailsToUpdate, List<string>? DetailsToDelete
-    );
-
-
-    private Checklist BuildChecklist(
-        string checklistId = StubData.ChecklistId, string userId = StubData.UserId, string title = StubData.ChecklistTitle,
-        DateTime? creationDate = null, DateTime? modificationDate = null, List<ChecklistDetail>? details = null
-    ) {
-        details ??= BuildRandomDetails(checklistId);
-
-        return new Checklist {
-            Id = checklistId,
-            UserId = userId,
-            Title = title,
-            Details = details,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek
-        };
-    }
-
-    private UpdateChecklistDTO BuildUpdateChecklistModel(
-        string checklistId = StubData.ChecklistId, string userId = StubData.UserId,
-        string title = StubData.ChecklistTitle, List<ChecklistDetail>? detailsToAdd = null,
-        List<ChecklistDetail>? detailsToUpdate = null, List<string>? detailsToDelete = null
-    ) {
-        detailsToAdd ??= BuildRandomDetails(checklistId);
-        // detailsToUpdate ??= BuildRandomDetails(checklistId);
-        // detailsToDelete ??= 
-
-        return new UpdateChecklistDTO {
-            Id = checklistId,
-            UserId = userId,
-            Title = title,
-            DetailsToAdd = _mapper.Map<List<ChecklistDetailDTO>>(detailsToAdd),
-            DetailsToUpdate = _mapper.Map<List<ChecklistDetailDTO>>(detailsToUpdate),
-            DetailsToDelete = detailsToDelete
-        };
-    }
-
-    private List<ChecklistDetail>? BuildRandomDetails(string checklistId, int depth = 0, string? parentDetailId = null)
-    {
-        var details = new List<ChecklistDetail>();
-        int detailsNumber = _random.Next(depth == 0 ? 1 : 0, 5 - depth);
-        for (int i = 0; i < detailsNumber; i++)
-        {
-            var detail = BuildChecklistDetail(
-                checklistId: checklistId, taskName: StubData.CreateRandomString(), parentDetailId: parentDetailId
-            );
-            detail.SubItems = BuildRandomDetails(checklistId, depth + 1, detail.Id);
-            // detail.SubItems = [];
-            details.Add(detail);
-        }
-        return details;
-    }
-
-    private ChecklistDetail BuildChecklistDetail(
-        string? detailId = null, string checklistId = StubData.ChecklistId, string taskName = StubData.ChecklistTaskName,
-        string? parentDetailId = null, bool status = true, DateTime? creationDate = null, DateTime? modificationDate = null
-    ) {
-        return new ChecklistDetail {
-            Id = string.IsNullOrWhiteSpace(detailId) ? Guid.CreateVersion7().ToString("N") : detailId,
-            ChecklistId = checklistId,
-            TaskName = taskName,
-            ParentDetailId = parentDetailId,
-            Status = status,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek
-        };
-    }
-
-    private bool RandomBool() => _random.NextDouble() >= 0.5;
-
-    private (List<ChecklistDetail> DetailToUpdate, List<string> DetailsToDelete) PickRandomDetails(
-        List<ChecklistDetail> flattenedDetails
-    ){
-        var detailsToUpdate = new List<ChecklistDetail>();
-        var detailsToDelete = new List<string>();
-    
-        flattenedDetails.ForEach(detail => {
-            if (RandomBool())
-                detailsToUpdate.Add(detail);
-            if (RandomBool())
-                detailsToDelete.Add(detail.Id);
-        });
-        
-        return (detailsToUpdate, detailsToDelete);
     }
 }

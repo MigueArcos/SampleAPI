@@ -63,10 +63,10 @@ public class AuthServiceTests {
             Password = StubData.Password
         };
 
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
-        var jwtToken = BuildJwt();
-        var userToken = BuildUserToken();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
+        var jwtToken = TestDataBuilders.BuildJwt();
+        var userToken = TestDataBuilders.BuildUserToken();
         
         // Using Func<T> instead of Expression<Func<T>> to be able to use optional arguments and collectionExpressions
         Func<UserTokenIdentity, bool> generateTokenInputValidator = arg => ObjectComparer.JsonCompare(arg, tokenIdentity);
@@ -105,8 +105,8 @@ public class AuthServiceTests {
             Password = StubData.Password
         };
 
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
 
         Func<UserTokenIdentity, bool> generateTokenInputValidator = arg => ObjectComparer.JsonCompare(arg, tokenIdentity);
 
@@ -139,7 +139,7 @@ public class AuthServiceTests {
             Password = StubData.Password
         };
 
-        var userInfo = BuildUser();
+        var userInfo = TestDataBuilders.BuildUser();
 
         _mockUsersRepo.FindSingle(Arg.Any<Expression<Func<User, bool>>>()).Returns(userInfo);
         _mockPasswordHasher.Check(userInfo.Password, inputData.Password).Returns((false, true));
@@ -194,10 +194,10 @@ public class AuthServiceTests {
             Password = StubData.Password
         };
         
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
-        var jwtToken = BuildJwt();
-        var userToken = BuildUserToken();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
+        var jwtToken = TestDataBuilders.BuildJwt();
+        var userToken = TestDataBuilders.BuildUserToken();
         
         // Using Func<T> instead of Expression<Func<T>> to be able to use optional arguments and collectionExpressions
         Func<UserTokenIdentity, bool> generateTokenInputValidator = arg =>
@@ -242,10 +242,10 @@ public class AuthServiceTests {
             Password = StubData.Password
         };
         
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
-        var jwtToken = BuildJwt();
-        var userToken = BuildUserToken();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
+        var jwtToken = TestDataBuilders.BuildJwt();
+        var userToken = TestDataBuilders.BuildUserToken();
         
         // Using Func<T> instead of Expression<Func<T>> to be able to use optional arguments and collectionExpressions
         Func<UserTokenIdentity, bool> generateTokenInputValidator = arg =>
@@ -285,7 +285,7 @@ public class AuthServiceTests {
             Password = StubData.Password
         };
         
-        var userInfo = BuildUser();
+        var userInfo = TestDataBuilders.BuildUser();
     
         _mockUsersRepo.FindSingle(Arg.Any<Expression<Func<User, bool>>>()).Returns(userInfo);
 
@@ -310,10 +310,10 @@ public class AuthServiceTests {
     public async Task ExchangeOldTokensForNewToken_WhenEverythingIsOK_ReturnsJwt()
     {
         // Arrange
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
-        var jwtToken = BuildJwt();
-        var userToken = BuildUserToken();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
+        var jwtToken = TestDataBuilders.BuildJwt();
+        var userToken = TestDataBuilders.BuildUserToken();
         
         // Using Func<T> instead of Expression<Func<T>> to be able to use optional arguments and collectionExpressions
         Func<UserTokenIdentity, bool> generateTokenInputValidator = arg =>
@@ -355,10 +355,10 @@ public class AuthServiceTests {
     public async Task ExchangeOldTokensForNewToken_WhenJwtManagerFailsToGenerateToken_ReturnsError()
     {
         // Arrange
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
-        var jwtToken = BuildJwt();
-        var userToken = BuildUserToken();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
+        var jwtToken = TestDataBuilders.BuildJwt();
+        var userToken = TestDataBuilders.BuildUserToken();
         
         Func<UserTokenIdentity, bool> generateTokenInputValidator = arg =>
             ObjectComparer.JsonCompare(arg, tokenIdentity, [nameof(tokenIdentity.UserId)]);
@@ -394,10 +394,10 @@ public class AuthServiceTests {
     public async Task ExchangeOldTokensForNewToken_WhenAnExceptionIsThrownDuringTransaction_ReturnsError()
     {
         // Arrange
-        var userInfo = BuildUser();
-        var tokenIdentity = BuildUserTokenIdentity();
-        var jwtToken = BuildJwt();
-        var userToken = BuildUserToken();
+        var userInfo = TestDataBuilders.BuildUser();
+        var tokenIdentity = TestDataBuilders.BuildUserTokenIdentity();
+        var jwtToken = TestDataBuilders.BuildJwt();
+        var userToken = TestDataBuilders.BuildUserToken();
         var thrownException = new Exception(ErrorCodes.UnknownError);
         
         // Using Func<T> instead of Expression<Func<T>> to be able to use optional arguments and collectionExpressions
@@ -440,7 +440,7 @@ public class AuthServiceTests {
     public async Task ExchangeOldTokensForNewToken_WhenJwtManagerFailsToReadToken_ReturnsError()
     {
         // Arrange
-        var userToken = BuildUserToken();
+        var userToken = TestDataBuilders.BuildUserToken();
         
         _mockUsersTokenRepo.FindSingle(Arg.Any<Expression<Func<UserToken, bool>>>()).Returns(userToken);
         _mockJwtManager.ReadToken(StubData.JwtToken, false).Returns(new AppError(ErrorCodes.IncompleteJwtTokenData));
@@ -487,53 +487,5 @@ public class AuthServiceTests {
         result.Error.Should().NotBeNull();
         // result.Value.Should().BeNull();
         result.Error!.Code.Should().Be(ErrorCodes.RefreshTokenExpired);
-    }
-
-    private JsonWebToken BuildJwt(
-        string userId = StubData.UserId, string email = StubData.Email,
-        string token = StubData.JwtToken, string refreshToken = StubData.RefreshToken
-    ) {
-        return new JsonWebToken {
-            UserId = userId,
-            Email = email,
-            ExpiresIn = 3600,
-            Token = token,
-            RefreshToken = refreshToken
-        };
-    }
-
-    private UserTokenIdentity BuildUserTokenIdentity(
-        string userId = StubData.UserId, string email = StubData.Email, string name = StubData.UserName
-    ) {
-        return new UserTokenIdentity {
-            UserId = userId,
-            Email = email,
-            Name = name
-        };
-    }
-
-    private UserToken BuildUserToken(string userId = StubData.UserId, string token = StubData.RefreshToken)
-    {
-        return new UserToken {
-            Id = Guid.CreateVersion7().ToString("N"),
-            UserId = userId,
-            TokenTypeId = $"{(int) Enums.TokenType.RefreshToken}",
-            Token = token,
-            ExpiryTime = DateTime.Now.AddYears(1)
-        };
-    }
-
-    private User BuildUser(
-        string userId = StubData.UserId, string email = StubData.Email,
-        string name = StubData.UserName, string password = StubData.HashedPassword
-    ) {
-        return new User {
-            Id = userId,
-            Email = email,
-            Password = password,
-            Name = name,
-            CreationDate = DateTime.Now,
-            ModificationDate = null
-        };
     }
 }

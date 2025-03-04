@@ -39,7 +39,7 @@ public class LoginControllerTest {
     public async Task SignIn_WhenEverythingIsOK_ShouldReturnJwt(bool saveAuthInCookie)
     {
         // Arrange
-        var jwtMockResult = BuildJwt();
+        var jwtMockResult = TestDataBuilders.BuildJwt();
         var inputData = new SignInModel {
             Email = StubData.Email,
             Password = StubData.Password
@@ -175,7 +175,7 @@ public class LoginControllerTest {
     public async Task SignUp_WhenEverythingIsOK_ShouldReturnJwt(bool saveAuthInCookie)
     {
         // Arrange
-        var jwtMockResult = BuildJwt();
+        var jwtMockResult = TestDataBuilders.BuildJwt();
         var inputData = new SignUpModel {
             Email = StubData.Email,
             Password = StubData.Password,
@@ -359,18 +359,5 @@ public class LoginControllerTest {
                 Add(combination[0] as string, combination[1] as string, combination[2] as string);
             }
         }
-    }
-
-    private JsonWebToken BuildJwt(
-        string userId = StubData.UserId, string email = StubData.Email,
-        string token = StubData.JwtToken, string refreshToken = StubData.RefreshToken
-    ) {
-        return new JsonWebToken {
-            UserId = userId,
-            Email = email,
-            ExpiresIn = 3600,
-            Token = token,
-            RefreshToken = refreshToken
-        };
     }
 }

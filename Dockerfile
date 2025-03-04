@@ -9,9 +9,9 @@ COPY ArchitectureTest.sln ./
 COPY ./src/*/*.csproj ./
 COPY ./tests/*/*.csproj ./
 
-## First, we must remove the TestUtils project
-RUN dotnet sln remove ./tests/ArchitectureTest.TestUtils/ArchitectureTest.TestUtils.csproj
-RUN rm ./ArchitectureTest.TestUtils.csproj
+## First, we must remove the TestUtils and IntegrationTests projects
+RUN dotnet sln remove ./tests/ArchitectureTest.TestUtils/ArchitectureTest.TestUtils.csproj ./tests/ArchitectureTest.IntegrationTests/ArchitectureTest.IntegrationTests.csproj
+RUN rm ./ArchitectureTest.TestUtils.csproj ./ArchitectureTest.IntegrationTests.csproj
 
 RUN TESTPROJS=$(find . -name \*.Tests.csproj -printf '%f\n') && for item in $TESTPROJS; do \
     dotnet sln remove ./tests/"${item%.*}"/$item; \

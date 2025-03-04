@@ -1,7 +1,6 @@
 ﻿using ArchitectureTest.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
@@ -14,6 +13,9 @@ using NSubstitute;
 using ArchitectureTest.TestUtils;
 using FluentAssertions;
 using ArchitectureTest.Domain.Models;
+using AutoMapper;
+using ArchitectureTest.Domain.Services.Application.EntityCrudService;
+using ArchitectureTest.Domain.Entities;
 
 namespace ArchitectureTest.Web.Tests.Controllers;
 
@@ -22,15 +24,19 @@ public class NotesControllerTest
     private readonly INotesCrudService _mockNotesCrudService;
     private readonly IHttpContextAccessor _mockHttpContextAccessor;
     private readonly ILogger<NotesController> _mockLogger;
+    private readonly IMapper _mapper;
 
     private readonly NotesController _systemUnderTest;
-
 
     public NotesControllerTest()
     {
         _mockNotesCrudService = Substitute.For<INotesCrudService>();
         _mockHttpContextAccessor = Substitute.For<IHttpContextAccessor>();
         _mockLogger = Substitute.For<ILogger<NotesController>>();
+        var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile<ApplicationModelsMappingProfile>());
+        mapperConfig.AssertConfigurationIsValid();
+
+        _mapper = mapperConfig.CreateMapper();
 
         var userClaims = new List<Claim> {
             new Claim(ClaimTypes.NameIdentifier, StubData.UserId),
@@ -54,7 +60,7 @@ public class NotesControllerTest
     public async Task GetById_WhenEverythingIsOK_ReturnsNote()
     {
         // Arrange
-        var foundNote = BuildNote();
+        var foundNote = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote());
         _mockNotesCrudService.GetById(StubData.NoteId).Returns(foundNote);
 
         // Act
@@ -102,10 +108,10 @@ public class NotesControllerTest
     public async Task GetUserNotes_WhenEverythingIsOK_ReturnsListOfNotes()
     {
         // Arrange
-        var foundNotes = new List<NoteDTO> {
-            BuildNote(noteId: "1"),
-            BuildNote(noteId: "2")
-        };
+        var foundNotes = _mapper.Map<List<NoteDTO>>(new List<Note> {
+            TestDataBuilders.BuildNote(noteId: "1"),
+            TestDataBuilders.BuildNote(noteId: "2")
+        });
         _mockNotesCrudService.GetUserNotes().Returns(foundNotes);
 
         // Act
@@ -153,8 +159,8 @@ public class NotesControllerTest
     public async Task Create_WhenEverythingIsOK_ReturnsNote()
     {
         // Arrange
-        var inputData = BuildNote(noteId: string.Empty);
-        var createdNote = BuildNote();
+        var inputData = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote(noteId: string.Empty));
+        var createdNote = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote());
 
         _mockNotesCrudService.Create(inputData).Returns((createdNote, createdNote.Id!));
         string path = "/api/notes";
@@ -181,7 +187,7 @@ public class NotesControllerTest
     public async Task Create_WhenRepositoryFails_ReturnsError(string errorCode, int loggerCalls)
     {
         // Arrange
-        var inputData = BuildNote(noteId: string.Empty);
+        var inputData = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote(noteId: string.Empty));
         _mockNotesCrudService.Create(inputData).Returns(new AppError(errorCode));
         
         // Act
@@ -206,8 +212,8 @@ public class NotesControllerTest
     public async Task Update_WhenEverythingIsOK_ReturnsNote()
     {
         // Arrange
-        var inputData = BuildNote();
-        var modifiedNote = BuildNote(title: "title2", content: "content2");
+        var inputData = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote());
+        var modifiedNote = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote(title: "title2", content: "content2"));
         // domain.Update will always be called validating if entity belongs to user because that is a 
         // behavior of the domain and cannot be changed by user
         _mockNotesCrudService.Update(inputData.Id!, inputData).Returns(modifiedNote);
@@ -233,7 +239,7 @@ public class NotesControllerTest
     public async Task Update_WhenRepositoryFails_ReturnsError(string errorCode, int loggerCalls)
     {
         // Arrange
-        var inputData = BuildNote();
+        var inputData = _mapper.Map<NoteDTO>(TestDataBuilders.BuildNote());
         _mockNotesCrudService.Update(inputData.Id!, inputData).Returns(new AppError(errorCode));
 
         // Act
@@ -298,19 +304,5 @@ public class NotesControllerTest
             _mockLogger.Received(loggerCalls).LogError(errorCode);
         else
             _mockLogger.DidNotReceiveWithAnyArgs().LogError(default);
-    }
-
-    private NoteDTO BuildNote(
-        string noteId = StubData.NoteId, string title = StubData.NoteTitle, string content = StubData.NoteContent,
-        string userId = StubData.UserId, DateTime? creationDate = null, DateTime? modificationDate = null
-    ) {
-        return new NoteDTO {
-            Id = noteId,
-            Title = title,
-            Content = content,
-            UserId = userId,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek
-        };
     }
 }

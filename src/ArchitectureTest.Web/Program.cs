@@ -77,7 +77,7 @@ app.MapControllers();
 app.Run();
 
 [ExcludeFromCodeCoverage]
-public static partial class Program { }
+public partial class Program { }
 
 // Check this response on why the browser is not being auto launched after Serilog is configured, with console logging this
 // is harder to implement because we are using the JSON formatter, so, the log "Now Listening on..." appears as JSON and this

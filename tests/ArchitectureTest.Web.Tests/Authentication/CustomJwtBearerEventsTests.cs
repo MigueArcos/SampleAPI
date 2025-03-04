@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
-using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using ArchitectureTest.TestUtils;
@@ -15,7 +14,6 @@ using FluentAssertions;
 using Microsoft.Net.Http.Headers;
 using ArchitectureTest.Web.Configuration;
 using System.Text.Json;
-using ArchitectureTest.Domain.Models.Application;
 using ArchitectureTest.Domain.Errors;
 using System;
 
@@ -134,8 +132,8 @@ public class CustomJwtBearerEventsTests
         // Arrange
         var httpContext = SetupHttpContext(isAnonymous: false, tokensInCookie: tokensInCookie, tokensInHeaders: tokensInHeaders);
         var bearerOptions = new JwtBearerOptions();
-        var jwt = BuildJwt();
-        var claimsPrincipal = BuildClaimsPrincipal();
+        var jwt = TestDataBuilders.BuildJwt();
+        var claimsPrincipal = TestDataBuilders.BuildClaimsPrincipal();
         _mockAuthService.ExchangeOldTokensForNewToken(StubData.JwtToken, StubData.RefreshToken).Returns((jwt, claimsPrincipal));
         var inputData = new AuthenticationFailedContext(httpContext, _authScheme, bearerOptions);
     
@@ -206,31 +204,5 @@ public class CustomJwtBearerEventsTests
             );
 
         return httpContext;
-    }
-
-    private JsonWebToken BuildJwt(
-        string userId = StubData.UserId, string email = StubData.Email,
-        string token = StubData.JwtToken, string refreshToken = StubData.RefreshToken
-    ) {
-        return new JsonWebToken {
-            UserId = userId,
-            Email = email,
-            ExpiresIn = 3600,
-            Token = token,
-            RefreshToken = refreshToken
-        };
-    }
-
-    private ClaimsPrincipal BuildClaimsPrincipal(
-        string userId = StubData.UserId, string email = StubData.Email, string userName = StubData.UserName
-    ){
-        var userClaims = new List<Claim> {
-            new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Name, userName),
-        };
-        var identity = new ClaimsIdentity(userClaims, "TestAuthType");
-
-        return new ClaimsPrincipal(identity);
     }
 }

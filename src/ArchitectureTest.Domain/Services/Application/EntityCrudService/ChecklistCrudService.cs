@@ -37,7 +37,7 @@ public class ChecklistCrudService : EntityCrudService<Checklist, ChecklistDTO>, 
                     input!.UserId != CrudSettings.UserId && CrudSettings.ValidateEntityBelongsToUser,
                     ErrorCodes.CannotCreateDataForThisUserId
                 ),
-                ((input, entityId) => string.IsNullOrWhiteSpace(input!.Title), ErrorCodes.NoteTitleNotFound),
+                ((input, entityId) => string.IsNullOrWhiteSpace(input!.Title), ErrorCodes.ChecklistTitleNotFound),
             ],
             [CrudOperation.ReadById] = [
                 ((input, entityId) => string.IsNullOrWhiteSpace(entityId), ErrorCodes.ChecklistIdNotSupplied)

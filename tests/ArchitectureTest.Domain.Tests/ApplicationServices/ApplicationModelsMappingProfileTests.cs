@@ -199,25 +199,25 @@ public class ApplicationModelsMappingProfileTests
     private List<ChecklistDetail> BuildComplexChecklistDetailsAsTree()
     {
         return new List<ChecklistDetail>{
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "1",
                 checklistId: StubData.ChecklistId,
                 taskName: "one",
                 parentDetailId: null,
                 subItems: [
-                    BuildChecklistDetail(
+                    TestDataBuilders.BuildChecklistDetail(
                         detailId: "4",
                         checklistId: StubData.ChecklistId,
                         taskName: "four",
                         parentDetailId: "1",
                         subItems: [
-                            BuildChecklistDetail(
+                            TestDataBuilders.BuildChecklistDetail(
                                 detailId: "6",
                                 checklistId: StubData.ChecklistId,
                                 taskName: "six",
                                 parentDetailId: "4",
                                 subItems: [
-                                    BuildChecklistDetail(
+                                    TestDataBuilders.BuildChecklistDetail(
                                         detailId: "8",
                                         checklistId: StubData.ChecklistId,
                                         taskName: "eight",
@@ -225,49 +225,49 @@ public class ApplicationModelsMappingProfileTests
                                     )
                                 ]
                             ),
-                            BuildChecklistDetail(
+                            TestDataBuilders.BuildChecklistDetail(
                                 detailId: "7",
                                 checklistId: StubData.ChecklistId,
                                 taskName: "seven",
                                 parentDetailId: "4",
                                 subItems: [
-                                    BuildChecklistDetail(
+                                    TestDataBuilders.BuildChecklistDetail(
                                         detailId: "9",
                                         checklistId: StubData.ChecklistId,
                                         taskName: "nine",
                                         parentDetailId: "7"
                                     ),
-                                    BuildChecklistDetail(
+                                    TestDataBuilders.BuildChecklistDetail(
                                         detailId: "10",
                                         checklistId: StubData.ChecklistId,
                                         taskName: "ten",
                                         parentDetailId: "7",
                                         subItems: [
-                                            BuildChecklistDetail(
+                                            TestDataBuilders.BuildChecklistDetail(
                                                 detailId: "12",
                                                 checklistId: StubData.ChecklistId,
                                                 taskName: "twelve",
                                                 parentDetailId: "10",
                                                 subItems: [
-                                                    BuildChecklistDetail(
+                                                    TestDataBuilders.BuildChecklistDetail(
                                                         detailId: "13",
                                                         checklistId: StubData.ChecklistId,
                                                         taskName: "thirteen",
                                                         parentDetailId: "12",
                                                         subItems: [
-                                                            BuildChecklistDetail(
+                                                            TestDataBuilders.BuildChecklistDetail(
                                                                 detailId: "14",
                                                                 checklistId: StubData.ChecklistId,
                                                                 taskName: "fourteen",
                                                                 parentDetailId: "13",
                                                                 subItems: [
-                                                                    BuildChecklistDetail(
+                                                                    TestDataBuilders.BuildChecklistDetail(
                                                                         detailId: "15",
                                                                         checklistId: StubData.ChecklistId,
                                                                         taskName: "fifteen",
                                                                         parentDetailId: "14"
                                                                     ),
-                                                                    BuildChecklistDetail(
+                                                                    TestDataBuilders.BuildChecklistDetail(
                                                                         detailId: "16",
                                                                         checklistId: StubData.ChecklistId,
                                                                         taskName: "sixteen",
@@ -281,7 +281,7 @@ public class ApplicationModelsMappingProfileTests
                                             )
                                         ]
                                     ),
-                                    BuildChecklistDetail(
+                                    TestDataBuilders.BuildChecklistDetail(
                                         detailId: "11",
                                         checklistId: StubData.ChecklistId,
                                         taskName: "eleven",
@@ -291,7 +291,7 @@ public class ApplicationModelsMappingProfileTests
                             )
                         ]
                     ),
-                    BuildChecklistDetail(
+                    TestDataBuilders.BuildChecklistDetail(
                         detailId: "5",
                         checklistId: StubData.ChecklistId,
                         taskName: "five",
@@ -299,19 +299,19 @@ public class ApplicationModelsMappingProfileTests
                     )
                 ]
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "2",
                 checklistId: StubData.ChecklistId,
                 taskName: "two",
                 parentDetailId: null,
                 subItems: [
-                    BuildChecklistDetail(
+                    TestDataBuilders.BuildChecklistDetail(
                         detailId: "17",
                         checklistId: StubData.ChecklistId,
                         taskName: "seventeen",
                         parentDetailId: "2"
                     ),
-                    BuildChecklistDetail(
+                    TestDataBuilders.BuildChecklistDetail(
                         detailId: "18",
                         checklistId: StubData.ChecklistId,
                         taskName: "eighteen",
@@ -319,7 +319,7 @@ public class ApplicationModelsMappingProfileTests
                     )
                 ]
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "3",
                 checklistId: StubData.ChecklistId,
                 taskName: "three",
@@ -331,133 +331,114 @@ public class ApplicationModelsMappingProfileTests
     private List<ChecklistDetail> BuildChecklistDetailsAsList()
     {
         return new List<ChecklistDetail>{
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "1",
                 checklistId: StubData.ChecklistId,
                 taskName: "one",
                 parentDetailId: null
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "2",
                 checklistId: StubData.ChecklistId,
                 taskName: "two",
                 parentDetailId: null
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "3",
                 checklistId: StubData.ChecklistId,
                 taskName: "three",
                 parentDetailId: null
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "4",
                 checklistId: StubData.ChecklistId,
                 taskName: "four",
                 parentDetailId: "1"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "5",
                 checklistId: StubData.ChecklistId,
                 taskName: "five",
                 parentDetailId: "1"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "6",
                 checklistId: StubData.ChecklistId,
                 taskName: "six",
                 parentDetailId: "4"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "7",
                 checklistId: StubData.ChecklistId,
                 taskName: "seven",
                 parentDetailId: "4"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "8",
                 checklistId: StubData.ChecklistId,
                 taskName: "eight",
                 parentDetailId: "6"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "9",
                 checklistId: StubData.ChecklistId,
                 taskName: "nine",
                 parentDetailId: "7"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "10",
                 checklistId: StubData.ChecklistId,
                 taskName: "ten",
                 parentDetailId: "7"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "11",
                 checklistId: StubData.ChecklistId,
                 taskName: "eleven",
                 parentDetailId: "7"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "12",
                 checklistId: StubData.ChecklistId,
                 taskName: "twelve",
                 parentDetailId: "10"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "13",
                 checklistId: StubData.ChecklistId,
                 taskName: "thirteen",
                 parentDetailId: "12"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "14",
                 checklistId: StubData.ChecklistId,
                 taskName: "fourteen",
                 parentDetailId: "13"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "15",
                 checklistId: StubData.ChecklistId,
                 taskName: "fifteen",
                 parentDetailId: "14"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "16",
                 checklistId: StubData.ChecklistId,
                 taskName: "sixteen",
                 parentDetailId: "14"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "17",
                 checklistId: StubData.ChecklistId,
                 taskName: "seventeen",
                 parentDetailId: "2"
             ),
-            BuildChecklistDetail(
+            TestDataBuilders.BuildChecklistDetail(
                 detailId: "18",
                 checklistId: StubData.ChecklistId,
                 taskName: "eighteen",
                 parentDetailId: "2"
             )
-        };
-    }
-
-    private ChecklistDetail BuildChecklistDetail(
-        string? detailId = null, string checklistId = StubData.ChecklistId, string taskName = StubData.ChecklistTaskName,
-        string? parentDetailId = null, bool status = true, DateTime? creationDate = null, DateTime? modificationDate = null,
-        List<ChecklistDetail>? subItems = null
-    )
-    {
-        return new ChecklistDetail
-        {
-            Id = string.IsNullOrWhiteSpace(detailId) ? Guid.CreateVersion7().ToString("N") : detailId,
-            ChecklistId = checklistId,
-            TaskName = taskName,
-            ParentDetailId = parentDetailId,
-            Status = status,
-            CreationDate = creationDate ?? StubData.Today,
-            ModificationDate = modificationDate ?? StubData.NextWeek,
-            SubItems = subItems
         };
     }
 }

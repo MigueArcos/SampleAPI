@@ -16,7 +16,8 @@ public class JwtManager : IJwtManager {
     private readonly TokenValidationParameters _tokenValidationParameters;
     private readonly IConfiguration _configuration;
 
-    public JwtManager(TokenValidationParameters tokenValidationParameters, IConfiguration configuration) {
+    public JwtManager(TokenValidationParameters tokenValidationParameters, IConfiguration configuration)
+    {
         _tokenHandler = new JwtSecurityTokenHandler();
         _tokenValidationParameters = tokenValidationParameters;
         _configuration = configuration;
@@ -72,6 +73,10 @@ public class JwtManager : IJwtManager {
             UserId = userIdClaim.Value,
             Name = nameClaim.Value
         };
+        // after changing ValidateLifetime, always set it again to true (weird because I thought a Scoped service was not
+        // reused for subsequent requests, and this services is scoped, but TokenValidationParameters isn't scoped, 
+        // actually it isn't registered with a lifetime in the DI container, maybe that's the problem)
+        _tokenValidationParameters.ValidateLifetime = true;
         return (user, claims);
     }
 
